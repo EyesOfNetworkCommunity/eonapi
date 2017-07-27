@@ -1,17 +1,17 @@
-# EyesOfNetwork API : EONAPI
+# Eyes Of Network API : EONAPI
 
 ## Installation steps: Get started!
-Clone the project EONAPI:
+1. Clone the project EONAPI:
 ```bash
 $ git clone https://github.com/eyesofnetworkcommunity/eonweb.git eonweb-git
 ```
 
-Make the symbolic links in your project:
+2. Make the symbolic links in your project:
 ```bash
 $ ln -sf /srv/eyesofnetwork/eonapi-git/ /srv/eyesofnetwork/eonapi
 ```
 
-Edit the eonapi httpd conf file:
+3. Edit the eonapi httpd conf file:
 ```bash
 $ vim /etc/httpd/conf.d/eonapi.conf
 ```
@@ -25,6 +25,10 @@ Alias /eonapi "/srv/eyesofnetwork/eonapi/html/api"
 
         FallbackResource index.php
 </Directory>
+```
+4. Restart the httpd daemon:
+```bash
+$ service httpd restart
 ```
 
 ## Presentation: What is EONAPI?
