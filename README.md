@@ -92,6 +92,71 @@ A basic API call will look like that:
 https://[EON_IP]/eonapi/[API_function]?&username=[username]&apiKey=[apiKey]
 ```
 
+## EONAPI features
+EONAPI is open source and is built to make object manipulation easier. A few actions could be done remotely by calling the right API URLs.
+
+As a reminder, a basic API call will look like that:
+```http
+https://[EON_IP]/eonapi/[API_function]?&username=[username]&apiKey=[apiKey]
+```
+
+You will find below the updated list of actions (**"API_function"**) possible in EONAPI:
+
+| Action URL **[API_function]** | Request type | Parameters (body/payload) | Expected response | Comments |
+| --- | --- | --- | --- | --- |
+| `getAuthenticationStatus` | GET | None | "status": "authorized" | Confirm that the provided user account has admin privileges and the permission to make advanced API calls. This means the association username/apiKey is correct.  |
+| `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. |
+| `createService` | POST | [**hostName, serviceDescription, services**] The parameter **services** is an array with the service(s) name as a key, the service template as first parameter, and the following optional service arguments linked to the service template. | "http_code": "200 OK", "logs": [with the executed actions] | Add service(s) to an existant host and reload lilac configuration. To add a service, please see the parameters column. It will add a service to a specified nagios host with as many service arguments as needed. |
+
+## EONAPI calls examples
+To illustrate the EON API features tab, you will find a few implementation examples (JSON body parameters):
+
+* /createHost
+```json 
+{
+	"templateHostName": "TEMPLATE_HOST",
+	"hostName": "HostName",
+	"hostIp": "8.8.8.8",
+	"hostAlias": "My first host"
+}
+```
+
+* /createService
+```json 
+{
+	"hostName": "HostName",
+	"serviceDescription": "My first service",
+	"services": {
+                "Service1": [
+                    "TEMPLATE_SERVICE_1",
+                    "127.0.0.1",
+                    "eth0",
+                    "1000000",
+                    "100",
+                    "110"
+                ],
+                "Service2": [
+                    "TEMPLATE_SERVICE_2",
+                    "3000",
+                    "80",
+                    "5000",
+                    "90"
+                ]
+        }
+}
+
+```
+
+* /createUser
+```json 
+{
+	"customerLogin": "BOB",
+	"customer": "Bob Marley",
+	"customerMail": "bob@axians.com",
+	"admin": true
+}
+```
+
 ## Security and Encryption
 If you are accessing the API inside your secure LAN you can simply use HTTP. In insecure environments (e.g. when accessing your EON server across the Internet) you should use HTTPS requests to make sure that your parameters and passwords are encrypted. This way all communication between the EON server and your client is encrypted by SSL encryption.
 
@@ -99,6 +164,8 @@ If you are accessing the API inside your secure LAN you can simply use HTTP. In 
 Most JSON replies from the API contain a **"api_version"** field that contains the api version on the EON server. Your applications developers should take note of this version for compatibility reasons.
 
 ## Error Handling
+Each response to an API call contains a status code. These status codes have a meaning and are referenced in the table below:
+
 | Status Code | Meaning | Comments |
 | --- | --- | --- |
 | `200` | OK | The API call was completed successfully, the JSON response contains the result data. |
