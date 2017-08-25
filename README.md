@@ -3,7 +3,7 @@
 ## Installation steps: Get started!
 1. Clone the project EONAPI:
 ```bash
-$ git clone https://github.com/eyesofnetworkcommunity/eonweb.git eonweb-git
+$ git clone https://github.com/eyesofnetworkcommunity/eonapi.git eonapi-git
 ```
 
 2. Make the symbolic links in your project:
