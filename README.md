@@ -105,8 +105,12 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | Action URL **[API_function]** | Request type | Parameters (body/payload) | Expected response | Comments |
 | --- | --- | --- | --- | --- |
 | `getAuthenticationStatus` | GET | None | "status": "authorized" | Confirm that the provided user account has admin privileges and the permission to make advanced API calls. This means the association username/apiKey is correct.  |
-| `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. |
-| `createService` | POST | [**hostName, serviceDescription, services**] The parameter **services** is an array with the service(s) name as a key, the service template as first parameter, and the following optional service arguments linked to the service template. | "http_code": "200 OK", "logs": [with the executed actions] | Add service(s) to an existant host and reload lilac configuration. To add a service, please see the parameters column. It will add a service to a specified nagios host with as many service arguments as needed. |
+| `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
+| `createService` | POST | [**hostName, services**] The parameter **services** is an array with the service(s) name as a key, the service template as first parameter, and the following optional service arguments linked to the service template. | "http_code": "200 OK", "logs": [with the executed actions] | Add service(s) to an existant host and reload lilac configuration. To add a service, please see the parameters column. It will add a service to a specified nagios host with as many service arguments as needed. |
+| `createUser` | POST | [**userName, userMail, admin, filterName, filterValue**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
+| `addContactToHost` | POST | [**contactName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
+| `addContactGroupToHost` | POST | [**contactGroupName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
+
 
 ## EONAPI calls examples
 To illustrate the EON API features tab, you will find a few implementation examples (JSON body parameters):
@@ -117,7 +121,9 @@ To illustrate the EON API features tab, you will find a few implementation examp
 	"templateHostName": "TEMPLATE_HOST",
 	"hostName": "HostName",
 	"hostIp": "8.8.8.8",
-	"hostAlias": "My first host"
+	"hostAlias": "My first host",
+	"contactName": "usertest",
+	"contactGroupName": null
 }
 ```
 
@@ -125,7 +131,6 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json 
 {
 	"hostName": "HostName",
-	"serviceDescription": "My first service",
 	"services": {
                 "Service1": [
                     "TEMPLATE_SERVICE_1",
@@ -150,10 +155,27 @@ To illustrate the EON API features tab, you will find a few implementation examp
 * /createUser
 ```json 
 {
-	"customerLogin": "BOB",
-	"customer": "Bob Marley",
-	"customerMail": "bob@axians.com",
-	"admin": true
+	"userName": "bob",
+	"userMail": "bob@marley.com",
+	"admin": true,
+	"filterName": "hostgroups",
+	"filterValue": "HOSTGROUP_JAMAICA"
+}
+```
+
+* /addContactToHost
+```json 
+{
+	"contactName": "bob",
+	"hostName": "HostName"
+}
+```
+
+* /addContactGroupToHost
+```json 
+{
+	"contactGroupName": "admins",
+	"hostName": "HostName"
 }
 ```
 
