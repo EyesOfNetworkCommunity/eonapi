@@ -26,6 +26,10 @@ $app->get('/getAuthenticationStatus','getAuthenticationStatus');
 
 //POST (parameters in body)
 $app->post('/createHost','createHostRest');
+$app->post('/createHostTemplate','createHostTemplateRest');
+$app->post('/addHostTemplateToHost','addHostTemplateToHostRest');
+$app->post('/addContactToHostTemplate','addContactToHostTemplateRest');
+$app->post('/addContactGroupToHostTemplate','addContactGroupToHostTemplateRest');
 $app->post('/createService','createServiceRest');
 $app->post('/createUser','createUserRest');
 $app->post('/addContactToHost','addContactToHostRest');
@@ -52,7 +56,7 @@ function createHostRest(){
     $contactGroupName = $body->contactGroupName;
     
     /*Test parameters*/
-    if( !(!empty($templateHostName) && !empty($hostName) && !empty($hostIp) && !empty($hostAlias)) ){    
+    if( !(!empty($templateHostName) && !empty($hostName) && !empty($hostIp)) ){    
         $array = array("message" => "invalid parameters");
         $result = getJsonResponse($response, "417", $array);
         echo $result;
@@ -95,6 +99,249 @@ function createHostRest(){
         echo $result;
     }
     
+}
+
+
+function createHostTemplateRest(){
+    $request = \Slim\Slim::getInstance()->request();
+    $response = \Slim\Slim::getInstance()->response();
+    $body = json_decode($request->getBody());
+    
+    //Parameters in request
+    $paramUsername = $request->get('username');
+    $paramApiKey = $request->get('apiKey');
+    //Do not set $serverApiKey to NULL (bypass risk)
+    $serverApiKey = "r@dom@cceSSM€mori€s269";
+    
+    //Parameters body
+    $templateHostName = $body->templateHostName;
+    
+    /*Test parameters*/
+    if( !(!empty($templateHostName)) ){    
+        $array = array("message" => "invalid parameters");
+        $result = getJsonResponse($response, "417", $array);
+        echo $result;
+        
+        return;
+    }
+    
+    $usersql = getUserByUsername( $paramUsername );
+    $user_limitation = mysqli_result($usersql, 0, "user_limitation");
+    $user_type = mysqli_result($usersql, 0, "user_type");
+    
+    //IF LOCAL USER AND ADMIN USER (No limitation)
+    if( ($user_type != "1") && $user_limitation == "0"){
+        //ID of the authenticated user
+        $user_id = mysqli_result($usersql, 0, "user_id");
+        $serverApiKey = apiKey( $user_id );    
+    }
+    
+    
+    //Only if API keys match
+    if($paramApiKey == $serverApiKey){
+        $co = new CreateObjects;
+        $logs = $co->createHostTemplate($templateHostName);
+        
+        try {
+            $array = array("logs" => $logs);
+            $result = getJsonResponse($response, "200", $array);
+            echo $result;
+        }
+        catch(PDOException $e) {
+            //error_log($e->getMessage(), 3, '/var/tmp/php.log');
+            $array = array("error" => $e->getMessage());
+            $result = getJsonResponse($response, "400", $array);
+            echo $result;
+        }
+    }
+    else{
+        $array = array("status" => "unauthorized");
+        $result = getJsonResponse($response, "401", $array);
+        echo $result;
+    }
+    
+}
+
+function addHostTemplateToHostRest(){
+    $request = \Slim\Slim::getInstance()->request();
+    $response = \Slim\Slim::getInstance()->response();
+    $body = json_decode($request->getBody());
+    
+    //Parameters in request
+    $paramUsername = $request->get('username');
+    $paramApiKey = $request->get('apiKey');
+    //Do not set $serverApiKey to NULL (bypass risk)
+    $serverApiKey = "r@dom@cceSSM€mori€s269";
+    
+    //Parameters body
+    $templateHostName = $body->templateHostName;
+    $hostName = $body->hostName;
+    
+    /*Test parameters*/
+    if( !(!empty($templateHostName) && !empty($hostName)) ){    
+        $array = array("message" => "invalid parameters");
+        $result = getJsonResponse($response, "417", $array);
+        echo $result;
+        
+        return;
+    }
+    
+    $usersql = getUserByUsername( $paramUsername );
+    $user_limitation = mysqli_result($usersql, 0, "user_limitation");
+    $user_type = mysqli_result($usersql, 0, "user_type");
+    
+    //IF LOCAL USER AND ADMIN USER (No limitation)
+    if( ($user_type != "1") && $user_limitation == "0"){
+        //ID of the authenticated user
+        $user_id = mysqli_result($usersql, 0, "user_id");
+        $serverApiKey = apiKey( $user_id );    
+    }
+    
+    
+    //Only if API keys match
+    if($paramApiKey == $serverApiKey){
+        $co = new CreateObjects;
+        $logs = $co->addHostTemplateToHost($templateHostName, $hostName);
+        
+        try {
+            $array = array("logs" => $logs);
+            $result = getJsonResponse($response, "200", $array);
+            echo $result;
+        }
+        catch(PDOException $e) {
+            //error_log($e->getMessage(), 3, '/var/tmp/php.log');
+            $array = array("error" => $e->getMessage());
+            $result = getJsonResponse($response, "400", $array);
+            echo $result;
+        }
+    }
+    else{
+        $array = array("status" => "unauthorized");
+        $result = getJsonResponse($response, "401", $array);
+        echo $result;
+    }
+}
+
+function addContactToHostTemplateRest(){
+    $request = \Slim\Slim::getInstance()->request();
+    $response = \Slim\Slim::getInstance()->response();
+    $body = json_decode($request->getBody());
+    
+    //Parameters in request
+    $paramUsername = $request->get('username');
+    $paramApiKey = $request->get('apiKey');
+    //Do not set $serverApiKey to NULL (bypass risk)
+    $serverApiKey = "r@dom@cceSSM€mori€s269";
+    
+    //Parameters body
+    $contactName = $body->contactName;
+    $templateHostName = $body->templateHostName;
+    
+    
+    /*Test parameters*/
+    if( !(!empty($contactName) && !empty($templateHostName)) ){    
+        $array = array("message" => "invalid parameters");
+        $result = getJsonResponse($response, "417", $array);
+        echo $result;
+        
+        return;
+    }
+    
+    $usersql = getUserByUsername( $paramUsername );
+    $user_limitation = mysqli_result($usersql, 0, "user_limitation");
+    $user_type = mysqli_result($usersql, 0, "user_type");
+    
+    //IF LOCAL USER AND ADMIN USER (No limitation)
+    if( ($user_type != "1") && $user_limitation == "0"){
+        //ID of the authenticated user
+        $user_id = mysqli_result($usersql, 0, "user_id");
+        $serverApiKey = apiKey( $user_id );    
+    }
+    
+    
+    //Only if API keys match
+    if($paramApiKey == $serverApiKey){
+        $co = new CreateObjects;
+        $logs = $co->addContactToHostTemplate($contactName, $templateHostName);
+        
+        try {
+            $array = array("logs" => $logs);
+            $result = getJsonResponse($response, "200", $array);
+            echo $result;
+        }
+        catch(PDOException $e) {
+            //error_log($e->getMessage(), 3, '/var/tmp/php.log');
+            $array = array("error" => $e->getMessage());
+            $result = getJsonResponse($response, "400", $array);
+            echo $result;
+        }
+    }
+    else{
+        $array = array("status" => "unauthorized");
+        $result = getJsonResponse($response, "401", $array);
+        echo $result;
+    }
+}
+
+function addContactGroupToHostTemplateRest(){
+    $request = \Slim\Slim::getInstance()->request();
+    $response = \Slim\Slim::getInstance()->response();
+    $body = json_decode($request->getBody());
+    
+    //Parameters in request
+    $paramUsername = $request->get('username');
+    $paramApiKey = $request->get('apiKey');
+    //Do not set $serverApiKey to NULL (bypass risk)
+    $serverApiKey = "r@dom@cceSSM€mori€s269";
+    
+    //Parameters body
+    $contactGroupName = $body->contactGroupName;
+    $templateHostName = $body->templateHostName;
+    
+    
+    /*Test parameters*/
+    if( !(!empty($contactGroupName) && !empty($templateHostName)) ){    
+        $array = array("message" => "invalid parameters");
+        $result = getJsonResponse($response, "417", $array);
+        echo $result;
+        
+        return;
+    }
+    
+    $usersql = getUserByUsername( $paramUsername );
+    $user_limitation = mysqli_result($usersql, 0, "user_limitation");
+    $user_type = mysqli_result($usersql, 0, "user_type");
+    
+    //IF LOCAL USER AND ADMIN USER (No limitation)
+    if( ($user_type != "1") && $user_limitation == "0"){
+        //ID of the authenticated user
+        $user_id = mysqli_result($usersql, 0, "user_id");
+        $serverApiKey = apiKey( $user_id );    
+    }
+    
+    
+    //Only if API keys match
+    if($paramApiKey == $serverApiKey){
+        $co = new CreateObjects;
+        $logs = $co->addContactGroupToHostTemplate($contactGroupName, $templateHostName);
+        
+        try {
+            $array = array("logs" => $logs);
+            $result = getJsonResponse($response, "200", $array);
+            echo $result;
+        }
+        catch(PDOException $e) {
+            //error_log($e->getMessage(), 3, '/var/tmp/php.log');
+            $array = array("error" => $e->getMessage());
+            $result = getJsonResponse($response, "400", $array);
+            echo $result;
+        }
+    }
+    else{
+        $array = array("status" => "unauthorized");
+        $result = getJsonResponse($response, "401", $array);
+        echo $result;
+    }
 }
 
 function createServiceRest(){
