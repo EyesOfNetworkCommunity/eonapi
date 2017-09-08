@@ -110,6 +110,10 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `createUser` | POST | [**userName, userMail, admin, filterName, filterValue**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
 | `addContactToHost` | POST | [**contactName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
 | `addContactGroupToHost` | POST | [**contactGroupName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
+| `createHostTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a new nagios host template. |
+| `addHostTemplateToHost` | POST | [**templateHostName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a host template to a nagios host. |
+| `addContactToHostTemplate` | POST | [**contactName, templateHostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a contact to a nagios host template. |
+| `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a contact group to a nagios host template. |
 
 
 ## EONAPI calls examples
@@ -176,6 +180,37 @@ To illustrate the EON API features tab, you will find a few implementation examp
 {
 	"contactGroupName": "admins",
 	"hostName": "HostName"
+}
+```
+
+* /createHostTemplate
+```json 
+{
+	"templateHostName": "TEMPLATE_HOST"
+}
+```
+
+* /addHostTemplateToHost
+```json 
+{
+	"templateHostName": "TEMPLATE_HOST",
+	"hostName": "HostName"
+}
+```
+
+* /addContactToHostTemplate
+```json 
+{
+	"contactName": "bob",
+	"templateHostName": "TEMPLATE_HOST"
+}
+```
+
+* /addContactGroupToHostTemplate
+```json 
+{
+	"contactGroupName": "admins",
+	"templateHostName": "TEMPLATE_HOST"
 }
 ```
 
