@@ -11,6 +11,8 @@
 #
 */
 
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+
 include("/srv/eyesofnetwork/eonweb/include/config.php");
 include("/srv/eyesofnetwork/eonweb/include/function.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
