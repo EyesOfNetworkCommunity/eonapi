@@ -11,7 +11,7 @@
 #
 */
 
-error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING & ~E_EXCEPTION);
 
 include("/srv/eyesofnetwork/eonweb/include/config.php");
 include("/srv/eyesofnetwork/eonweb/include/function.php");
@@ -19,7 +19,7 @@ include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
 
 
-class CreateObjects {
+class ObjectManager {
     
     function __construct(){
         
@@ -38,7 +38,7 @@ class CreateObjects {
         return $logs;
     }
     
-    function exportConfigurationToNagios(){
+    function exportConfigurationToNagios( &$error = "", &$success = "" ){
         $jobName = "nagios";
         $c = new Criteria();
         //$c->add(ExportJobPeer::END_TIME, null);
@@ -59,6 +59,11 @@ class CreateObjects {
             $exportJob->setStatus("Starting...");
             $exportJob->save();
             exec("php /srv/eyesofnetwork/lilac/exporter/export.php " . $exportJob->getId() . " > /dev/null 2>&1", $tempOutput, $retVal);   
+            
+            $success .= "Nagios configuration exported\n";
+        }
+        else{
+            $error .= "ERROR during nagios configuration export\n";
         }
             
     }
@@ -67,7 +72,7 @@ class CreateObjects {
 
     
 	/* LILAC -  Hosts and services creation */
-	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL ){
+	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
         
@@ -119,7 +124,8 @@ class CreateObjects {
                 
 				
 				// Export
-				$this->exportConfigurationToNagios();
+                if( $exportConfiguration == TRUE )
+				    $this->exportConfigurationToNagios($error, $success);
 			}
 			catch(Exception $e) {
 				$error .= $e->getMessage()."\n";
@@ -134,7 +140,7 @@ class CreateObjects {
 	}
     
     
-    function createHostTemplate( $templateHostName ){
+    function createHostTemplate( $templateHostName, $exportConfiguration = FALSE ){
         global $lilac;
         $error = "";
         $success = "";
@@ -200,7 +206,8 @@ class CreateObjects {
         
         
         // Export
-        $this->exportConfigurationToNagios();
+        if( $exportConfiguration == TRUE )
+            $this->exportConfigurationToNagios($error, $success);
         
         
         $logs = $this->getLogs($error, $success);
@@ -209,7 +216,7 @@ class CreateObjects {
     }
     
     
-    function createHostGroup( $hostGroupName, &$error = "", &$success = "" ){
+    function createHostGroup( $hostGroupName, &$error = "", &$success = "", $exportConfiguration = FALSE ){
         global $lilac;
         $hostGroup = NULL;
         
@@ -254,7 +261,7 @@ class CreateObjects {
     }
            
     
-    public function addHostTemplateToHost( $templateHostName, $hostName ){
+    public function addHostTemplateToHost( $templateHostName, $hostName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
         
@@ -290,7 +297,8 @@ class CreateObjects {
                 $success .= "Host template ".$templateHostName." added to ".$hostName."\n";
                 
                 // Export
-                $this->exportConfigurationToNagios();
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
             }
             catch(Exception $e) {
                 $error .= $e->getMessage();
@@ -304,7 +312,7 @@ class CreateObjects {
         return $logs;
     }
     
-    public function addContactToHostTemplate( $contactName, $templateHostName ){
+    public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 
@@ -339,7 +347,8 @@ class CreateObjects {
                 $success .= "Contact ".$contactName." added to host template ".$templateHostName."\n";
                 
                 // Export
-                $this->exportConfigurationToNagios();
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
             }
         } 
         
@@ -350,7 +359,7 @@ class CreateObjects {
         return $logs;
     }
     
-    public function addContactGroupToHostTemplate( $contactGroupName, $templateHostName ){
+    public function addContactGroupToHostTemplate( $contactGroupName, $templateHostName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 
@@ -384,7 +393,8 @@ class CreateObjects {
                 $success .= "Contact group ".$contactGroupName." added to host template ".$templateHostName."\n";
                 
                 // Export
-                $this->exportConfigurationToNagios();
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
             }
         } 
         
@@ -395,7 +405,7 @@ class CreateObjects {
         return $logs;
     }
     
-    public function addContactToExistingHost( $hostName, $contactName ){
+    public function addContactToExistingHost( $hostName, $contactName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
         
@@ -413,7 +423,8 @@ class CreateObjects {
                 $this->addContactToHost( $host, $contactName, $error, $success );
                 
                 // Export
-                $this->exportConfigurationToNagios();
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
             }
         }
         
@@ -422,7 +433,7 @@ class CreateObjects {
         return $logs;
     }
     
-    public function addContactGroupToExistingHost( $hostName, $contactGroupName ){
+    public function addContactGroupToExistingHost( $hostName, $contactGroupName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
         
@@ -440,7 +451,8 @@ class CreateObjects {
                 $this->addContactGroupToHost( $host, $contactGroupName, $error, $success );
                 
                 // Export
-                $this->exportConfigurationToNagios();
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
             }
         }
         
@@ -449,7 +461,7 @@ class CreateObjects {
         return $logs;
     }
     
-    public function addContactToHost( $tempHost, $contactName, &$error, &$success ){
+    public function addContactToHost( $tempHost, $contactName, &$error, &$success, $exportConfiguration = FALSE ){
         $ncp = new NagiosContactPeer;
         
         // Find host contact
@@ -482,7 +494,7 @@ class CreateObjects {
         }    
     }
     
-    public function addContactGroupToHost( $tempHost, $contactGroupName, &$error, &$success ){
+    public function addContactGroupToHost( $tempHost, $contactGroupName, &$error, &$success, $exportConfiguration = FALSE ){
         $ncgp = new NagiosContactGroupPeer;
 
         // Find host group contact
@@ -516,7 +528,7 @@ class CreateObjects {
     
     
 
-	public function createService( $hostName, $services, $host = NULL ){
+	public function createService( $hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
         
         $error = "";
         $success = "";
@@ -571,7 +583,8 @@ class CreateObjects {
 				}
 				
 				// Export
-				$this->exportConfigurationToNagios();
+                if( $exportConfiguration == TRUE )
+				    $this->exportConfigurationToNagios($error, $success);
 			}
 			catch(Exception $e) {
 				$error .= $e->getMessage()."\n";
@@ -586,43 +599,43 @@ class CreateObjects {
 	}
     
     
-    public function createUser($user_name, $user_mail, $admin = false, $filterName = "", $filterValue = ""){
+    public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
         //Lower case
-        $user_name = strtolower($user_name);
+        $userName = strtolower($userName);
         
         $success = "";
         $error = "";
-        $user_group = 0;
+        $userGroup = 0;
         //Local user
-        $user_type = 0;
-        $user_password1 = $user_name;
-        $user_password2 = $user_name;
+        $userType = 0;
+        $userPassword1 = $userName;
+        $userPassword2 = $userName;
         $message = false;
         
         //Admin
         if( $admin == true ){
             //admins group
-            $user_group = 1;
+            $userGroup = 1;
             
-            $user_descr = "admin user";
+            $userDescr = "admin user";
         }
         else{
-            $user_descr = "limited user";
+            $userDescr = "limited user";
         }
         
-        $created_user_limitation = !($admin);
+        $createdUserLimitation = !($admin);
         // EONWEB - User creation 
-        $user = insert_user($user_name, $user_descr, $user_group, $user_password1, $user_password2, $user_type, "", $user_mail, $created_user_limitation, $message);
+        $user = insert_user($userName, $userDescr, $userGroup, $userPassword1, $userPassword2, $userType, "", $userMail, $createdUserLimitation, $message);
 
         if($user) {
-            $success .= "User $user_name created\n";
+            $success .= "User $userName created\n";
         } else {
-            $error .= "Unable to create user $user_name\n";	
+            $error .= "Unable to create user $userName\n";	
         }
 
 
         // EONWEB - XML Filter creation
-        $xml_file = "/srv/eyesofnetwork/eonweb/cache/".$user_name."-ged.xml";
+        $xml_file = "/srv/eyesofnetwork/eonweb/cache/".$userName."-ged.xml";
         $dom = openXml();
         $root = $dom->createElement("ged");
         $root = $dom->appendChild($root);
@@ -633,11 +646,11 @@ class CreateObjects {
         //GED filters for non admin users
         if($admin == false){
             $default = $root->getElementsByTagName("default")->item(0);
-            $default->appendChild($dom->createTextNode($user_name));
+            $default->appendChild($dom->createTextNode($userName));
 
             $filters = $dom->createElement("filters");
             $filters = $root->appendChild($filters);
-            $filters->setAttribute("name",$user_name);
+            $filters->setAttribute("name",$userName);
             $filter = $dom->createElement("filter");
             $filter = $filters->appendChild($filter);
             $filter->setAttribute("name", $filterName);
@@ -664,7 +677,8 @@ class CreateObjects {
         
         
         // Export
-        $this->exportConfigurationToNagios();
+        if( $exportConfiguration == TRUE )
+            $this->exportConfigurationToNagios($error, $success);
 
 
         $logs = $this->getLogs($error, $success);
