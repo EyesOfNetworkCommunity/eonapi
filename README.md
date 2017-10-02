@@ -105,15 +105,15 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | Action URL **[API_function]** | Request type | Parameters (body/payload) | Expected response | Comments |
 | --- | --- | --- | --- | --- |
 | `getAuthenticationStatus` | GET | None | "status": "authorized" | Confirm that the provided user account has admin privileges and the permission to make advanced API calls. This means the association username/apiKey is correct.  |
-| `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
-| `createService` | POST | [**hostName, services**] The parameter **services** is an array with the service(s) name as a key, the service template as first parameter, and the following optional service arguments linked to the service template. | "http_code": "200 OK", "logs": [with the executed actions] | Add service(s) to an existant host and reload lilac configuration. To add a service, please see the parameters column. It will add a service to a specified nagios host with as many service arguments as needed. |
-| `createUser` | POST | [**userName, userMail, admin, filterName, filterValue**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
-| `addContactToHost` | POST | [**contactName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
-| `addContactGroupToHost` | POST | [**contactGroupName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
-| `createHostTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a new nagios host template. |
-| `addHostTemplateToHost` | POST | [**templateHostName, hostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a host template to a nagios host. |
-| `addContactToHostTemplate` | POST | [**contactName, templateHostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a contact to a nagios host template. |
-| `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a contact group to a nagios host template. |
+| `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
+| `createService` | POST | [**hostName, services, exportConfiguration**] The parameter **services** is an array with the service(s) name as a key, the service template as first parameter, and the following optional service arguments linked to the service template. | "http_code": "200 OK", "logs": [with the executed actions] | Add service(s) to an existant host and reload lilac configuration. To add a service, please see the parameters column. It will add a service to a specified nagios host with as many service arguments as needed. |
+| `createUser` | POST | [**userName, userMail, admin, filterName, filterValue, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
+| `addContactToHost` | POST | [**contactName, hostName, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
+| `addContactGroupToHost` | POST | [**contactGroupName, hostName, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
+| `createHostTemplate` | POST | [**templateHostName, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Create a new nagios host template. |
+| `addHostTemplateToHost` | POST | [**templateHostName, hostName, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a host template to a nagios host. |
+| `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a contact to a nagios host template. |
+| `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "logs": [with the executed actions] | Add a contact group to a nagios host template. |
 
 
 ## EONAPI calls examples
@@ -127,7 +127,8 @@ To illustrate the EON API features tab, you will find a few implementation examp
 	"hostIp": "8.8.8.8",
 	"hostAlias": "My first host",
 	"contactName": "usertest",
-	"contactGroupName": null
+	"contactGroupName": null,
+	"exportConfiguration": true
 }
 ```
 
@@ -151,7 +152,8 @@ To illustrate the EON API features tab, you will find a few implementation examp
                     "5000",
                     "90"
                 ]
-        }
+        },
+	"exportConfiguration": true
 }
 
 ```
@@ -163,7 +165,8 @@ To illustrate the EON API features tab, you will find a few implementation examp
 	"userMail": "bob@marley.com",
 	"admin": true,
 	"filterName": "hostgroups",
-	"filterValue": "HOSTGROUP_JAMAICA"
+	"filterValue": "HOSTGROUP_JAMAICA",
+	"exportConfiguration": true
 }
 ```
 
@@ -171,7 +174,8 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json 
 {
 	"contactName": "bob",
-	"hostName": "HostName"
+	"hostName": "HostName",
+	"exportConfiguration": true
 }
 ```
 
@@ -179,14 +183,16 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json 
 {
 	"contactGroupName": "admins",
-	"hostName": "HostName"
+	"hostName": "HostName",
+	"exportConfiguration": true
 }
 ```
 
 * /createHostTemplate
 ```json 
 {
-	"templateHostName": "TEMPLATE_HOST"
+	"templateHostName": "TEMPLATE_HOST",
+	"exportConfiguration": true
 }
 ```
 
@@ -194,7 +200,8 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json 
 {
 	"templateHostName": "TEMPLATE_HOST",
-	"hostName": "HostName"
+	"hostName": "HostName",
+	"exportConfiguration": true
 }
 ```
 
@@ -202,7 +209,8 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json 
 {
 	"contactName": "bob",
-	"templateHostName": "TEMPLATE_HOST"
+	"templateHostName": "TEMPLATE_HOST",
+	"exportConfiguration": true
 }
 ```
 
@@ -210,9 +218,28 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json 
 {
 	"contactGroupName": "admins",
-	"templateHostName": "TEMPLATE_HOST"
+	"templateHostName": "TEMPLATE_HOST",
+	"exportConfiguration": true
 }
 ```
+
+**NB:** You should notice the optional parameter `exportConfiguration` (boolean true or false) that allows the nagios configuration export. An API call doesn't need systematically a nagios configuration reload. That's why you should set this parameter depending your needs.
+
+## Add EONAPI features: How to do this?
+The EON API is an open source project. You can obviously add features to fit your needs. Do not hesitate to share your version with the EON community.
+
+The REST API is mainly based on function calls. The functions are defined in the [ObjectManager.php](include/ObjectManager.php) file. To make these functions available remotely (http calls via token), we declare the ObjectManager function needed in [index.php](html/api/index.php) by adding a route.
+
+A "framework" has been developped in order to add routes very easily.
+The function `addRoute($httpMethod, $routeName, $methodName)` allow you to generate the route and function automatically, based on the ObjectManager method.
+
+Example:
+```php
+#index.php
+addRoute('post', '/createHost', 'createHost' );
+```
+**NB:**
+The `$methodName` parameter is the Action URL (route call) defined in the [features array](#eonapi-features). It must have the same name as the method defined in [ObjectManager.php](include/ObjectManager.php).
 
 ## Security and Encryption
 If you are accessing the API inside your secure LAN you can simply use HTTP. In insecure environments (e.g. when accessing your EON server across the Internet) you should use HTTPS requests to make sure that your parameters and passwords are encrypted. This way all communication between the EON server and your client is encrypted by SSL encryption.
