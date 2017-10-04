@@ -281,12 +281,15 @@ class ObjectManager {
         
         	
         // We need to get the count of templates already inherited
-        $templateList = $host->getNagiosHostTemplateInheritances();
-        foreach($templateList as $tempTemplate) {
-            if($tempTemplate->getId() == $template_host->getId()) {
-                $error .= "That template already exists in the inheritance chain\n";
-            }
+        if( $host ){
+            $templateList = $host->getNagiosHostTemplateInheritances();
+            foreach($templateList as $tempTemplate) {
+                if($tempTemplate->getId() == $template_host->getId()) {
+                    $error .= "That template already exists in the inheritance chain\n";
+                }
+            }    
         }
+        
         if(empty($error)) {
             $newInheritance = new NagiosHostTemplateInheritance();
             $newInheritance->setNagiosHost($host);
