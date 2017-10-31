@@ -139,7 +139,36 @@ class ObjectManager {
         
 	}
     
+
+	/* LILAC -  Hosts delete */
+	public function deleteHost( $hostName, $exportConfiguration = FALSE ){
+		$error = "";
+		$success = "";
+
+		try {
+			$nhp = new NagiosHostPeer;
+			$host = $nhp->getByName($hostName);
+
+			if($host) {
+				$host->delete();
+				$success .= "Host ".$hostName." deleted\n";
+			} else {
+				$error .= "Host ".$hostName." not found\n";
+			}
+
+			// Export
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios();
+		}
+		catch(Exception $e) {
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+		return $logs;
+	}
     
+	
     function createHostTemplate( $templateHostName, $exportConfiguration = FALSE ){
         global $lilac;
         $error = "";
