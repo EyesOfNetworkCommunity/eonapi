@@ -11,13 +11,16 @@
 #
 */
 
-error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING & ~E_EXCEPTION);
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
 
 include("/srv/eyesofnetwork/eonweb/include/config.php");
+include("/srv/eyesofnetwork/eonweb/include/arrays.php");
 include("/srv/eyesofnetwork/eonweb/include/function.php");
+include("/srv/eyesofnetwork/eonweb/include/livestatus/Client.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
 
+use Nagios\Livestatus\Client;
 
 class ObjectManager {
     
@@ -719,6 +722,168 @@ class ObjectManager {
         
     }
     
+	
+	/* LIVESTATUS - checkHost */
+	private function checkHost($type, $address, $port, $path){
+        $host = false;
+        if($type == "unix"){
+                $socket_path_connexion = "unix://".$path;
+                $host = fsockopen($socket_path_connexion, $port, $errno, $errstr, 5);
+        }
+        else{
+                $host = fsockopen($address, $port, $errno, $errstr, 5);
+        }
+        return $host;
+	}
+	
+	
+	/* LIVESTATUS - List backends */
+	public function listNagiosBackends() {
+	
+		return getEonConfig("sockets","array");
+	
+	}
+	
+	
+	/* LIVESTATUS - List nagios objects */
+	public function listNagiosObjects( $object, $backend = NULL ) {
+		
+		$sockets = getEonConfig("sockets","array");
+
+		if($backend != NULL) {
+			$sockets = array_slice($sockets,$backend,1);
+		}
+		
+		foreach($sockets as $socket){
+			$socket_parts = explode(":", $socket);
+			$socket_type = $socket_parts[0];
+			$socket_address = $socket_parts[1];
+			$socket_port = $socket_parts[2];
+			$socket_path = $socket_parts[3];
+			$socket_name = $socket;
+			
+			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
+				if($socket_port == -1){
+					$socket_port = "";
+					$socket_address = "";
+					$socket_name = "default";
+				}
+				$options = array(
+					'socketType' => $socket_type,
+					'socketAddress' => $socket_address,
+					'socketPort' => $socket_port,
+					'socketPath' => $socket_path,
+				);
+				
+				// construct mklivestatus request, and get the response
+				$client = new Client($options);
+
+				// get all host PENDING
+				$result[$socket_name] = $client
+					->get($object)
+					->executeAssoc();
+			}
+		}
+		
+		// response for the Ajax call
+		return $result;
+	
+	}
+
+		
+	/* LIVESTATUS - List nagios states */
+	public function listNagiosStates( $backend = NULL ) {
+		
+		$sockets = getEonConfig("sockets","array");
+
+		$result = array();
+		$result["hosts"]["pending"] = 0;
+		$result["hosts"]["up"] = 0;
+		$result["hosts"]["down"] = 0;
+		$result["hosts"]["unreachable"] = 0;
+		$result["hosts"]["unknown"] = 0;
+		$result["services"]["pending"] = 0;
+		$result["services"]["ok"] = 0;
+		$result["services"]["warning"] = 0;
+		$result["services"]["critical"] = 0;
+		$result["services"]["unknown"] = 0;
+
+		if($backend != NULL) {
+			$sockets = array_slice($sockets,$backend,1);
+		}
+		
+		foreach($sockets as $socket){
+			$socket_parts = explode(":", $socket);
+			$socket_type = $socket_parts[0];
+			$socket_address = $socket_parts[1];
+			$socket_port = $socket_parts[2];
+			$socket_path = $socket_parts[3];
+			
+			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
+				if($socket_port == -1){
+					$socket_port = "";
+					$socket_address = "";
+				}
+				$options = array(
+					'socketType' => $socket_type,
+					'socketAddress' => $socket_address,
+					'socketPort' => $socket_port,
+					'socketPath' => $socket_path,
+				);
+				
+				// construct mklivestatus request, and get the response
+				$client = new Client($options);
+
+				// get all host PENDING
+				$test = $client
+					->get('hosts')
+					->filter('has_been_checked = 0')
+					->execute();
+				$result["hosts"]["pending"] += count($test) - 1;
+			
+				// construct mklivestatus request, and get the response
+				$response = $client
+					->get('hosts')
+					->stat('state = 0')
+					->stat('state = 1')
+					->stat('state = 2')
+					->stat('state = 3')
+					->filter('has_been_checked = 1')
+					->execute();
+				
+				$result["hosts"]["up"] += $response[0][0];
+				$result["hosts"]["down"] += $response[0][1];
+				$result["hosts"]["unreachable"] += $response[0][2];
+				$result["hosts"]["unknown"] += $response[0][3];
+				
+				// get all service PENDING
+				$test = $client
+					->get('services')
+					->filter('has_been_checked = 0')
+					->execute();
+				$result["services"]["pending"] += count($test) - 1;
+
+				// construct mklivestatus request, and get the response
+				$response = $client
+					->get('services')
+					->stat('state = 0')
+					->stat('state = 1')
+					->stat('state = 2')
+					->stat('state = 3')
+					->filter('has_been_checked = 1')
+					->execute();
+
+				$result["services"]["ok"] += $response[0][0];
+				$result["services"]["warning"] += $response[0][1];
+				$result["services"]["critical"] += $response[0][2];
+				$result["services"]["unknown"] += $response[0][3];
+			}
+		}
+		
+		// response for the Ajax call
+		return $result;
+	
+	}
 	
 }
 

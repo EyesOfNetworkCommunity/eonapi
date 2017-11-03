@@ -27,7 +27,10 @@ function getParametersNameFunction( $className, $functionName ){
     $params = array();
     
     foreach ($reflector->getParameters() as $param) {
-        $params[] = $param->name;
+        $params[0][] = $param->name;
+        if( $param->isDefaultValueAvailable() ){
+		$params[1][$param->name] = $param->getDefaultValue(); 
+	}
     }
     
     return $params;

@@ -34,6 +34,9 @@ addRoute('post', '/createService', 'createService' );
 addRoute('post', '/createUser','createUser');
 addRoute('post', '/addContactToHost','addContactToExistingHost');
 addRoute('post', '/addContactGroupToHost','addContactGroupToExistingHost');
+addRoute('post', '/listNagiosBackends','listNagiosBackends');
+addRoute('post', '/listNagiosObjects','listNagiosObjects');
+addRoute('post', '/listNagiosStates','listNagiosStates');
 
 
 /*--Kind of framework to add routes very easily*/
@@ -52,12 +55,14 @@ function addRoute($httpMethod, $routeName, $methodName){
         $params = getParametersNameFunction( $className, $methodName );
         $paramsValue = array();
         $i = 0;
-        foreach( $params as $param ){
-            $var[] = $param;
-            ${$var[$i]} = $body->$param;
-            $paramsValue[] = $body->$param;
-
-            $i++;
+        foreach( $params[0] as $param ){
+			$var[] = $param;
+			if(!isset($body->$param)) {
+				$body->$param = $params[1][$param];
+			}
+			${$var[$i]} = $body->$param;
+			$paramsValue[] = $body->$param;		
+			$i++;
         }
 
         /*Test parameters*/
