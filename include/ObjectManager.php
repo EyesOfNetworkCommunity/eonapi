@@ -746,7 +746,7 @@ class ObjectManager {
 	
 	
 	/* LIVESTATUS - List nagios objects */
-	public function listNagiosObjects( $object, $backend = NULL ) {
+	public function listNagiosObjects( $object, $backend = NULL, $columns = FALSE, $filters = FALSE ) {
 		
 		$sockets = getEonConfig("sockets","array");
 
@@ -778,10 +778,23 @@ class ObjectManager {
 				// construct mklivestatus request, and get the response
 				$client = new Client($options);
 
-				// get all host PENDING
-				$result[$socket_name] = $client
-					->get($object)
-					->executeAssoc();
+				// get objects
+				$result[$socket_name] = $client->get($object);
+				
+				// get columns
+				if($columns) {
+					$result[$socket_name] = $result[$socket_name]->columns($columns);
+				}		
+
+                                // get filters
+                                if($filters) {
+					foreach($filters as $filter) {
+                                        	$result[$socket_name] = $result[$socket_name]->filter($filter);
+					}
+                                }
+
+				// execute
+				$result[$socket_name]=$result[$socket_name]->executeAssoc();
 			}
 		}
 		
@@ -792,7 +805,7 @@ class ObjectManager {
 
 		
 	/* LIVESTATUS - List nagios states */
-	public function listNagiosStates( $backend = NULL ) {
+	public function listNagiosStates( $backend = NULL, $filters = FALSE ) {
 		
 		$sockets = getEonConfig("sockets","array");
 
@@ -837,8 +850,17 @@ class ObjectManager {
 				// get all host PENDING
 				$test = $client
 					->get('hosts')
-					->filter('has_been_checked = 0')
-					->execute();
+					->filter('has_been_checked = 0');			
+ 
+                                // get filters
+                                if($filters) {
+                                        foreach($filters as $filter) {
+                                                $test = $test->filter($filter);
+                                        }
+                                }
+
+				// execute
+				$test = $test->execute();
 				$result["hosts"]["pending"] += count($test) - 1;
 			
 				// construct mklivestatus request, and get the response
@@ -848,8 +870,17 @@ class ObjectManager {
 					->stat('state = 1')
 					->stat('state = 2')
 					->stat('state = 3')
-					->filter('has_been_checked = 1')
-					->execute();
+					->filter('has_been_checked = 1');
+
+                                // get filters
+                                if($filters) {
+                                        foreach($filters as $filter) {
+                                                $response = $response->filter($filter);
+                                        }
+                                }
+
+				// execute
+				$response = $response->execute();
 				
 				$result["hosts"]["up"] += $response[0][0];
 				$result["hosts"]["down"] += $response[0][1];
@@ -859,8 +890,17 @@ class ObjectManager {
 				// get all service PENDING
 				$test = $client
 					->get('services')
-					->filter('has_been_checked = 0')
-					->execute();
+					->filter('has_been_checked = 0');
+				
+                                // get filters
+                                if($filters) {
+                                        foreach($filters as $filter) {
+                                                $test = $test->filter($filter);
+                                        }
+                                }
+
+                                // execute
+				$test = $test->execute();
 				$result["services"]["pending"] += count($test) - 1;
 
 				// construct mklivestatus request, and get the response
@@ -870,8 +910,17 @@ class ObjectManager {
 					->stat('state = 1')
 					->stat('state = 2')
 					->stat('state = 3')
-					->filter('has_been_checked = 1')
-					->execute();
+					->filter('has_been_checked = 1');
+
+                                // get filters
+                                if($filters) {
+                                        foreach($filters as $filter) {
+                                                $response = $response->filter($filter);
+                                        }
+                                }
+				
+				// execute	
+				$response = $response->execute();
 
 				$result["services"]["ok"] += $response[0][0];
 				$result["services"]["warning"] += $response[0][1];
