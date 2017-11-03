@@ -24,9 +24,7 @@ function apiKey( $user_id )
 /*---General functions--*/
 function getParametersNameFunction( $className, $functionName ){
     $reflector = new ReflectionMethod($className, $functionName);
-    $params = array();
-    $params[0]=NULL;   
-    $params[1]=NULL;   
+    $params = array(array(),array());
  
     foreach ($reflector->getParameters() as $param) {
         $params[0][] = $param->name;
