@@ -60,24 +60,32 @@ function has_empty($array) {
 function getUserByUsername( $username ){
     global $database_eonweb;
     
-    $usersql = sqlrequest($database_eonweb,"select U.user_id as user_id, U.group_id as group_id ,U.user_name as user_name, U.user_passwd as user_passwd, U.user_descr as user_descr, U.user_type as user_type, L.dn as user_location, U.user_limitation as user_limitation  from users as U left join ldap_users_extended as L on U.user_name = L.login  where U.user_name = '".$username."'");
+    $usersql = sqlrequest($database_eonweb,
+		"SELECT U.user_id as user_id,U.user_name as user_name,U.user_passwd as user_passwd,U.user_type as user_type,
+		U.user_limitation as user_limitation,R.tab_1 as readonly,R.tab_2 as operator,R.tab_6 as admin
+		FROM users as U left join groups as G on U.group_id = G.group_id left join groupright as R on R.group_id=G.group_id
+		WHERE U.user_name = '".$username."'"
+	);
     
     return $usersql;
 }
 
 /*---HTTP Response---*/
 function getJsonResponse( $response, $code, $array = null ){
-    $header = "HTTP/1.1 ".$response->getMessageForCode($code)."\r\nContent-Type: application/json\r\n";
-
+	
+	global $app;
+	
     $eonapi = \Slim\Slim::VERSION;
     $codeMessage = $response->getMessageForCode( $code );
     $arrayHeader = array("api_version" => $eonapi, "http_code" => $codeMessage);
     $arrayMerge = array_merge( $arrayHeader, $array );
 
     $jsonResponse = json_encode($arrayMerge, JSON_PRETTY_PRINT);
-    $jsonResponseWithHeader = $header.$jsonResponse;
-    header('Content-Type: application/json');
-    
+    $jsonResponseWithHeader = $jsonResponse;
+
+	$app->response->headers->set('Content-Type', 'application/json');
+	$app->response->setStatus($codeMessage);
+	
     return $jsonResponseWithHeader;
 }
 
@@ -85,7 +93,7 @@ function constructResponse( $response, $logs, $authenticationValid = false ){
     //Only if API keys match
     if($authenticationValid == true){
         try {
-            $array = array("logs" => $logs);
+            $array = array("result" => $logs);
             $result = getJsonResponse($response, "200", $array);
             echo $result;
         }
@@ -104,7 +112,7 @@ function constructResponse( $response, $logs, $authenticationValid = false ){
 }
 
 /*---Authorization checks--*/
-function verifyAuthenticationByApiKey( $request ){
+function verifyAuthenticationByApiKey( $request, $right ){
     $authenticationValid = false;
     
     //Parameters in request
@@ -115,11 +123,11 @@ function verifyAuthenticationByApiKey( $request ){
     $serverApiKey = EONAPI_KEY;
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_limitation = mysqli_result($usersql, 0, "user_limitation");
+    $user_right = mysqli_result($usersql, 0, $right);
     $user_type = mysqli_result($usersql, 0, "user_type");
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
-    if( ($user_type != "1") && $user_limitation == "0"){
+    if( $user_type != "1" && $user_right == "1"){
         //ID of the authenticated user
         $user_id = mysqli_result($usersql, 0, "user_id");
         $serverApiKey = apiKey( $user_id );    
@@ -143,11 +151,11 @@ function verifyAuthenticationByPassword( $request ){
     $paramPassword = $request->get('password');
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_limitation = mysqli_result($usersql, 0, "user_limitation");
+    $user_right = mysqli_result($usersql, 0, "readonly");
     $user_type = mysqli_result($usersql, 0, "user_type");
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
-    if( ($user_type != "1") && $user_limitation == "0"){
+    if( $user_type != "1" && $user_right == "1"){
         $userpasswd = mysqli_result($usersql, 0, "user_passwd");
         $password = md5($paramPassword);
         
@@ -180,17 +188,18 @@ function getApiKey(){
         echo $result;
     }
     else{
-        $array = array("message" => "The username-password credentials of your authentication can not be accepted or the user doesn't have admin privileges");
+        $array = array("message" => "The username-password credentials of your authentication can not be accepted or the user is not in a group");
         $result = getJsonResponse($response, "401", $array);
         echo $result;
     }  
 }
 
 function getAuthenticationStatus(){
-    $request = \Slim\Slim::getInstance()->request();
+	
+	$request = \Slim\Slim::getInstance()->request();
     $response = \Slim\Slim::getInstance()->response();
     
-    $authenticationValid = verifyAuthenticationByApiKey( $request );    
+    $authenticationValid = verifyAuthenticationByApiKey( $request,"readonly" );    
     if( $authenticationValid == TRUE ){
         $array = array("status" => "authorized");
         $result = getJsonResponse($response, "200", $array);
@@ -202,8 +211,5 @@ function getAuthenticationStatus(){
         echo $result;
     }
 }
-
-
-
 
 ?>

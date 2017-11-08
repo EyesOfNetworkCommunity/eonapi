@@ -34,23 +34,24 @@ addRoute('post', '/createService', 'createService' );
 addRoute('post', '/createUser','createUser');
 addRoute('post', '/addContactToHost','addContactToExistingHost');
 addRoute('post', '/addContactGroupToHost','addContactGroupToExistingHost');
-addRoute('post', '/listNagiosBackends','listNagiosBackends');
-addRoute('post', '/listNagiosObjects','listNagiosObjects');
-addRoute('post', '/listNagiosStates','listNagiosStates');
-
+addRoute('post', '/listNagiosBackends','listNagiosBackends','readonly');
+addRoute('post', '/listNagiosObjects','listNagiosObjects','readonly');
+addRoute('post', '/listNagiosStates','listNagiosStates','readonly');
 
 /*--Kind of framework to add routes very easily*/
-function addRoute($httpMethod, $routeName, $methodName){
+function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
+	
     global $app;
     
-    $app->$httpMethod($routeName, function() use ($methodName){
+    $app->$httpMethod($routeName, function() use ($methodName,$right){
+		
         $request = \Slim\Slim::getInstance()->request();
         $response = \Slim\Slim::getInstance()->response();
         $body = json_decode($request->getBody());
         $logs = "";
 
         $className = 'ObjectManager';
-        //$methodName = __FUNCTION__ ;
+
         /*Parameters body (POST)*/
         $params = getParametersNameFunction( $className, $methodName );
         $paramsValue = array();
@@ -81,7 +82,7 @@ function addRoute($httpMethod, $routeName, $methodName){
         }
 
 
-        $authenticationValid = verifyAuthenticationByApiKey( $request );
+        $authenticationValid = verifyAuthenticationByApiKey( $request, $right );
         if( $authenticationValid == true ){
             $co = new $className;
             $logs = call_user_func_array(array($co, $methodName), $paramsValue);
@@ -90,8 +91,6 @@ function addRoute($httpMethod, $routeName, $methodName){
         constructResponse( $response, $logs, $authenticationValid );
     });
 }
-
-
 
 $app->run();
 

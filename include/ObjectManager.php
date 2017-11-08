@@ -725,15 +725,15 @@ class ObjectManager {
 	
 	/* LIVESTATUS - checkHost */
 	private function checkHost($type, $address, $port, $path){
-        $host = false;
-        if($type == "unix"){
-                $socket_path_connexion = "unix://".$path;
-                $host = fsockopen($socket_path_connexion, $port, $errno, $errstr, 5);
-        }
-        else{
-                $host = fsockopen($address, $port, $errno, $errstr, 5);
-        }
-        return $host;
+		$host = false;
+		if($type == "unix"){
+			$socket_path_connexion = "unix://".$path;
+			$host = fsockopen($socket_path_connexion, $port, $errno, $errstr, 5);
+		}
+		else{
+			$host = fsockopen($address, $port, $errno, $errstr, 5);
+		}
+		return $host;
 	}
 	
 	
@@ -747,13 +747,13 @@ class ObjectManager {
 	
 	/* LIVESTATUS - List nagios objects */
 	public function listNagiosObjects( $object, $backend = NULL, $columns = FALSE, $filters = FALSE ) {
-		
+
 		$sockets = getEonConfig("sockets","array");
 
 		if($backend != NULL) {
 			$sockets = array_slice($sockets,$backend,1);
 		}
-		
+
 		foreach($sockets as $socket){
 			$socket_parts = explode(":", $socket);
 			$socket_type = $socket_parts[0];
@@ -761,7 +761,7 @@ class ObjectManager {
 			$socket_port = $socket_parts[2];
 			$socket_path = $socket_parts[3];
 			$socket_name = $socket;
-			
+
 			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
 				if($socket_port == -1){
 					$socket_port = "";
@@ -774,39 +774,39 @@ class ObjectManager {
 					'socketPort' => $socket_port,
 					'socketPath' => $socket_path,
 				);
-				
+
 				// construct mklivestatus request, and get the response
 				$client = new Client($options);
 
 				// get objects
 				$result[$socket_name] = $client->get($object);
-				
+
 				// get columns
 				if($columns) {
 					$result[$socket_name] = $result[$socket_name]->columns($columns);
 				}		
 
-                                // get filters
-                                if($filters) {
+				// get filters
+				if($filters) {
 					foreach($filters as $filter) {
-                                        	$result[$socket_name] = $result[$socket_name]->filter($filter);
+						$result[$socket_name] = $result[$socket_name]->filter($filter);
 					}
-                                }
+				}
 
 				// execute
 				$result[$socket_name]=$result[$socket_name]->executeAssoc();
 			}
 		}
-		
+
 		// response for the Ajax call
 		return $result;
-	
+
 	}
 
 		
 	/* LIVESTATUS - List nagios states */
 	public function listNagiosStates( $backend = NULL, $filters = FALSE ) {
-		
+
 		$sockets = getEonConfig("sockets","array");
 
 		$result = array();
@@ -824,14 +824,14 @@ class ObjectManager {
 		if($backend != NULL) {
 			$sockets = array_slice($sockets,$backend,1);
 		}
-		
+
 		foreach($sockets as $socket){
 			$socket_parts = explode(":", $socket);
 			$socket_type = $socket_parts[0];
 			$socket_address = $socket_parts[1];
 			$socket_port = $socket_parts[2];
 			$socket_path = $socket_parts[3];
-			
+
 			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
 				if($socket_port == -1){
 					$socket_port = "";
@@ -843,7 +843,7 @@ class ObjectManager {
 					'socketPort' => $socket_port,
 					'socketPath' => $socket_path,
 				);
-				
+
 				// construct mklivestatus request, and get the response
 				$client = new Client($options);
 
@@ -851,18 +851,18 @@ class ObjectManager {
 				$test = $client
 					->get('hosts')
 					->filter('has_been_checked = 0');			
- 
-                                // get filters
-                                if($filters) {
-                                        foreach($filters as $filter) {
-                                                $test = $test->filter($filter);
-                                        }
-                                }
+
+				// get filters
+				if($filters) {
+					foreach($filters as $filter) {
+						$test = $test->filter($filter);
+					}
+				}
 
 				// execute
 				$test = $test->execute();
 				$result["hosts"]["pending"] += count($test) - 1;
-			
+
 				// construct mklivestatus request, and get the response
 				$response = $client
 					->get('hosts')
@@ -872,34 +872,34 @@ class ObjectManager {
 					->stat('state = 3')
 					->filter('has_been_checked = 1');
 
-                                // get filters
-                                if($filters) {
-                                        foreach($filters as $filter) {
-                                                $response = $response->filter($filter);
-                                        }
-                                }
+				// get filters
+				if($filters) {
+					foreach($filters as $filter) {
+						$response = $response->filter($filter);
+					}
+				}
 
 				// execute
 				$response = $response->execute();
-				
+
 				$result["hosts"]["up"] += $response[0][0];
 				$result["hosts"]["down"] += $response[0][1];
 				$result["hosts"]["unreachable"] += $response[0][2];
 				$result["hosts"]["unknown"] += $response[0][3];
-				
+
 				// get all service PENDING
 				$test = $client
 					->get('services')
 					->filter('has_been_checked = 0');
-				
-                                // get filters
-                                if($filters) {
-                                        foreach($filters as $filter) {
-                                                $test = $test->filter($filter);
-                                        }
-                                }
 
-                                // execute
+				// get filters
+				if($filters) {
+					foreach($filters as $filter) {
+						$test = $test->filter($filter);
+					}
+				}
+
+				// execute
 				$test = $test->execute();
 				$result["services"]["pending"] += count($test) - 1;
 
@@ -912,13 +912,13 @@ class ObjectManager {
 					->stat('state = 3')
 					->filter('has_been_checked = 1');
 
-                                // get filters
-                                if($filters) {
-                                        foreach($filters as $filter) {
-                                                $response = $response->filter($filter);
-                                        }
-                                }
-				
+				// get filters
+				if($filters) {
+					foreach($filters as $filter) {
+						$response = $response->filter($filter);
+					}
+				}
+
 				// execute	
 				$response = $response->execute();
 
@@ -928,10 +928,10 @@ class ObjectManager {
 				$result["services"]["unknown"] += $response[0][3];
 			}
 		}
-		
+
 		// response for the Ajax call
 		return $result;
-	
+
 	}
 	
 }
