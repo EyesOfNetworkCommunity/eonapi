@@ -10,10 +10,8 @@
 */
 
 require "/srv/eyesofnetwork/eonapi/include/Slim/Slim.php";
-
 require "/srv/eyesofnetwork/eonapi/include/api_functions.php";
 require "/srv/eyesofnetwork/eonapi/include/ObjectManager.php";
-
 
 \Slim\Slim::registerAutoloader();
 $app = new \Slim\Slim();
@@ -26,19 +24,19 @@ $app->get('/getAuthenticationStatus','getAuthenticationStatus');
 //POST (parameters in body)
 addRoute('post', '/createHost', 'createHost' );
 addRoute('post', '/deleteHost', 'deleteHost' );
-addRoute('post', '/createHostTemplate','createHostTemplate');
-addRoute('post', '/addHostTemplateToHost','addHostTemplateToHost');
-addRoute('post', '/addContactToHostTemplate','addContactToHostTemplate');
-addRoute('post', '/addContactGroupToHostTemplate','addContactGroupToHostTemplate');
-addRoute('post', '/createService', 'createService' );
+addRoute('post', '/createHostTemplate', 'createHostTemplate');
+addRoute('post', '/addHostTemplateToHost', 'addHostTemplateToHost');
+addRoute('post', '/addContactToHostTemplate', 'addContactToHostTemplate');
+addRoute('post', '/addContactGroupToHostTemplate', 'addContactGroupToHostTemplate');
+addRoute('post', '/createService', 'createService');
 addRoute('post', '/createUser','createUser');
-addRoute('post', '/addContactToHost','addContactToExistingHost');
-addRoute('post', '/addContactGroupToHost','addContactGroupToExistingHost');
-addRoute('post', '/listNagiosBackends','listNagiosBackends','readonly');
-addRoute('post', '/listNagiosObjects','listNagiosObjects','readonly');
-addRoute('post', '/listNagiosStates','listNagiosStates','readonly');
+addRoute('post', '/addContactToHost', 'addContactToExistingHost');
+addRoute('post', '/addContactGroupToHost', 'addContactGroupToExistingHost');
+addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
+addRoute('post', '/listNagiosObjects', 'listNagiosObjects', 'readonly');
+addRoute('post', '/listNagiosStates', 'listNagiosStates', 'readonly');
 
-/*--Kind of framework to add routes very easily*/
+/* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
 	
     global $app;
@@ -80,7 +78,6 @@ function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
 
             return;
         }
-
 
         $authenticationValid = verifyAuthenticationByApiKey( $request, $right );
         if( $authenticationValid == true ){

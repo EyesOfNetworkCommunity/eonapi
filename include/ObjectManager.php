@@ -748,6 +748,11 @@ class ObjectManager {
 	/* LIVESTATUS - List nagios objects */
 	public function listNagiosObjects( $object, $backend = NULL, $columns = FALSE, $filters = FALSE ) {
 
+		// get authUser
+		$request = \Slim\Slim::getInstance()->request();
+        $authUser = $request->get('username');
+	
+		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
 
 		if($backend != NULL) {
@@ -772,7 +777,7 @@ class ObjectManager {
 					'socketType' => $socket_type,
 					'socketAddress' => $socket_address,
 					'socketPort' => $socket_port,
-					'socketPath' => $socket_path,
+					'socketPath' => $socket_path
 				);
 
 				// construct mklivestatus request, and get the response
@@ -780,7 +785,7 @@ class ObjectManager {
 
 				// get objects
 				$result[$socket_name] = $client->get($object);
-
+				
 				// get columns
 				if($columns) {
 					$result[$socket_name] = $result[$socket_name]->columns($columns);
@@ -793,6 +798,9 @@ class ObjectManager {
 					}
 				}
 
+				// set user
+				$result[$socket_name] = $result[$socket_name]->authUser($authUser);
+				
 				// execute
 				$result[$socket_name]=$result[$socket_name]->executeAssoc();
 			}
@@ -807,6 +815,11 @@ class ObjectManager {
 	/* LIVESTATUS - List nagios states */
 	public function listNagiosStates( $backend = NULL, $filters = FALSE ) {
 
+		// get authUser
+		$request = \Slim\Slim::getInstance()->request();
+        $authUser = $request->get('username');
+	
+		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
 
 		$result = array();
@@ -841,7 +854,7 @@ class ObjectManager {
 					'socketType' => $socket_type,
 					'socketAddress' => $socket_address,
 					'socketPort' => $socket_port,
-					'socketPath' => $socket_path,
+					'socketPath' => $socket_path
 				);
 
 				// construct mklivestatus request, and get the response
@@ -859,6 +872,9 @@ class ObjectManager {
 					}
 				}
 
+				// set user
+				$test = $test->authUser($authUser);
+				
 				// execute
 				$test = $test->execute();
 				$result["hosts"]["pending"] += count($test) - 1;
@@ -879,6 +895,9 @@ class ObjectManager {
 					}
 				}
 
+				// set user
+				$response = $response->authUser($authUser);
+				
 				// execute
 				$response = $response->execute();
 
@@ -899,6 +918,9 @@ class ObjectManager {
 					}
 				}
 
+				// set user
+				$test = $test->authUser($authUser);
+				
 				// execute
 				$test = $test->execute();
 				$result["services"]["pending"] += count($test) - 1;
@@ -919,6 +941,9 @@ class ObjectManager {
 					}
 				}
 
+				// set user
+				$response = $response->authUser($authUser);
+				
 				// execute	
 				$response = $response->execute();
 
