@@ -22,13 +22,18 @@ include("/srv/eyesofnetwork/lilac/includes/config.inc");
 
 use Nagios\Livestatus\Client;
 
+# Class with all api functions
 class ObjectManager {
     
+	private $authUser;
+		
     function __construct(){
-        
+		# Get api userName
+		$request = \Slim\Slim::getInstance()->request();
+		$this->authUser = $request->get('username');  
     }
-    
-    
+     
+	/* EONAPI - Display results */
     function getLogs($error, $success){
         $logs = $error.$success;
         $countLogs = substr_count($logs, "\n");
@@ -38,9 +43,10 @@ class ObjectManager {
         else
             $logs = str_replace("\n", "", $logs);
 
-        return $logs;
+        return retrim($logs," | ");
     }
-    
+   
+	/* LILAC -  Exporter */
     function exportConfigurationToNagios( &$error = "", &$success = "" ){
         $jobName = "nagios";
         $c = new Criteria();
@@ -70,10 +76,7 @@ class ObjectManager {
         }
             
     }
-    
-
-
-    
+        
 	/* LILAC -  Hosts and services creation */
 	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
@@ -93,7 +96,6 @@ class ObjectManager {
 			$error .= "Host Template $templateHostName not found\n";
 		}
         
-		
 		// Lauch actions if no errors
 		if(empty($error)) {	
 			try {
@@ -105,14 +107,12 @@ class ObjectManager {
 				$tempHost->save();
 				$success .= "Host $hostName added\n";
                 
-
 				// host-template
 				$newInheritance = new NagiosHostTemplateInheritance();
 				$newInheritance->setNagiosHost($tempHost);
 				$newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($template_host);
 				$newInheritance->save();
 				$success .= "Host Template ".$templateHostName." added to host ".$hostName."\n";
-                
                 
                 if( $contactName != NULL ){
                     //Add a contact to a host
@@ -124,8 +124,6 @@ class ObjectManager {
                     $this->addContactGroupToHost( $tempHost, $contactGroupName, $error, $success );    
                 }
                                 
-                
-				
 				// Export
                 if( $exportConfiguration == TRUE )
 				    $this->exportConfigurationToNagios($error, $success);
@@ -142,7 +140,6 @@ class ObjectManager {
         
 	}
     
-
 	/* LILAC -  Hosts delete */
 	public function deleteHost( $hostName, $exportConfiguration = FALSE ){
 		$error = "";
@@ -170,8 +167,8 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
 		return $logs;
 	}
-    
-	
+    	
+	/* LILAC - Create Host Template */
     function createHostTemplate( $templateHostName, $exportConfiguration = FALSE ){
         global $lilac;
         $error = "";
@@ -198,8 +195,7 @@ class ObjectManager {
             $template->save();
             
             $success .= "Host template ".$templateHostName." created\n";
-            
-            
+                        
             /*---Add host template inheritance ("GENERIC_HOST")---*/
             $targetTemplate = $nhtp->getByName("GENERIC_HOST");
             if(!$targetTemplate) {
@@ -236,18 +232,16 @@ class ObjectManager {
 
         }
         
-        
         // Export
         if( $exportConfiguration == TRUE )
             $this->exportConfigurationToNagios($error, $success);
-        
-        
+                
         $logs = $this->getLogs($error, $success);
         
         return $logs;
     }
     
-    
+    /* LILAC - Create Host Group */
     function createHostGroup( $hostGroupName, &$error = "", &$success = "", $exportConfiguration = FALSE ){
         global $lilac;
         $hostGroup = NULL;
@@ -276,6 +270,7 @@ class ObjectManager {
         return $hostGroup;
     }
     
+	/* LILAC - Modify Command */
     function modifyCommand(){
         /*---Modify check command ==> 'dummy_ok'---*/
         //TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
@@ -292,7 +287,7 @@ class ObjectManager {
         }
     }
            
-    
+    /* LILAC - Add Template to Host */
     public function addHostTemplateToHost( $templateHostName, $hostName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
@@ -347,7 +342,8 @@ class ObjectManager {
         return $logs;
     }
     
-    public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
+    /* LILAC - Add Contact to Host Template */
+	public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 
@@ -394,6 +390,7 @@ class ObjectManager {
         return $logs;
     }
     
+	/* LILAC - Add Contact Group to Host Template */
     public function addContactGroupToHostTemplate( $contactGroupName, $templateHostName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
@@ -410,7 +407,6 @@ class ObjectManager {
 		if(!$template_host) {
 			$error .= "Host Template $templateHostName not found\n";
 		}
-
         
         if( empty($error) ) {
             $c = new Criteria();
@@ -432,15 +428,14 @@ class ObjectManager {
                     $this->exportConfigurationToNagios($error, $success);
             }
         } 
-        
-        
-        
+             
         $logs = $this->getLogs($error, $success);
         
         return $logs;
     }
     
-    public function addContactToExistingHost( $hostName, $contactName, $exportConfiguration = FALSE ){
+    /* LILAC - Add Contact to Host */
+	public function addContactToExistingHost( $hostName, $contactName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
         
@@ -468,6 +463,7 @@ class ObjectManager {
         return $logs;
     }
     
+	/* LILAC - Add Contact Group to Host */
     public function addContactGroupToExistingHost( $hostName, $contactGroupName, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
@@ -496,6 +492,7 @@ class ObjectManager {
         return $logs;
     }
     
+	/* LILAC - Add Contact */
     public function addContactToHost( $tempHost, $contactName, &$error, &$success, $exportConfiguration = FALSE ){
         $ncp = new NagiosContactPeer;
         
@@ -504,7 +501,6 @@ class ObjectManager {
         if(!$tempContact) {
             $error .= "Contact $contactName not found\n";	
         }
-
         
         //If contact exists
         if($tempContact) {
@@ -529,6 +525,7 @@ class ObjectManager {
         }    
     }
     
+	/* LILAC - Add Contact Group to Host */
     public function addContactGroupToHost( $tempHost, $contactGroupName, &$error, &$success, $exportConfiguration = FALSE ){
         $ncgp = new NagiosContactGroupPeer;
 
@@ -559,16 +556,13 @@ class ObjectManager {
             }	
         }
     }
-    
-    
-    
-
-	public function createService( $hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
+ 
+	/* LILAC - Create Service */
+    public function createService( $hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
         
         $error = "";
         $success = "";
-        
-	    
+        	    
         $nsp = new NagiosHostPeer;
         
         if( $host == NULL ){
@@ -581,7 +575,6 @@ class ObjectManager {
         
         $nstp = new NagiosServiceTemplatePeer;
 		
-
         //Test if the parent templates exist
         foreach($services as $key => $service) {
             $templateName = $service[0];
@@ -625,15 +618,14 @@ class ObjectManager {
 				$error .= $e->getMessage()."\n";
 			}
 		}
-        
-        
+                
         $logs = $this->getLogs($error, $success);
         
         return $logs;
         
 	}
     
-    
+    /* EONWEB - Create User */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
         //Lower case
         $userName = strtolower($userName);
@@ -721,8 +713,7 @@ class ObjectManager {
         return $logs;
         
     }
-    
-	
+    	
 	/* LIVESTATUS - checkHost */
 	private function checkHost($type, $address, $port, $path){
 		$host = false;
@@ -735,22 +726,16 @@ class ObjectManager {
 		}
 		return $host;
 	}
-	
-	
+		
 	/* LIVESTATUS - List backends */
 	public function listNagiosBackends() {
 	
 		return getEonConfig("sockets","array");
 	
 	}
-	
-	
+		
 	/* LIVESTATUS - List nagios objects */
 	public function listNagiosObjects( $object, $backend = NULL, $columns = FALSE, $filters = FALSE ) {
-
-		// get authUser
-		$request = \Slim\Slim::getInstance()->request();
-        $authUser = $request->get('username');
 	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
@@ -799,7 +784,7 @@ class ObjectManager {
 				}
 
 				// set user
-				$result[$socket_name] = $result[$socket_name]->authUser($authUser);
+				$result[$socket_name] = $result[$socket_name]->authUser($this->authUser);
 				
 				// execute
 				$result[$socket_name]=$result[$socket_name]->executeAssoc();
@@ -810,14 +795,9 @@ class ObjectManager {
 		return $result;
 
 	}
-
 		
 	/* LIVESTATUS - List nagios states */
 	public function listNagiosStates( $backend = NULL, $filters = FALSE ) {
-
-		// get authUser
-		$request = \Slim\Slim::getInstance()->request();
-        $authUser = $request->get('username');
 	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
@@ -873,7 +853,7 @@ class ObjectManager {
 				}
 
 				// set user
-				$test = $test->authUser($authUser);
+				$test = $test->authUser($this->authUser);
 				
 				// execute
 				$test = $test->execute();
@@ -896,7 +876,7 @@ class ObjectManager {
 				}
 
 				// set user
-				$response = $response->authUser($authUser);
+				$response = $response->authUser($this->authUser);
 				
 				// execute
 				$response = $response->execute();
@@ -919,7 +899,7 @@ class ObjectManager {
 				}
 
 				// set user
-				$test = $test->authUser($authUser);
+				$test = $test->authUser($this->authUser);
 				
 				// execute
 				$test = $test->execute();
@@ -942,7 +922,7 @@ class ObjectManager {
 				}
 
 				// set user
-				$response = $response->authUser($authUser);
+				$response = $response->authUser($this->authUser);
 				
 				// execute	
 				$response = $response->execute();
@@ -960,7 +940,5 @@ class ObjectManager {
 	}
 	
 }
-
-
 
 ?>
