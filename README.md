@@ -71,8 +71,6 @@ https://[EON_IP]/eonapi/getAuthenticationStatus?&username=[username]&apiKey=[api
 
 You should have an authorized response:
 ```json
-HTTP/1.1 200 OK
-Content-Type: application/json
 {
     "api_version": "2.4.2",
     "http_code": "200 OK", 
