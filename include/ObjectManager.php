@@ -46,7 +46,7 @@ class ObjectManager {
         return retrim($logs," | ");
     }
    
-	/* LILAC -  Exporter */
+	/* LILAC - Exporter */
     function exportConfigurationToNagios( &$error = "", &$success = "" ){
         $jobName = "nagios";
         $c = new Criteria();
@@ -77,7 +77,7 @@ class ObjectManager {
             
     }
         
-	/* LILAC -  Hosts and services creation */
+	/* LILAC - Create Host and Services */
 	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
@@ -140,7 +140,7 @@ class ObjectManager {
         
 	}
     
-	/* LILAC -  Hosts delete */
+	/* LILAC - Delete Host */
 	public function deleteHost( $hostName, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
