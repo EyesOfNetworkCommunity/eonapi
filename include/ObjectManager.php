@@ -43,7 +43,7 @@ class ObjectManager {
         else
             $logs = str_replace("\n", "", $logs);
 
-        return retrim($logs," | ");
+        return rtrim($logs," | ");
     }
    
 	/* LILAC - Exporter */
