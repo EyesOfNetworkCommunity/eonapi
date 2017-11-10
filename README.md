@@ -54,8 +54,6 @@ https://[EON_IP]/eonapi/getApiKey?&username=[username]&password=[password]
 
 If authorized, you should have in return a JSON document with your **EONAPI_KEY** value:
 ```json
-HTTP/1.1 200 OK
-Content-Type: application/json
 {
     "api_version": "2.4.2",
     "http_code": "200 OK", 
