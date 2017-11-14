@@ -730,18 +730,23 @@ class ObjectManager {
 	/* LIVESTATUS - List backends */
 	public function listNagiosBackends() {
 	
-		return getEonConfig("sockets","array");
-	
+		$backends = getEonConfig("sockets","array");
+		for($i=0;$i<count($backends);$i++) {
+			$backends_json[$i]["id"]=$i;
+			$backends_json[$i]["backend"]=$backends[$i];
+		}
+		return $backends_json;
+		
 	}
 		
 	/* LIVESTATUS - List nagios objects */
-	public function listNagiosObjects( $object, $backend = NULL, $columns = FALSE, $filters = FALSE ) {
+	public function listNagiosObjects( $object, $backendid = NULL, $columns = FALSE, $filters = FALSE ) {
 	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
 
-		if($backend != NULL) {
-			$sockets = array_slice($sockets,$backend,1);
+		if($backendid != NULL) {
+			$sockets = array_slice($sockets,$backendid,1);
 		}
 
 		foreach($sockets as $socket){
@@ -787,7 +792,7 @@ class ObjectManager {
 				$result[$socket_name] = $result[$socket_name]->authUser($this->authUser);
 				
 				// execute
-				$result[$socket_name]=$result[$socket_name]->executeAssoc();
+				$result[$socket_name] = $result[$socket_name]->executeAssoc();
 			}
 		}
 
@@ -797,7 +802,7 @@ class ObjectManager {
 	}
 		
 	/* LIVESTATUS - List nagios states */
-	public function listNagiosStates( $backend = NULL, $filters = FALSE ) {
+	public function listNagiosStates( $backendid = NULL, $filters = FALSE ) {
 	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
@@ -814,8 +819,8 @@ class ObjectManager {
 		$result["services"]["critical"] = 0;
 		$result["services"]["unknown"] = 0;
 
-		if($backend != NULL) {
-			$sockets = array_slice($sockets,$backend,1);
+		if($backendid != NULL) {
+			$sockets = array_slice($sockets,$backendid,1);
 		}
 
 		foreach($sockets as $socket){
