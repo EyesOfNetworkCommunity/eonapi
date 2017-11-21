@@ -625,6 +625,13 @@ class ObjectManager {
         
 	}
     
+	/* LILAC - List Hosts */
+	public function listHosts( $hostName = NULL ){
+			
+		return true;
+			
+	}
+	
     /* EONWEB - Create User */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
         //Lower case
