@@ -2,7 +2,7 @@ Summary:        API for the EON suite.
 Name:           eonapi
 Version:        1.0
 Release:        2.eon
-Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}-%{release}.tar.gz
+Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
 Group:          Applications/System
 License:        GPL
 Vendor:         EyesOfNetwork Community
