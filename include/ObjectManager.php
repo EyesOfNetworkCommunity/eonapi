@@ -626,10 +626,10 @@ class ObjectManager {
 	}
     
 	/* LILAC - List Hosts */
-	public function listHosts( $hostName = NULL ){
-			
+	public function listHosts( $hostName = false, $hostTemplate = false ){
+		
 		return true;
-			
+		
 	}
 	
     /* EONWEB - Create User */
