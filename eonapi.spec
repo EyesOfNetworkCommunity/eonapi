@@ -1,23 +1,21 @@
 Summary:        API for the EON suite.
 Name:           eonapi
 Version:        1.0
-Release:        1.eon
-Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/%{version}.tar.gz
+Release:        2.eon
+Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}-%{release}.tar.gz
 Group:          Applications/System
 License:        GPL
 Vendor:         EyesOfNetwork Community
 URL:            https://github.com/EyesOfNetworkCommunity/eonapi
+Requires:	eonweb
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 
 %define eondir          /srv/eyesofnetwork
-%define	datadir		%{eondir}/%{name}-%{version}
-%define linkdir         %{eondir}/%{name}
-%define eonconfdir      /etc/httpd/conf.d
+%define	datadir		%{eondir}/%{name}
 
 %description
 Eyes Of Network includes a web-based "RESTful" API (Application Programming Interface) called EONAPI that enables external programs to access information from the monitoring database and to manipulate objects inside the databases of EON suite.
-
 
 %prep
 %setup -q
@@ -26,23 +24,26 @@ Eyes Of Network includes a web-based "RESTful" API (Application Programming Inte
 
 %install
 install -d -m0755 %{buildroot}%{datadir}
-chmod -v 640 ./eonapi.conf
-mv -v ./eonapi.conf %{eonconfdir}
+install -d -m0755 %{buildroot}%{_sysconfdir}/httpd/conf.d
 cp -afv ./* %{buildroot}%{datadir}
-systemctl restart httpd
+install -m 640 eonapi.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 
 %post
-ln -nsf %{datadir} %{linkdir}
-/bin/chown -R root:eyesofnetwork %{eondir}/%{name}-%{version}
-/bin/chown -h root:eyesofnetwork %{linkdir}
+systemctl restart httpd
 
 %clean
 rm -rf %{buildroot}
 
 %files
+%defattr(-,root,eyesofnetwork)
 %{eondir}
+%defattr(-,root,root)
+%{_sysconfdir}/httpd/conf.d/eonapi.conf
 
 %changelog
+* Mon Nov 27 2017 Jean-Philippe Levy <jeanphilippe.levy@gmail.com> - 1.0-2
+- Fix installation for EyesOfNetwork 5.2.
+
 * Thu Oct 26 2017 Michael Aubertin <michael.aubertin@gmail.com> - 1.0-1
 - Fix permission issue.
 
