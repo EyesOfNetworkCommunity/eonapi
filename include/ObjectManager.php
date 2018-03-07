@@ -764,6 +764,12 @@ class ObjectManager {
 			$socket_path = $socket_parts[3];
 			$socket_name = $socket;
 
+			// check if socket disabled
+			if(isset($socket_parts[4])) {
+				continue;
+			}
+
+			// check if socket is up
 			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
 				if($socket_port == -1){
 					$socket_port = "";
@@ -837,6 +843,12 @@ class ObjectManager {
 			$socket_port = $socket_parts[2];
 			$socket_path = $socket_parts[3];
 
+			// check if socket disabled
+			if(isset($socket_parts[4])) {
+				continue;
+			}
+
+			// check if socket is up
 			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
 				if($socket_port == -1){
 					$socket_port = "";
