@@ -765,7 +765,7 @@ class ObjectManager {
 			$socket_name = $socket;
 
 			// check if socket disabled
-			if(isset($socket_parts[4])) {
+			if(isset($socket_parts[4]) && $backendid == NULL) {
 				continue;
 			}
 
@@ -844,7 +844,7 @@ class ObjectManager {
 			$socket_path = $socket_parts[3];
 
 			// check if socket disabled
-			if(isset($socket_parts[4])) {
+			if(isset($socket_parts[4]) && $backendid == NULL) {
 				continue;
 			}
 
