@@ -47,8 +47,7 @@ class ObjectManager {
     }
    
 	/* LILAC - Exporter */
-    function exportConfigurationToNagios( &$error = "", &$success = "" ){
-        $jobName = "nagios";
+    function exportConfigurationToNagios(&$error = "", &$success = "", $jobName = "nagios"){
         $c = new Criteria();
         //$c->add(ExportJobPeer::END_TIME, null);
         $exportJobs = ExportJobPeer::doSelect($c);
@@ -60,7 +59,7 @@ class ObjectManager {
                 break;
             }
         }
-        
+
         if( $nagiosJobId != NULL ){
             $exportJob = ExportJobPeer::retrieveByPK( $nagiosJobId );
             $exportJob->setStatusCode(ExportJob::STATUS_STARTING);
@@ -69,14 +68,26 @@ class ObjectManager {
             $exportJob->save();
             exec("php /srv/eyesofnetwork/lilac/exporter/export.php " . $exportJob->getId() . " > /dev/null 2>&1", $tempOutput, $retVal);   
             
-            $success .= "Nagios configuration exported\n";
+            $success .= $jobName." : Nagios configuration exported\n";
         }
         else{
             $error .= "ERROR during nagios configuration export\n";
         }
             
     }
+
+	/* LILAC - Export Nagios Configuration */
+	public function exportConfiguration($jobName = "nagios"){
+        $error = "";
+        $success = "";
+		
+		$this->exportConfigurationToNagios($error, $success, $jobName);
+		
+		$logs = $this->getLogs($error, $success);
         
+        return $logs;
+	}
+	
 	/* LILAC - Create Host and Services */
 	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
