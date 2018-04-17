@@ -111,6 +111,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addHostTemplateToHost` | POST | [**templateHostName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Add a host template to a nagios host. |
 | `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Add a contact to a nagios host template. |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Add a contact group to a nagios host template. |
+| `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 
 
 ## EONAPI calls examples
