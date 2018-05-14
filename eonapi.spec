@@ -2,7 +2,7 @@ Summary:        API for the EON suite.
 Name:           eonapi
 Version:        1.0
 Release:        2.eon
-Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
+Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/master.tar.gz#/%{name}-%{version}.tar.gz
 Group:          Applications/System
 License:        GPL
 Vendor:         EyesOfNetwork Community
@@ -18,7 +18,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 Eyes Of Network includes a web-based "RESTful" API (Application Programming Interface) called EONAPI that enables external programs to access information from the monitoring database and to manipulate objects inside the databases of EON suite.
 
 %prep
-%setup -q
+%setup -q -n %{name}-master
 
 %build
 
@@ -41,7 +41,7 @@ rm -rf %{buildroot}
 %{_sysconfdir}/httpd/conf.d/eonapi.conf
 
 %changelog
-* Mon Nov 27 2017 Jean-Philippe Levy <jeanphilippe.levy@gmail.com> - 1.0-2
+* Sun May 13 2018 Jean-Philippe Levy <jeanphilippe.levy@gmail.com> - 1.0-2
 - Fix installation for EyesOfNetwork 5.2.
 
 * Thu Oct 26 2017 Michael Aubertin <michael.aubertin@gmail.com> - 1.0-1
