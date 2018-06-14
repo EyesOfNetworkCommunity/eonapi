@@ -1,7 +1,7 @@
 Summary:        API for the EON suite.
 Name:           eonapi
 Version:        1.0
-Release:        2.eon
+Release:        3.eon
 Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/master.tar.gz#/%{name}-%{version}.tar.gz
 Group:          Applications/System
 License:        GPL
@@ -27,6 +27,7 @@ install -d -m0755 %{buildroot}%{datadir}
 install -d -m0755 %{buildroot}%{_sysconfdir}/httpd/conf.d
 cp -afv ./* %{buildroot}%{datadir}
 install -m 640 eonapi.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
+rm -rf %{buildroot}%{datadir}/%{name}.spec
 
 %post
 systemctl restart httpd
@@ -41,6 +42,9 @@ rm -rf %{buildroot}
 %{_sysconfdir}/httpd/conf.d/eonapi.conf
 
 %changelog
+* Thu Jun 14 2018 Jean-Philippe Levy <jeanphilippe.levy@gmail.com> - 1.0-3
+- Add addEventBroker and delEventBroker functions
+
 * Sun May 13 2018 Jean-Philippe Levy <jeanphilippe.levy@gmail.com> - 1.0-2
 - Fix installation for EyesOfNetwork 5.2.
 

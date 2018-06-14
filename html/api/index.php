@@ -36,6 +36,8 @@ addRoute('post', '/addContactGroupToHost', 'addContactGroupToExistingHost');
 addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
 addRoute('post', '/listNagiosObjects', 'listNagiosObjects', 'readonly');
 addRoute('post', '/listNagiosStates', 'listNagiosStates', 'readonly');
+addRoute('post', '/addEventBroker','addEventBroker');
+addRoute('post', '/delEventBroker','delEventBroker');
 
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
