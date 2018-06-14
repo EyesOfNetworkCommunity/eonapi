@@ -46,72 +46,6 @@ class ObjectManager {
         return rtrim($logs," | ");
     }
 
-	/* LILAC - addEventBroker */
-	function addEventBroker( $broker, $exportConfiguration = FALSE ){
-		
-		global $lilac;
-		$error = "";
-		$success = "";
-
-		try {
-			# Check if exist
-			$module_list = NagiosBrokerModulePeer::doSelect(new Criteria());
-			foreach($module_list as $module) {
-				if($module->getLine()==$broker)
-					$brokerExists = true;
-			}
-			
-			# Add broker
-			if(!isset($brokerExists)) {
-				$module = new NagiosBrokerModule();
-				$module->setLine($broker);
-				$module->save();
-				$success .= "EventBroker added\n";
-			} else {
-				$success .= "EventBroker already exists\n";
-			}
-		}
-		catch(Exception $e) {
-			$error .= $e->getMessage()."\n";
-		}
-
-		$logs = $this->getLogs($error, $success);
-		return $logs;
-
-	}
-
-	/* LILAC - delEventBroker */
-	function delEventBroker( $broker, $exportConfiguration = FALSE ){
-		
-		global $lilac;
-		$error = "";
-		$success = "";
-
-		try {
-			# Check if exist
-			$module_list = NagiosBrokerModulePeer::doSelect(new Criteria());
-			foreach($module_list as $module) {
-				if($module->getLine()==$broker)
-					$brokerExists = $module;
-			}
-			
-			# Add broker
-			if(isset($brokerExists)) {
-				$brokerExists->delete();
-				$success .= "EventBroker deleted\n";
-			} else {
-				$success .= "EventBroker not exists\n";
-			}
-		}
-		catch(Exception $e) {
-			$error .= $e->getMessage()."\n";
-		}
-
-		$logs = $this->getLogs($error, $success);
-		return $logs;
-
-	}
-	
 	/* LILAC - Exporter */
     function exportConfigurationToNagios(&$error = "", &$success = "", $jobName = "nagios"){
         $c = new Criteria();
@@ -152,6 +86,80 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         
         return $logs;
+	}
+	
+	/* LILAC - addEventBroker */
+	function addEventBroker( $broker, $exportConfiguration = FALSE ){
+		
+		global $lilac;
+		$error = "";
+		$success = "";
+
+		try {
+			// Check if exist
+			$module_list = NagiosBrokerModulePeer::doSelect(new Criteria());
+			foreach($module_list as $module) {
+				if($module->getLine()==$broker)
+					$brokerExists = true;
+			}
+			
+			// Add broker
+			if(!isset($brokerExists)) {
+				$module = new NagiosBrokerModule();
+				$module->setLine($broker);
+				$module->save();
+				$success .= "EventBroker added\n";
+			} else {
+				$success .= "EventBroker already exists\n";
+			}
+			
+			// Export
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		}
+		catch(Exception $e) {
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+		return $logs;
+
+	}
+
+	/* LILAC - delEventBroker */
+	function delEventBroker( $broker, $exportConfiguration = FALSE ){
+		
+		global $lilac;
+		$error = "";
+		$success = "";
+
+		try {
+			// Check if exist
+			$module_list = NagiosBrokerModulePeer::doSelect(new Criteria());
+			foreach($module_list as $module) {
+				if($module->getLine()==$broker)
+					$brokerExists = $module;
+			}
+			
+			// Add broker
+			if(isset($brokerExists)) {
+				$brokerExists->delete();
+				$success .= "EventBroker deleted\n";
+			} else {
+				$success .= "EventBroker not exists\n";
+			}
+			
+			// Export
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		}
+		catch(Exception $e) {
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+		return $logs;
+
 	}
 	
 	/* LILAC - Create Host and Services */
