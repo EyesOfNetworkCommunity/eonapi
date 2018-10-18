@@ -88,14 +88,14 @@ class ObjectManager {
 		$success = "";
 
 		try {
-			# Check if exist
+			// Check if exist
 			$module_list = NagiosBrokerModulePeer::doSelect(new Criteria());
 			foreach($module_list as $module) {
 				if($module->getLine()==$broker)
 					$brokerExists = $module;
 			}
 			
-			# Add broker
+			// Add broker
 			if(isset($brokerExists)) {
 				$brokerExists->delete();
 				$success .= "EventBroker deleted\n";
