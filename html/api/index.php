@@ -40,6 +40,8 @@ addRoute('post', '/addEventBroker','addEventBroker');
 addRoute('post', '/delEventBroker','delEventBroker');
 addRoute('post', '/deleteCommand', 'deleteCommand');
 addRoute('post', '/addCommand', 'addCommand');
+addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
+addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){

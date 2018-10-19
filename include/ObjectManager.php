@@ -700,7 +700,115 @@ class ObjectManager {
                 $success .= "Contact group $contactGroupName added to host $hostName\n";   
             }	
         }
-    }
+	}
+
+	/* LILAC - delete service template */
+    function deleteServiceTemplate($templateName){
+		$error = "";
+		$success = "";
+		
+		try{
+			$targetTemplate = NagiosServiceTemplatePeer::getByName($templateName);
+
+			if(!$targetTemplate) {
+				$error .= "The command '".$templateName."'does not exist\n";
+			}
+			else{
+				$targetTemplate->delete();
+				$success .= "The command '".$templateName."' deleted.\n";
+			}
+		}catch(Exception $e) {
+			$error .= $e->getMessage()."\n";
+		}
+		$logs = $this->getLogs($error, $success);
+        
+        return $logs;
+	}
+	
+	/* LILAC - create service template */
+	public function createServiceTemplate($templateName, $templateDescription="", $servicesGroup=array(), $contacts=array(), $contactsGroup=array(), $checkCommand, $checkCommandParameters=array(), $templatesToInherit=array(), $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		
+		try{
+			$t=NagiosServiceTemplatePeer::getByName($templateName);
+			if(!$t){
+				$nst=new NagiosServiceTemplate;
+				$nst->setName($templateName);
+				$nst->setDescription($templateDescription);
+				
+				if($templatesToInherit=array()){
+					if($nst->addTemplateInheritance("GENERIC_SERVICE")){
+						$success .= "The Template 'GENERIC_SERVICE' add to service Template ".$templateName."\n";
+					}else {
+						$error .= "The template 'GENERIC_SERVICE' doesn't exist.\n";
+					}
+				}else{
+					foreach($templatesToInherit as $template){
+						if($nst->addTemplateInheritance($template)){
+							$success .= "The Template '".$template."' add to service Template ".$templateName."\n";
+						}else {
+							$error .= "The template '".$template."' doesn't exist.\n";
+						}
+					}
+				}
+	
+				foreach($servicesGroup as $serviceGroup){
+					if($nst->addServicegroupByName($serviceGroup)){
+						$success .= "The Service group '".$serviceGroup."' add to service Template ".$templateName."\n";
+					}else {
+						$error .= "The Service group '".$serviceGroup."' doesn't exist.\n";
+					}
+				}
+				
+				foreach($contactsGroup as $contactGroup){
+					if($nst->addServicegroupByName($contactGroup)){
+						$success .= "The Contact group '".$contactGroup."' add to service Template ".$templateName."\n";
+					}else {
+						$error .= "The Contact group '".$contactGroup."' doesn't exist.\n";
+					}
+				}
+				
+				foreach($contacts as $contact){
+					if($nst->addServicegroupByName($contact)){
+						$success .= "The Contact '".$contact."' add to service Template ".$templateName."\n";
+					}else {
+						$error .= "The Contact '".$contact."' doesn't exist.\n";
+					}
+				}
+				
+	
+				if($nst->setCheckCommandByName($checkCommand)){
+					$success .= "The command '".$checkCommand."' add to service Template ".$templateName."\n";
+				}else{
+					$error .= "The command '".$checkCommand."' doesn't exist.\n";
+				}
+	
+				foreach($checkCommandParameters as $arg){
+					if($nst->addCheckCommandParameter($arg)){
+						$success .= "The parameter'".$arg."' add to service Template ".$templateName."\n";
+					}else {
+						$error .= "The Contact '".$arg."' doesn't exist.\n";
+					}
+				}
+	
+				// Export
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
+	
+			}else{
+				$error .= "The Service template '".$templateName."' already exist.\n";
+			}
+		}catch(Exception $e) {
+			$error .= $e->getMessage()."\n";
+		}
+		
+
+		$logs = $this->getLogs($error, $success);
+        
+        return $logs;
+
+	}
  
 	/* LILAC - Create Service */
     public function createService( $hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
