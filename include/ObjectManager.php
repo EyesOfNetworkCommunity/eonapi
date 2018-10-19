@@ -376,18 +376,35 @@ class ObjectManager {
 		$error = "";
 		$success = "";
 		try{
-			$ncp = new NagiosCommand;
-			$ncp->setName($commandName);
-			$ncp->setLine($commandLine);
-			$ncp->setDescription($commandDescription);
-			$result=$ncp->save();
+			$ncp = new NagiosCommandPeer;
+			$targetCommand = $ncp->getByName($commandName);
 			
-
-			if(!$result) {
-				$error .= "The command '".$ncp->getName()."' can't be created\n";
+			//If command doesn't exist we create it
+			if(!$targetCommand) {
+				$command = new NagiosCommand;
+				$command->setName($commandName);
+				$command->setLine($commandLine);
+				$command->setDescription($commandDescription);
+				$result=$command->save();
+				if(!$result){
+					$error .= "The command '".$command->getName()."' can't be created\n";
+				}
+				else{
+					$success .= "The command '".$command->getName()."' has been created.\n";
+				}
 			}
+			//if command already exist we modify it
 			else{
-				$success .= "The command '".$ncp->getName()."' has been created.\n";
+				$targetCommand->setName($commandName);
+				$targetCommand->setLine($commandLine);
+				$targetCommand->setDescription($commandDescription);
+				$result=$targetCommand->save();
+				if(!$result){
+					$error .= "The command '".$targetCommand->getName()."' can't be modify.\n";
+				}
+				else{
+					$success .= "The command '".$targetCommand->getName()."' has been modify.\n";
+				}
 			}
 		}catch(Exception $e) {
 			$error .= $e->getMessage()."\n";
