@@ -395,16 +395,7 @@ class ObjectManager {
 			}
 			//if command already exist we modify it
 			else{
-				$targetCommand->setName($commandName);
-				$targetCommand->setLine($commandLine);
-				$targetCommand->setDescription($commandDescription);
-				$result=$targetCommand->save();
-				if(!$result){
-					$error .= "The command '".$targetCommand->getName()."' can't be modify.\n";
-				}
-				else{
-					$success .= "The command '".$targetCommand->getName()."' has been modify.\n";
-				}
+				$error .= "The command '".$targetCommand->getName()."' already exist, if you want to modify it see the function 'modifyCommand'.\n";
 			}
 		}catch(Exception $e) {
 			$error .= $e->getMessage()."\n";
@@ -416,20 +407,34 @@ class ObjectManager {
 	}
 	
 	/* LILAC - Modify Command */
-    function modifyCommand(){
+    public function modifyCommand($commandName, $newCommandName="", $commandLine, $commandDescription=""){
         /*---Modify check command ==> 'dummy_ok'---*/
-        //TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
-        $ncp = new NagiosCommandPeer;
-        $targetCommand = $ncp->getByName("dummy_ok");
+		//TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
+		$error = "";
+		$success = "";
+		$ncp = new NagiosCommandPeer;
+		$targetCommand = $ncp->getByName($commandName);
         if(!$targetCommand) {
-            $error .= "The target command 'dummy_ok' does not exist\n";
+			
+            $error .= $error .= "The command '".$commandName."' does not exist\n";
         }
         else{
-            $template->setCheckCommand(NagiosCommandPeer::retrieveByPK($targetCommand->getId()));
-            $template->save();   
+			if(isset($newCommandName)) $targetCommand->setName($newCommandName);
+			if(isset($commandDescription)) $targetCommand->setDescription($commandDescription);
+			$targetCommand->setLine($commandLine);
+			$result=$targetCommand->save();   
 
-            $success .= "Check command modified to 'dummy_ok'\n";
-        }
+			if(!$result){
+				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
+			}
+			else{
+				$success .= "The command '".$targetCommand->getName()."' success to update.\n";
+			} 
+		}
+		
+		$logs = $this->getLogs($error, $success);
+        
+        return $logs;
     }
            
     /* LILAC - Add Template to Host */
@@ -703,7 +708,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - delete service template */
-    function deleteServiceTemplate($templateName){
+    public function deleteServiceTemplate($templateName){
 		$error = "";
 		$success = "";
 		

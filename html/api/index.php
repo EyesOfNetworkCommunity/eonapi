@@ -40,6 +40,7 @@ addRoute('post', '/addEventBroker','addEventBroker');
 addRoute('post', '/delEventBroker','delEventBroker');
 addRoute('post', '/deleteCommand', 'deleteCommand');
 addRoute('post', '/addCommand', 'addCommand');
+addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 
