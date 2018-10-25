@@ -112,7 +112,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Add a contact to a nagios host template. |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Add a contact group to a nagios host template. |
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
-| `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": [with the executed actions] | Add or modify (if already exist) a command to Nagios. |
+| `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": [with the executed actions] | Add a command to Nagios. |
+| `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": [with the executed actions] | modify a command to Nagios. |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a command to Nagios. |
 | `createHostGroup` | POST | [**hostGroupName, &error = "", &success = "", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
 | `createService` | POST | [**hostName, services, host = NULL, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Service |
@@ -230,6 +231,25 @@ To illustrate the EON API features tab, you will find a few implementation examp
 	"contactGroupName": "admins",
 	"templateHostName": "TEMPLATE_HOST",
 	"exportConfiguration": true
+}
+```
+* /createServiceTemplate
+```json 
+{
+  "templateName":"foe",
+  "templateDescription":"test description ",
+  "checkCommand":"check_ping",
+  "checkCommandParameters":["arg1","arg2"]
+}
+```
+
+* /modifyCommand `/!\ newCommandName and commandDescription are not required`
+```json 
+{
+	"commandName": "foe",
+	"newCommandName":"doe",
+	"commandLine": "$USER1$/foe.py -H $ARG1$",
+	"commandDescription":"Do something great"
 }
 ```
 
