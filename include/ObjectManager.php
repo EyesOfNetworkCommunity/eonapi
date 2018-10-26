@@ -168,7 +168,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Get Hosts by template name */
-	public function getHostBytemplate( $templateHostName){
+	public function getHostsBytemplate( $templateHostName){
         
         $nhtp = new NagiosHostTemplatePeer;
 		// Find host template
@@ -190,7 +190,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Get Host by  HostGroup */
-	public function getHostByHostGroup( $hostGroupName){
+	public function getHostsByHostGroup( $hostGroupName){
 		$nhgp = new NagiosHostgroupPeer;
 		//Find HostGroup
 		$hostGroup = $nhgp->getByName( $hostGroupName );
