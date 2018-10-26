@@ -153,7 +153,63 @@ class ObjectManager {
         
         return $logs;
 	}
-	
+
+	/* LILAC - Get Host */
+	public function getHost( $hostName){
+        
+        $nhp = new NagiosHostPeer;
+		// Find host
+		$host = $nhp->getByName($hostName);
+		if($host) {
+			return $host->getValues();
+		}else{
+			return "Host named ".$hostName." doesn't exist."; 
+		}
+	}
+
+	/* LILAC - Get Hosts by template name */
+	public function getHostBytemplate( $templateHostName){
+        
+        $nhtp = new NagiosHostTemplatePeer;
+		// Find host template
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			return "Host Template $templateHostName not found\n";
+		}else{
+			$hostList=$template_host->getAffectedHosts();
+			if(!$hostList){
+				return "No Host found for the template : $templateHostName \n";
+			}else{
+				$result = array();
+				foreach($hostList as $host){
+					array_push($result,$host->getValues());
+				}
+				return $result;
+			}
+		}
+	}
+
+	/* LILAC - Get Host by  HostGroup */
+	public function getHostByHostGroup( $hostGroupName){
+		$nhgp = new NagiosHostgroupPeer;
+		//Find HostGroup
+		$hostGroup = $nhgp->getByName( $hostGroupName );
+		if(!$hostGroup) {
+			return "HostGroup named $hostGroupName not found\n";
+		}else{
+			$hostList=$hostGroup->getMembers();
+			if(!$hostList){
+				return "No Host found for the HostGroup: $hostGroupName \n";
+			}else{
+				$result = array();
+				foreach($hostList as $host){
+					array_push($result,$host->getValues());
+				}
+				return $result;
+			}
+		}
+	}
+
 	/* LILAC - Create Host and Services */
 	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";

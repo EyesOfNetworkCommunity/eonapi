@@ -43,6 +43,9 @@ addRoute('post', '/addCommand', 'addCommand');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
+addRoute('post','/getHost','getHost');
+addRoute('post','/getHostBytemplate','getHostBytemplate');
+addRoute('post','/getHostByHostGroup','getHostByHostGroup');
 
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
