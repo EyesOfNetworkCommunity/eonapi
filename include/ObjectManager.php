@@ -479,24 +479,37 @@ class ObjectManager {
 	}
 	
 	/* LILAC - Modify Command */
-    public function modifyCommand($commandName, $newCommandName="", $commandLine, $commandDescription=""){
+    public function modifyCommand($commandName, $newCommandName=NULL, $commandLine, $commandDescription=NULL){
         /*---Modify check command ==> 'dummy_ok'---*/
 		//TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
 		$error = "";
 		$success = "";
+		$code=0;
+		$changes=0;
 		$ncp = new NagiosCommandPeer;
 		$targetCommand = $ncp->getByName($commandName);
         if(!$targetCommand) {
-			
+			$code=1;
             $error .= $error .= "The command '".$commandName."' does not exist\n";
         }
         else{
-			if(isset($newCommandName)) $targetCommand->setName($newCommandName);
-			if(isset($commandDescription)) $targetCommand->setDescription($commandDescription);
-			$targetCommand->setLine($commandLine);
-			$result=$targetCommand->save();   
+			if(isset($newCommandName) && $newCommandName!=$commandName){
+				$targetCommand->setName($newCommandName);
+				$changes++;
+			} 
+			if(isset($commandDescription) && $commandDescription!=$targetCommand->getDescription()){
+				$targetCommand->setDescription($commandDescription);
+				$changes++;
+			} 
+			if($commandLine != $targetCommand->getLine()){
+				$targetCommand->setLine($commandLine);
+				$changes++;
+			}
+			
+			$state=$targetCommand->save();   
 
-			if(!$result){
+			if(!$state){
+				$code=1;
 				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
 			}
 			else{
@@ -506,7 +519,8 @@ class ObjectManager {
 		
 		$logs = $this->getLogs($error, $success);
         
-        return $logs;
+        $result=array("code"=>$code,"description"=>$logs,"changes"=>$changes);
+        return $result;
     }
            
     /* LILAC - Add Template to Host */
@@ -556,13 +570,11 @@ class ObjectManager {
                 $error .= $e->getMessage();
             }		
         }
-		
-        
         
         $logs = $this->getLogs($error, $success);
         
         return $logs;
-    }
+	}
     
     /* LILAC - Add Contact to Host Template */
 	public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
@@ -712,7 +724,20 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return $logs;
-    }
+	}
+	
+	/* LILAC - Get Contact */	
+	public function getContact($contactName){
+		$ncp = new NagiosContactPeer;
+		
+        // Find host contact
+        $contact = $ncp->getByName( $contactName );
+        if(!$contact) {
+			return "Contact $contactName doesn't exist\n";
+        }else{
+			return $contact->toArray();
+		}
+	}
     
 	/* LILAC - Add Contact */
     public function addContactToHost( $tempHost, $contactName, &$error, &$success, $exportConfiguration = FALSE ){
