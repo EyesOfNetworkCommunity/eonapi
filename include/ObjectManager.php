@@ -161,7 +161,7 @@ class ObjectManager {
 		// Find host
 		$host = $nhp->getByName($hostName);
 		if($host) {
-			return $host->getValues();
+			return $host->toArray();
 		}else{
 			return "Host named ".$hostName." doesn't exist."; 
 		}
@@ -182,7 +182,7 @@ class ObjectManager {
 			}else{
 				$result = array();
 				foreach($hostList as $host){
-					array_push($result,$host->getValues());
+					array_push($result,$host->toArray());
 				}
 				return $result;
 			}
@@ -203,7 +203,7 @@ class ObjectManager {
 			}else{
 				$result = array();
 				foreach($hostList as $host){
-					array_push($result,$host->getValues());
+					array_push($result,$host->toArray());
 				}
 				return $result;
 			}
@@ -938,7 +938,7 @@ class ObjectManager {
 			$services=NagiosServicePeer::doSelect($c);
 			$result= array();
 			foreach($services as $service) {
-				array_push($result,$service->getValues());
+				array_push($result,$service->toArray());
 			} 
 			return $result;
 		}
@@ -957,7 +957,7 @@ class ObjectManager {
 			$services=NagiosServicePeer::doSelect($c);
 			$result= array();
 			foreach($services as $service) {
-				array_push($result,$service->getValues());
+				array_push($result,$service->toArray());
 			} 
 			return $result;
 		}
