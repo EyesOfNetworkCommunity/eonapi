@@ -442,6 +442,7 @@ class ObjectManager {
     function addCommand($commandName,$commandLine,$commandDescription=""){
 		$error = "";
 		$success = "";
+		$code=0;
 		try{
 			$ncp = new NagiosCommandPeer;
 			$targetCommand = $ncp->getByName($commandName);
@@ -454,6 +455,7 @@ class ObjectManager {
 				$command->setDescription($commandDescription);
 				$result=$command->save();
 				if(!$result){
+					$code=1;
 					$error .= "The command '".$command->getName()."' can't be created\n";
 				}
 				else{
@@ -462,15 +464,18 @@ class ObjectManager {
 			}
 			//if command already exist we modify it
 			else{
+				$code=1;
 				$error .= "The command '".$targetCommand->getName()."' already exist, if you want to modify it see the function 'modifyCommand'.\n";
 			}
 		}catch(Exception $e) {
+			$code=1;
 			$error .= $e->getMessage()."\n";
 		}
         
 		$logs = $this->getLogs($error, $success);
-        
-        return $logs;
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
 	}
 	
 	/* LILAC - Modify Command */

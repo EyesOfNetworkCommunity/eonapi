@@ -114,6 +114,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": [with the executed actions] | Add a command to Nagios. |
 | `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": [with the executed actions] | modify a command to Nagios. |
+| `getCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Return the informations of a command |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a command to Nagios. |
 | `createHostGroup` | POST | [**hostGroupName, &error = "", &success = "", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
 | `createService` | POST | [**hostName, services, host = NULL, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Service |
