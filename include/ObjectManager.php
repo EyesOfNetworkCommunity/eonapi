@@ -401,7 +401,18 @@ class ObjectManager {
         
         
         return $hostGroup;
-    }
+	}
+	
+	/* LILAC - get command */
+	function getCommand($commandName){
+		$ncp = new NagiosCommandPeer;
+		$targetCommand = $ncp->getByName($commandName);
+        if(!$targetCommand) {
+            return  "The command '".$commandName."' does not exist\n";
+        }else{
+			return $targetCommand->toArray();
+		}
+	}
 	
 	/* LILAC - delete Command */
     function deleteCommand($commandName){
@@ -870,7 +881,45 @@ class ObjectManager {
         return $logs;
 
 	}
- 
+	
+	/* LILAC - Get Service by Host */
+	public function getServicesByHost($hostName){
+		$nhp = new NagiosHostPeer();
+		$host = $nhp->getByName($hostName);
+		if(!$host){
+			return "No host named $hostName.\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::HOST, $host->getId());
+			$c->addAscendingOrderByColumn(NagiosServicePeer::ID);
+			$services=NagiosServicePeer::doSelect($c);
+			$result= array();
+			foreach($services as $service) {
+				array_push($result,$service->getValues());
+			} 
+			return $result;
+		}
+	}
+
+	/* LILAC - Get Service by HostTemplate */	
+	public function getServicesByHostTemplate($templateHostName){	
+		$nhtp = new NagiosHostTemplatePeer();
+		$templateHost = $nhtp->getByName($templateHostName);
+		if(!$templateHost) {
+			return "No hostTemplate named $templateHostName.\n";
+		}else {
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::HOST_TEMPLATE, $templateHost->getId());
+			$c->addAscendingOrderByColumn(NagiosServicePeer::DESCRIPTION );
+			$services=NagiosServicePeer::doSelect($c);
+			$result= array();
+			foreach($services as $service) {
+				array_push($result,$service->getValues());
+			} 
+			return $result;
+		}
+	}
+
 	/* LILAC - Create Service */
     public function createService( $hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
         
