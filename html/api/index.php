@@ -50,6 +50,7 @@ addRoute('post', '/getCommand', 'getCommand');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate');
 addRoute('post', '/getServicesByHost', 'getServicesByHost');
 addRoute('post', '/getContact', 'getContact');
+addRoute('post', '/getContactList', 'getContactList');
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
 	

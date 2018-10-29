@@ -112,8 +112,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Add a contact to a nagios host template. |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Add a contact group to a nagios host template. |
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
-| `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": [with the executed actions] | Add a command to Nagios. |
-| `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": [with the executed actions] | modify a command to Nagios. |
+| `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a command to Nagios.returncode=0 or 1 if failed |
+| `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs","changes":numerOfchanges] | modify a command to Nagios. returncode=0 or 1 if failed or nothing change |
 | `getCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Return the informations of a command |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a command to Nagios. |
 | `createHostGroup` | POST | [**hostGroupName, &error = "", &success = "", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
@@ -130,6 +130,9 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getHostsByHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given hostgroup |
 | `getServicesByHost` | POST | [**hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host|
 | `getServicesByHostTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host template|
+| `getContact` | POST | [**contactName**] | "http_code": "200 OK", "result": [with the executed actions] | return the contact|
+| `getContactList` | POST | [****] | "http_code": "200 OK", "result": [with the executed actions] | return all contacts|
+
 
 
 

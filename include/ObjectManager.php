@@ -508,6 +508,7 @@ class ObjectManager {
 			
 			$state=$targetCommand->save();   
 
+			//if no changes state = false 
 			if(!$state){
 				$code=1;
 				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
@@ -737,6 +738,18 @@ class ObjectManager {
         }else{
 			return $contact->toArray();
 		}
+	}
+
+	/* LILAC - Get All Contact */
+	public function getContactList() {
+		$c = new Criteria();
+		$c->addAscendingOrderByColumn(NagiosContactPeer::NAME);
+		$result=array();
+		$contact_list = NagiosContactPeer::doSelect($c);
+		foreach($contact_list as $contact){
+			array_push($result,$contact->toArray());
+		}
+		return $result;
 	}
     
 	/* LILAC - Add Contact */
