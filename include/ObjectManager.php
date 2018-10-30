@@ -156,7 +156,6 @@ class ObjectManager {
 
 	/* LILAC - Get Host */
 	public function getHost( $hostName){
-        
         $nhp = new NagiosHostPeer;
 		// Find host
 		$host = $nhp->getByName($hostName);
@@ -169,7 +168,6 @@ class ObjectManager {
 
 	/* LILAC - Get Hosts by template name */
 	public function getHostsBytemplate( $templateHostName){
-        
         $nhtp = new NagiosHostTemplatePeer;
 		// Find host template
 		$template_host = $nhtp->getByName($templateHostName);
@@ -512,8 +510,7 @@ class ObjectManager {
 			if(!$state){
 				$code=1;
 				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
-			}
-			else{
+			}else{
 				$success .= "The command '".$targetCommand->getName()."' success to update.\n";
 			} 
 		}
@@ -617,8 +614,6 @@ class ObjectManager {
                     $this->exportConfigurationToNagios($error, $success);
             }
         } 
-        
-        
         
         $logs = $this->getLogs($error, $success);
         
@@ -726,30 +721,99 @@ class ObjectManager {
         
         return $logs;
 	}
-	
-	/* LILAC - Get Contact */	
-	public function getContact($contactName){
-		$ncp = new NagiosContactPeer;
-		
-        // Find host contact
-        $contact = $ncp->getByName( $contactName );
-        if(!$contact) {
-			return "Contact $contactName doesn't exist\n";
-        }else{
-			return $contact->toArray();
+
+	/* LILAC - Delete contact Group */
+	public function deleteContactGroup($contactGroupName){
+		$error = "";
+		$success = "";
+		try {
+			$ncp = new NagiosContactGroupPeer;
+			// Find host contact
+			$contactGroup = $ncp->getByName( $contactGroupName );
+			if(!$contactGroup) {
+				$error .= "Contact Group $contactGroupName doesn't exist\n";
+			}else{
+				$contactGroup->delete();
+				$success .="$contactGroupName as been deleted\n";
+			}
+		}catch(Exception $e) {
+			$error .= $e->getMessage()."\n";
 		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return $logs;
 	}
 
-	/* LILAC - Get All Contact */
-	public function getContactList() {
-		$c = new Criteria();
-		$c->addAscendingOrderByColumn(NagiosContactPeer::NAME);
-		$result=array();
-		$contact_list = NagiosContactPeer::doSelect($c);
-		foreach($contact_list as $contact){
-			array_push($result,$contact->toArray());
+	/* LILAC - Delete contact */
+	public function deleteContact($contactName){
+		$error = "";
+		$success = "";
+		try {
+			$ncp = new NagiosContactPeer;
+			// Find host contact
+			$contact = $ncp->getByName( $contactName );
+			if(!$contact) {
+				$error .= "Contact $contactName doesn't exist\n";
+			}else{
+				$contact->delete();
+				$success .="$contactName as been deleted\n";
+			}
+		}catch(Exception $e) {
+			$error .= $e->getMessage()."\n";
 		}
-		return $result;
+
+		$logs = $this->getLogs($error, $success);
+        
+        return $logs;
+	}
+	
+	/* LILAC - Get Contact */	
+	public function getContact($contactName=FALSE){
+		if(!$contactName){
+			$c = new Criteria();
+			$c->addAscendingOrderByColumn(NagiosContactPeer::NAME);
+			$result=array();
+			$contact_list = NagiosContactPeer::doSelect($c);
+			foreach($contact_list as $contact){
+				array_push($result,$contact->toArray());
+			}
+			return $result;
+		}else {
+			$ncp = new NagiosContactPeer;
+			// Find host contact
+			$contact = $ncp->getByName( $contactName );
+			if(!$contact) {
+				return "Contact $contactName doesn't exist\n";
+			}else{
+				return $contact->toArray();
+			}
+		}
+		
+	}
+
+
+	/* LILAC - Get ContactGroup */
+	public function getContactGroups($contactGroupName=FALSE){
+		if(!$contactGroupName){
+			$c = new Criteria();
+			$c->addAscendingOrderByColumn(NagiosContactGroupPeer::NAME);
+			$result=array();
+			$contactGroup_list = NagiosContactGroupPeer::doSelect($c);
+			foreach($contactGroup_list as $contactGroup){
+				array_push($result,$contactGroup->toArray());
+			}
+			return $result;
+		}else {
+			$ncgp = new NagiosContactGroupPeer;
+			// Find host contact
+			$contactGroup = $ncgp->getByName( $contactGroupName );
+			if(!$contactGroup) {
+				return "ContactGroup named $contactGroupName doesn't exist\n";
+			}else{
+				return $contactGroup->toArray();
+			}
+		}
 	}
     
 	/* LILAC - Add Contact */

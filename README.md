@@ -103,7 +103,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getAuthenticationStatus` | GET | None | "status": "authorized" | Confirm that the provided user account has admin privileges and the permission to make advanced API calls. This means the association username/apiKey is correct.  |
 | `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
 | `deleteHost` | POST | [**hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a nagios host. |
-| `createService` | POST | [**hostName, services, exportConfiguration**] The parameter **services** is an array with the service(s) name as a key, the service template as first parameter, and the following optional service arguments linked to the service template. | "http_code": "200 OK", "result": [with the executed actions] | Add service(s) to an existant host and reload lilac configuration. To add a service, please see the parameters column. It will add a service to a specified nagios host with as many service arguments as needed. |
+| `createService` | POST | [**hostName, services, host = NULL, exportConfiguration**] The parameter **services** is an array with the service(s) name as a key, the service template as first parameter, and the following optional service arguments linked to the service template. | "http_code": "200 OK", "result": [with the executed actions] | Add service(s) to an existant host and reload lilac configuration. To add a service, please see the parameters column. It will add a service to a specified nagios host with as many service arguments as needed. |
 | `createUser` | POST | [**userName, userMail, admin, filterName, filterValue, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
 | `addContactToHost` | POST | [**contactName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
 | `addContactGroupToHost` | POST | [**contactGroupName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
@@ -117,7 +117,6 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Return the informations of a command |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a command to Nagios. |
 | `createHostGroup` | POST | [**hostGroupName, &error = "", &success = "", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
-| `createService` | POST | [**hostName, services, host = NULL, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Service |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
 | `listNagiosBackends` | POST | [] | "http_code": "200 OK", "result": [with the executed actions] | Return available backend informations(log) |
@@ -130,9 +129,10 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getHostsByHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given hostgroup |
 | `getServicesByHost` | POST | [**hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host|
 | `getServicesByHostTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host template|
-| `getContact` | POST | [**contactName**] | "http_code": "200 OK", "result": [with the executed actions] | return the contact|
-| `getContactList` | POST | [****] | "http_code": "200 OK", "result": [with the executed actions] | return all contacts|
-
+| `getContact` | POST | [**contactName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact otherwise it return all the contact|
+| `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
+| `deleteContact` | POST | [**contactName**] | "http_code": "200 OK", "result": [with the executed actions] | delete the given contact |
+| `deleteContactGroup` | POST | [**contactGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | delete the given contact Group  |
 
 
 
