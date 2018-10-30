@@ -1027,6 +1027,81 @@ class ObjectManager {
 		}
 	}
 
+	/* LILAC - Delete Service */
+	public function deleteService($serviceName,$hostName, $exportConfiguration = FALSE ){
+		$error = "";
+        $success = "";
+        $code=0;
+        $nsp = new NagiosHostPeer;
+		
+		$host = $nsp->getByName($hostName);    
+		if(!$host) {
+			$code++;
+			$error .= "Host $hostName doesn't exist\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::DESCRIPTION, $serviceName);
+			$services=$host->getNagiosServices($c);
+			if(count($services)==1){
+				$services[0]->delete();
+				$success .= "$serviceName in host $hostName had been deleted";
+			}else{
+				$error .= "Service didn't exist or to much services had been returned";
+				$code++;
+			}  
+		}
+		
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Modify Service */
+	public function modifyService($serviceName,$hostName, $columns=array(), $exportConfiguration = FALSE ){
+		$error = "";
+        $success = "";
+        $code=0;
+        $nsp = new NagiosHostPeer;
+		
+		$host = $nsp->getByName($hostName);    
+		if(!$host) {
+			$code++;
+			$error .= "Host $hostName doesn't exist\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::DESCRIPTION, $serviceName);
+			$services=$host->getNagiosServices($c);
+			if(count($services)==1){
+				foreach($columns as $column => $value){
+					
+					if($column == "CheckCommand"){
+						$command=NagiosCommandPeer::getByName($value);
+						if(!$command) $error .= "The command  : $value doesn't exist.\n";
+						else $services[0]->setCheckCommand($command->getId());
+						
+					}else{
+						if($column!="Host" && $column != "HostTemplate"){
+							$services[0]->setByName($column,$value);
+							$success.="$column updated.\n";
+						}
+					} 
+					
+
+				}
+				
+				$success .= "$serviceName in host $hostName has been updated.";
+				$services[0]->save();
+			}else{
+				$error .= "Service didn't exist or to much services had been returned";
+				$code++;
+			}  
+		}
+		
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Create Service */
     public function createService( $hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
         

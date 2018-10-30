@@ -53,6 +53,8 @@ addRoute('post', '/getContact', 'getContact');
 addRoute('post', '/getContactGroups', 'getContactGroups');
 addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
+addRoute('post', '/deleteService', 'deleteService');
+addRoute('post', '/modifyService', 'modifyService');
 
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){

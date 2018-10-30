@@ -133,6 +133,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
 | `deleteContact` | POST | [**contactName**] | "http_code": "200 OK", "result": [with the executed actions] | delete the given contact |
 | `deleteContactGroup` | POST | [**contactGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | delete the given contact Group  |
+| `deleteService` | POST | [**serviceName, hostName**] | "http_code": "200 OK", "result": [with the executed actions] | delete the given service  |
+| `modifyService` | POST | [**serviceName, hostName, column=array(), exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | modify the given service with the given columnName => value (ie bellow)  |
 
 
 
@@ -260,6 +262,19 @@ To illustrate the EON API features tab, you will find a few implementation examp
 	"newCommandName":"doe",
 	"commandLine": "$USER1$/foe.py -H $ARG1$",
 	"commandDescription":"Do something great"
+}
+```
+
+* /modifyService 
+```json 
+{
+	"serviceName": "foe",
+	"hostName":"doe",
+	"columns":{
+		"DisplayName":"erased",
+		"CheckCommand":"check_api_eon",
+		"IsVolatile":"enable"
+  	}
 }
 ```
 
