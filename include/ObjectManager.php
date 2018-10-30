@@ -300,11 +300,11 @@ class ObjectManager {
 	}
     	
 	/* LILAC - Create Host Template */
-    function createHostTemplate( $templateHostName, $exportConfiguration = FALSE ){
+    function createHostTemplate( $templateHostName,$templateHostDescription="", $exportConfiguration = FALSE ){
         global $lilac;
         $error = "";
         $success = "";
-        $description = "host template";
+        
         
         // Check for pre-existing host template with same name        
         $nhtp = new NagiosHostTemplatePeer;
@@ -322,7 +322,7 @@ class ObjectManager {
             /*---Create template---*/
             $template = new NagiosHostTemplate();
             $template->setName( $templateHostName );
-            $template->setDescription( $description );
+            $template->setDescription( $templateHostDescription );
             $template->save();
             
             $success .= "Host template ".$templateHostName." created\n";
@@ -1027,6 +1027,10 @@ class ObjectManager {
 		}
 	}
 
+	/* LILAC - Add Host template to Service */
+
+	/* LILAC - Delete Host Template to Service */
+
 	/* LILAC - Delete Service */
 	public function deleteService($serviceName,$hostName, $exportConfiguration = FALSE ){
 		$error = "";
@@ -1103,7 +1107,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Create Service */
-    public function createService( $hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
+    public function createService( $hostName, $services, $host = NULL, $checkCommand=NULL, $exportConfiguration = FALSE ){
         
         $error = "";
         $success = "";
@@ -1136,6 +1140,16 @@ class ObjectManager {
 					$tempService = new NagiosService();
 					$tempService->setDescription($key);
 					$tempService->setHost($host->getId());
+					if($checkCommand != NULL){
+						$cmd = NagiosCommandPeer::getByName($checkCommand);
+						if($tempService->setCheckCommand($cmd->getId())){
+							$success .= "The command '".$checkCommand."' add to service ".$templateName."\n";
+						}else{
+							$error .= "The command '".$checkCommand."' doesn't exist.\n";
+						}
+					}
+					
+		
 					$tempService->save();
 					$success .= "Service $key added\n";
 					
