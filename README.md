@@ -106,6 +106,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getHostsByTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given template host |
 | `getHostsByHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given hostgroup |
 | `getServicesByHost` | POST | [**hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host|
+| `getService` | POST | [**serviceName, hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return the service link with the given host|
 | `getServicesByHostTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host template|
 | `getContact` | POST | [**contactName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact otherwise it return all the contact|
 | `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
@@ -119,9 +120,10 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addContactGroupToHost` | POST | [**contactGroupName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
 | `addHostTemplateToHost` | POST | [**templateHostName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a host template to a nagios host. |
 | `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact to a nagios host template. |
+| `addServiceTemplateFromService` | POST | [**serviceTemplateName, serviceName, hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service template in the given service of the specified host. |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact group to a nagios host template. |
-| `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a command to Nagios.returncode=0 or 1 if failed |
+| `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
 | `listNagiosBackends` | POST | [] | "http_code": "200 OK", "result": [with the executed actions] | Return available backend informations(log) |
@@ -136,7 +138,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteServiceTemplate` | POST | [**templateName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete the given Service template |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a command to Nagios. |
 | `deleteHost` | POST | [**hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a nagios host. |
-
+| `deleteServiceTemplateFromService` | POST | [**serviceTemplateName, serviceName, hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a service template in the given service of the specified host. |
 
 
 

@@ -49,6 +49,7 @@ addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup');
 addRoute('post', '/getCommand', 'getCommand');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate');
 addRoute('post', '/getServicesByHost', 'getServicesByHost');
+addRoute('post', '/getService', 'getService');
 addRoute('post', '/getContact', 'getContact');
 addRoute('post', '/getContactGroups', 'getContactGroups');
 addRoute('post', '/deleteContact', 'deleteContact');
@@ -56,6 +57,8 @@ addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteService', 'deleteService');
 addRoute('post', '/modifyService', 'modifyService');
 addRoute('post', '/modifyNagiosRessources', 'modifyNagiosRessources');
+addRoute('post', '/addServiceTemplateToService', 'addServiceTemplateToService');
+addRoute('post', '/deleteServiceTemplateFromService', 'deleteServiceTemplateFromService');
 
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){

@@ -273,6 +273,26 @@ class ObjectManager {
 		}
 	}
 
+	/* LILAC - Get Service  */
+	public function getService($serviceName,$hostName){
+		$nhp = new NagiosHostPeer();
+		$host = $nhp->getByName($hostName);
+		if(!$host){
+			return "No host named $hostName.\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::HOST, $host->getId());
+			$c->add(NagiosServicePeer::DESCRIPTION, $serviceName);
+			$c->addAscendingOrderByColumn(NagiosServicePeer::ID);
+			$services=NagiosServicePeer::doSelect($c);
+			if(count($services)==1){
+				return $services[0]->toArray();
+			}else{
+				return "Service didn't exist or to much services had been returned";
+			}  
+		}
+	}
+
 	/* LILAC - Get Service by Host */
 	public function getServicesByHost($hostName){
 		$nhp = new NagiosHostPeer();
@@ -765,6 +785,37 @@ class ObjectManager {
             }	
         }
 	}
+
+	/* LILAC - Add Service template to Service */
+	public function addServiceTemplateToService($serviceTemplateName, $serviceName, $hostName){
+		$error = "";
+        $success = "";
+		$code=0;
+		
+		$nhp = new NagiosHostPeer;
+		$host = $nhp->getByName($hostName);    
+		if(!$host) {
+			$error .= "Host $hostName doesn't exist\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::DESCRIPTION, $serviceName);
+			$services=$host->getNagiosServices($c);
+			if(count($services)==1){
+				$newInheritance = new NagiosServiceTemplateInheritance();
+				$newInheritance->setNagiosService($services[0]);
+				$template = NagiosServiceTemplatePeer::getByName($serviceTemplateName);
+				$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($template);
+				$newInheritance->save();
+				$success .= "Service Template $serviceTemplateName added to service $serviceName\n";
+			}else $error .= "$serviceName doesn't exist or to much result had been found.\n";
+		}
+
+		if(!empty($error)) $code=1;
+			
+		$logs = $this->getLogs($error, $success);
+		
+		return array("code"=>$code,"description"=>$logs);
+	}
            
     /* LILAC - Add Template to Host */
     public function addHostTemplateToHost( $templateHostName, $hostName, $exportConfiguration = FALSE ){
@@ -1231,19 +1282,63 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
-	
-	/* LILAC - Add Host template to Service */
 
-	/* LILAC - Delete Host Template to Service */
+	/* LILAC - Delete serviceTemplate to Service */
+	public function deleteServiceTemplateFromService($serviceTemplateName, $serviceName, $hostName){
+		$error = "";
+        $success = "";
+		$code=0;
+		
+		$nhp = new NagiosHostPeer;
+		$host = $nhp->getByName($hostName);    
+		if(!$host) {
+			$error .= "Host $hostName doesn't exist\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::DESCRIPTION, $serviceName);
+			$services=$host->getNagiosServices($c);
+			if(count($services)==1){
+				$targetTemplate = NagiosServiceTemplatePeer::getByName($serviceTemplateName);
+				$c = new Criteria();
+				$c->add(NagiosServiceTemplateInheritancePeer::SOURCE_SERVICE, $services[0]->getId());
+				$c->addAscendingOrderByColumn(NagiosServiceTemplateInheritancePeer::ORDER);
+				$inheritanceList = NagiosServiceTemplateInheritancePeer::doSelect($c);
+				$found = false;
+				foreach($inheritanceList as $inherit) {
+					if($inherit->getNagiosServiceTemplateRelatedByTargetTemplate()->getId() == $targetTemplate->getId()) {
+						// Delete the inheritance
+						$inherit->delete();
+						// Okay, regrab the list
+						$newList = NagiosServiceTemplateInheritancePeer::doSelect($c);
+						for($counter = 0; $counter < count($newList); $counter++) {
+							// Reordering
+							$newList[$counter]->setOrder($counter);
+							$newList[$counter]->save();
+						}
+						$success .= "Service Template $serviceTemplateName removed from service $serviceName\n";
+						$found=true;
+					}
+				}	
+				if(!$found) $error .= "$serviceTemplateName doesn't exist in this service.\n";
+			}else $error .= "$serviceName doesn't exist or to much result had been found.\n";
+		}
+
+		if(!empty($error)) $code=1;
+			
+		$logs = $this->getLogs($error, $success);
+		
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 
 	/* LILAC - Delete Service */
 	public function deleteService($serviceName,$hostName, $exportConfiguration = FALSE ){
 		$error = "";
         $success = "";
         $code=0;
-        $nsp = new NagiosHostPeer;
+        $nhp = new NagiosHostPeer;
 		
-		$host = $nsp->getByName($hostName);    
+		$host = $nhp->getByName($hostName);    
 		if(!$host) {
 			$code++;
 			$error .= "Host $hostName doesn't exist\n";
