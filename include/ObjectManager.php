@@ -154,6 +154,13 @@ class ObjectManager {
         return $logs;
 	}
 
+	/* LILAC - List Hosts */
+	public function listHosts( $hostName = false, $hostTemplate = false ){
+		
+		return true;
+		
+	}
+
 	/* LILAC - Get Host */
 	public function getHost( $hostName){
         $nhp = new NagiosHostPeer;
@@ -208,15 +215,303 @@ class ObjectManager {
 		}
 	}
 
+	/* LILAC - Get Contact */	
+	public function getContact($contactName=FALSE){
+		if(!$contactName){
+			$c = new Criteria();
+			$c->addAscendingOrderByColumn(NagiosContactPeer::NAME);
+			$result=array();
+			$contact_list = NagiosContactPeer::doSelect($c);
+			foreach($contact_list as $contact){
+				array_push($result,$contact->toArray());
+			}
+			return $result;
+		}else {
+			$ncp = new NagiosContactPeer;
+			// Find host contact
+			$contact = $ncp->getByName( $contactName );
+			if(!$contact) {
+				return "Contact $contactName doesn't exist\n";
+			}else{
+				return $contact->toArray();
+			}
+		}
+		
+	}
+
+	/* LILAC - Get ContactGroup */
+	public function getContactGroups($contactGroupName=FALSE){
+		if(!$contactGroupName){
+			$c = new Criteria();
+			$c->addAscendingOrderByColumn(NagiosContactGroupPeer::NAME);
+			$result=array();
+			$contactGroup_list = NagiosContactGroupPeer::doSelect($c);
+			foreach($contactGroup_list as $contactGroup){
+				array_push($result,$contactGroup->toArray());
+			}
+			return $result;
+		}else {
+			$ncgp = new NagiosContactGroupPeer;
+			// Find host contact
+			$contactGroup = $ncgp->getByName( $contactGroupName );
+			if(!$contactGroup) {
+				return "ContactGroup named $contactGroupName doesn't exist\n";
+			}else{
+				return $contactGroup->toArray();
+			}
+		}
+	}
+
+	/* LILAC - get command */
+	function getCommand($commandName){
+		$ncp = new NagiosCommandPeer;
+		$targetCommand = $ncp->getByName($commandName);
+        if(!$targetCommand) {
+            return  "The command '".$commandName."' does not exist\n";
+        }else{
+			return $targetCommand->toArray();
+		}
+	}
+
+	/* LILAC - Get Service by Host */
+	public function getServicesByHost($hostName){
+		$nhp = new NagiosHostPeer();
+		$host = $nhp->getByName($hostName);
+		if(!$host){
+			return "No host named $hostName.\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::HOST, $host->getId());
+			$c->addAscendingOrderByColumn(NagiosServicePeer::ID);
+			$services=NagiosServicePeer::doSelect($c);
+			$result= array();
+			foreach($services as $service) {
+				array_push($result,$service->toArray());
+			} 
+			return $result;
+		}
+	}
+
+	/* LILAC - Get Service by HostTemplate */	
+	public function getServicesByHostTemplate($templateHostName){	
+		$nhtp = new NagiosHostTemplatePeer();
+		$templateHost = $nhtp->getByName($templateHostName);
+		if(!$templateHost) {
+			return "No hostTemplate named $templateHostName.\n";
+		}else {
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::HOST_TEMPLATE, $templateHost->getId());
+			$c->addAscendingOrderByColumn(NagiosServicePeer::DESCRIPTION );
+			$services=NagiosServicePeer::doSelect($c);
+			$result= array();
+			foreach($services as $service) {
+				array_push($result,$service->toArray());
+			} 
+			return $result;
+		}
+	}
+
+	/* LILAC - Create Host Template */
+    function createHostTemplate( $templateHostName,$templateHostDescription="", $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        
+        
+        // Check for pre-existing host template with same name        
+        $nhtp = new NagiosHostTemplatePeer;
+		$template_host = $nhtp->getByName($templateHostName);
+		if($template_host) {
+			$code=1;
+			$error .= "A host template with that name already exists!\n";
+		}
+           
+        if( $templateHostName == NULL || $templateHostName == "" ){
+			$code=1;
+            $error .= "A host template name must be defined\n";   
+        }
+           
+           
+        if( empty($error) ) {			
+            /*---Create template---*/
+            $template = new NagiosHostTemplate();
+            $template->setName( $templateHostName );
+            $template->setDescription( $templateHostDescription );
+            $template->save();
+            
+            $success .= "Host template ".$templateHostName." created\n";
+                        
+            /*---Add host template inheritance ("GENERIC_HOST")---*/
+            $targetTemplate = $nhtp->getByName("GENERIC_HOST");
+            if(!$targetTemplate) {
+				$code=1;
+                $error .= "The target template 'GENERIC_HOST' does not exit\n";
+            }
+            else{
+                $newInheritance = new NagiosHostTemplateInheritance();
+                $newInheritance->setNagiosHostTemplateRelatedBySourceTemplate($template);
+                $newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($targetTemplate);
+                try {
+                    $newInheritance->save();
+                    $success .= "Template 'GENERIC_HOST' added to inheritance chain\n";				
+                }
+                catch(Exception $e) {
+					$code=1;
+                    $error .= $e->getMessage();
+                }   
+            }
+            
+            /*---Create Host Group with Host Template name if not exists---*/
+            if($lilac->hostgroup_exists( $templateHostName )) {
+                $nhgp = new NagiosHostgroupPeer;
+                $hostGroup = $nhgp->getByName( $templateHostName );
+            }
+            else{
+                $hostGroup = $this->createHostGroup( $templateHostName, $error, $success );   
+            }
+            
+            /*---Add Group Membership to Host template---*/
+            if( $hostGroup != NULL ){
+                $lilac->add_hostgroup_template_member( $hostGroup->getId(), $template->getId() );
+                
+                $success .= "Host group membership added to ".$templateHostName."\n";
+            }
+
+        }
+        
+        // Export
+        if( $exportConfiguration == TRUE )
+            $this->exportConfigurationToNagios($error, $success);
+                
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+    }
+    
+    /* LILAC - Create Host Group */
+    function createHostGroup( $hostGroupName, &$error = "", &$success = "", $exportConfiguration = FALSE ){
+        global $lilac;
+        $hostGroup = NULL;
+        
+        // Check for pre-existing contact with same name
+		if($lilac->hostgroup_exists( $hostGroupName )) {
+			$error .= "A host group with that name already exists!\n";
+		}
+		else {
+			// Field Error Checking
+			if( $hostGroupName == "" ) {
+				$error .= "Host group name is required\n";
+			}
+			else {
+				// All is well for error checking, add the hostgroup into the db.
+				$hostGroup = new NagiosHostgroup();
+				$hostGroup->setAlias( "host group" );
+				$hostGroup->setName( $hostGroupName );				
+				$hostGroup->save();				
+				
+                $success .= "Host group ".$hostGroupName." created\n";
+			}
+		}
+        
+        
+        return $hostGroup;
+	}
+
+	/* LILAC - Create Service */
+    public function createService( $hostName, $services, $host = NULL, $checkCommand=NULL, $exportConfiguration = FALSE ){
+        
+        $error = "";
+		$success = "";
+		$code=0;
+        	    
+        $nsp = new NagiosHostPeer;
+        
+        if( $host == NULL ){
+            $host = $nsp->getByName($hostName);
+            
+            if(!$host) {
+				$code=1;
+                $error .= "Host $hostName doesn't exist\n";
+            }
+        }
+        
+        $nstp = new NagiosServiceTemplatePeer;
+		
+        //Test if the parent templates exist
+        foreach($services as $key => $service) {
+            $templateName = $service[0];
+            $template = $nstp->getByName($templateName);
+            if(!$template) {
+				$code=1;
+				$error .= "Service Template $templateName not found\n";	
+            }       
+        }
+		
+		if(empty($error)) {	
+			try {
+				// service interface
+				foreach($services as $key => $service) {
+					$tempService = new NagiosService();
+					$tempService->setDescription($key);
+					$tempService->setHost($host->getId());
+					if($checkCommand != NULL){
+						$cmd = NagiosCommandPeer::getByName($checkCommand);
+						if($tempService->setCheckCommand($cmd->getId())){
+							$success .= "The command '".$checkCommand."' add to service ".$templateName."\n";
+						}else{
+							$code=1;
+							$error .= "The command '".$checkCommand."' doesn't exist.\n";
+						}
+					}
+					
+		
+					$tempService->save();
+					$success .= "Service $key added\n";
+					
+					$newInheritance = new NagiosServiceTemplateInheritance();
+					$newInheritance->setNagiosService($tempService);
+					$template = NagiosServiceTemplatePeer::getByName($service[0]);
+					$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($template);
+					$newInheritance->save();
+					$success .= "Service Template ".$service[0]." added to service $key\n";
+
+					for($i=1 ; $i < count($service) ; $i++) {
+						$param = new NagiosServiceCheckCommandParameter();
+						$param->setService($tempService->getId());
+						$param->setParameter($service[$i]);
+						$param->save();
+						$success .= "Command Parameter ".$service[$i]." added to $key\n";
+					}
+				}
+				
+				// Export
+                if( $exportConfiguration == TRUE )
+				    $this->exportConfigurationToNagios($error, $success);
+			}
+			catch(Exception $e) {
+				$code=1;
+				$error .= $e->getMessage()."\n";
+			}
+		}
+                
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+        
+	}
+
 	/* LILAC - Create Host and Services */
 	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
-        
+		$code=0;
+		
         $nhp = new NagiosHostPeer;
 		// Find host
 		$host = $nhp->getByName($hostName);
 		if($host) {
+			$code=1;
 			$error .= "Host $hostName already exists\n";
 		}
 
@@ -224,6 +519,7 @@ class ObjectManager {
 		// Find host template
 		$template_host = $nhtp->getByName($templateHostName);
 		if(!$template_host) {
+			$code=1;
 			$error .= "Host Template $templateHostName not found\n";
 		}
         
@@ -260,6 +556,7 @@ class ObjectManager {
 				    $this->exportConfigurationToNagios($error, $success);
 			}
 			catch(Exception $e) {
+				$code=1;
 				$error .= $e->getMessage()."\n";
 			}
 		}
@@ -267,173 +564,101 @@ class ObjectManager {
         
         $logs = $this->getLogs($error, $success);
         
-        return $logs;
-        
+        return array("code"=>$code,"description"=>$logs);        
 	}
     
-	/* LILAC - Delete Host */
-	public function deleteHost( $hostName, $exportConfiguration = FALSE ){
+	/* LILAC - create service template */
+	public function createServiceTemplate($templateName, $templateDescription="", $servicesGroup=array(), $contacts=array(), $contactsGroup=array(), $checkCommand, $checkCommandParameters=array(), $templatesToInherit=array(), $exportConfiguration = FALSE){
 		$error = "";
 		$success = "";
-
-		try {
-			$nhp = new NagiosHostPeer;
-			$host = $nhp->getByName($hostName);
-
-			if($host) {
-				$host->delete();
-				$success .= "Host ".$hostName." deleted\n";
-			} else {
-				$error .= "Host ".$hostName." not found\n";
-			}
-
-			// Export
-			if( $exportConfiguration == TRUE )
-				$this->exportConfigurationToNagios();
-		}
-		catch(Exception $e) {
-			$error .= $e->getMessage()."\n";
-		}
-
-		$logs = $this->getLogs($error, $success);
-		return $logs;
-	}
-    	
-	/* LILAC - Create Host Template */
-    function createHostTemplate( $templateHostName,$templateHostDescription="", $exportConfiguration = FALSE ){
-        global $lilac;
-        $error = "";
-        $success = "";
-        
-        
-        // Check for pre-existing host template with same name        
-        $nhtp = new NagiosHostTemplatePeer;
-		$template_host = $nhtp->getByName($templateHostName);
-		if($template_host) {
-			$error .= "A host template with that name already exists!\n";
-		}
-           
-        if( $templateHostName == NULL || $templateHostName == "" ){
-            $error .= "A host template name must be defined\n";   
-        }
-           
-           
-        if( empty($error) ) {			
-            /*---Create template---*/
-            $template = new NagiosHostTemplate();
-            $template->setName( $templateHostName );
-            $template->setDescription( $templateHostDescription );
-            $template->save();
-            
-            $success .= "Host template ".$templateHostName." created\n";
-                        
-            /*---Add host template inheritance ("GENERIC_HOST")---*/
-            $targetTemplate = $nhtp->getByName("GENERIC_HOST");
-            if(!$targetTemplate) {
-                $error .= "The target template 'GENERIC_HOST' does not exit\n";
-            }
-            else{
-                $newInheritance = new NagiosHostTemplateInheritance();
-                $newInheritance->setNagiosHostTemplateRelatedBySourceTemplate($template);
-                $newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($targetTemplate);
-                try {
-                    $newInheritance->save();
-                    $success .= "Template 'GENERIC_HOST' added to inheritance chain\n";				
-                }
-                catch(Exception $e) {
-                    $error .= $e->getMessage();
-                }   
-            }
-            
-            /*---Create Host Group with Host Template name if not exists---*/
-            if($lilac->hostgroup_exists( $templateHostName )) {
-                $nhgp = new NagiosHostgroupPeer;
-                $hostGroup = $nhgp->getByName( $templateHostName );
-            }
-            else{
-                $hostGroup = $this->createHostGroup( $templateHostName, $error, $success );   
-            }
-            
-            /*---Add Group Membership to Host template---*/
-            if( $hostGroup != NULL ){
-                $lilac->add_hostgroup_template_member( $hostGroup->getId(), $template->getId() );
-                
-                $success .= "Host group membership added to ".$templateHostName."\n";
-            }
-
-        }
-        
-        // Export
-        if( $exportConfiguration == TRUE )
-            $this->exportConfigurationToNagios($error, $success);
-                
-        $logs = $this->getLogs($error, $success);
-        
-        return $logs;
-    }
-    
-    /* LILAC - Create Host Group */
-    function createHostGroup( $hostGroupName, &$error = "", &$success = "", $exportConfiguration = FALSE ){
-        global $lilac;
-        $hostGroup = NULL;
-        
-        // Check for pre-existing contact with same name
-		if($lilac->hostgroup_exists( $hostGroupName )) {
-			$error .= "A host group with that name already exists!\n";
-		}
-		else {
-			// Field Error Checking
-			if( $hostGroupName == "" ) {
-				$error .= "Host group name is required\n";
-			}
-			else {
-				// All is well for error checking, add the hostgroup into the db.
-				$hostGroup = new NagiosHostgroup();
-				$hostGroup->setAlias( "host group" );
-				$hostGroup->setName( $hostGroupName );				
-				$hostGroup->save();				
-				
-                $success .= "Host group ".$hostGroupName." created\n";
-			}
-		}
-        
-        
-        return $hostGroup;
-	}
-	
-	/* LILAC - get command */
-	function getCommand($commandName){
-		$ncp = new NagiosCommandPeer;
-		$targetCommand = $ncp->getByName($commandName);
-        if(!$targetCommand) {
-            return  "The command '".$commandName."' does not exist\n";
-        }else{
-			return $targetCommand->toArray();
-		}
-	}
-	
-	/* LILAC - delete Command */
-    function deleteCommand($commandName){
-		$error = "";
-		$success = "";
+		$code=0;
 		
 		try{
-			$ncp = new NagiosCommandPeer;
-
-			$targetCommand = $ncp->getByName($commandName);
-			if(!$targetCommand) {
-				$error .= "The command '".$commandName."'does not exist\n";
-			}
-			else{
-				$targetCommand->delete();
-				$success .= "The command '".$commandName."' deleted.\n";
+			$t=NagiosServiceTemplatePeer::getByName($templateName);
+			if(!$t){
+				$nst=new NagiosServiceTemplate;
+				$nst->setName($templateName);
+				$nst->setDescription($templateDescription);
+				
+				if($templatesToInherit=array()){
+					if($nst->addTemplateInheritance("GENERIC_SERVICE")){
+						$success .= "The Template 'GENERIC_SERVICE' add to service Template ".$templateName."\n";
+					}else {
+						$code=1;
+						$error .= "The template 'GENERIC_SERVICE' doesn't exist.\n";
+					}
+				}else{
+					foreach($templatesToInherit as $template){
+						if($nst->addTemplateInheritance($template)){
+							$success .= "The Template '".$template."' add to service Template ".$templateName."\n";
+						}else {
+							$code=1;
+							$error .= "The template '".$template."' doesn't exist.\n";
+						}
+					}
+				}
+	
+				foreach($servicesGroup as $serviceGroup){
+					if($nst->addServicegroupByName($serviceGroup)){
+						$success .= "The Service group '".$serviceGroup."' add to service Template ".$templateName."\n";
+					}else {
+						$code=1;
+						$error .= "The Service group '".$serviceGroup."' doesn't exist.\n";
+					}
+				}
+				
+				foreach($contactsGroup as $contactGroup){
+					if($nst->addServicegroupByName($contactGroup)){
+						$success .= "The Contact group '".$contactGroup."' add to service Template ".$templateName."\n";
+					}else {
+						$code=1;
+						$error .= "The Contact group '".$contactGroup."' doesn't exist.\n";
+					}
+				}
+				
+				foreach($contacts as $contact){
+					if($nst->addServicegroupByName($contact)){
+						$success .= "The Contact '".$contact."' add to service Template ".$templateName."\n";
+					}else {
+						$code=1;
+						$error .= "The Contact '".$contact."' doesn't exist.\n";
+					}
+				}
+				
+	
+				if($nst->setCheckCommandByName($checkCommand)){
+					$success .= "The command '".$checkCommand."' add to service Template ".$templateName."\n";
+				}else{
+					$code=1;
+					$error .= "The command '".$checkCommand."' doesn't exist.\n";
+				}
+	
+				foreach($checkCommandParameters as $arg){
+					if($nst->addCheckCommandParameter($arg)){
+						$success .= "The parameter'".$arg."' add to service Template ".$templateName."\n";
+					}else {
+						$code=1;
+						$error .= "The Contact '".$arg."' doesn't exist.\n";
+					}
+				}
+	
+				// Export
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
+	
+			}else{
+				$code=1;
+				$error .= "The Service template '".$templateName."' already exist.\n";
 			}
 		}catch(Exception $e) {
+			$code=1;
 			$error .= $e->getMessage()."\n";
 		}
+		
+
 		$logs = $this->getLogs($error, $success);
         
-        return $logs;
+		return array("code"=>$code,"description"=>$logs);
 	}
 
 	/* LILAC - add Command */
@@ -476,346 +701,6 @@ class ObjectManager {
         return $result;
 	}
 	
-	/* LILAC - Modify Command */
-    public function modifyCommand($commandName, $newCommandName=NULL, $commandLine, $commandDescription=NULL){
-        /*---Modify check command ==> 'dummy_ok'---*/
-		//TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
-		$error = "";
-		$success = "";
-		$code=0;
-		$changes=0;
-		$ncp = new NagiosCommandPeer;
-		$targetCommand = $ncp->getByName($commandName);
-        if(!$targetCommand) {
-			$code=1;
-            $error .= $error .= "The command '".$commandName."' does not exist\n";
-        }
-        else{
-			if(isset($newCommandName) && $newCommandName!=$commandName){
-				$targetCommand->setName($newCommandName);
-				$changes++;
-			} 
-			if(isset($commandDescription) && $commandDescription!=$targetCommand->getDescription()){
-				$targetCommand->setDescription($commandDescription);
-				$changes++;
-			} 
-			if($commandLine != $targetCommand->getLine()){
-				$targetCommand->setLine($commandLine);
-				$changes++;
-			}
-			
-			$state=$targetCommand->save();   
-
-			//if no changes state = false 
-			if(!$state){
-				$code=1;
-				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
-			}else{
-				$success .= "The command '".$targetCommand->getName()."' success to update.\n";
-			} 
-		}
-		
-		$logs = $this->getLogs($error, $success);
-        
-        $result=array("code"=>$code,"description"=>$logs,"changes"=>$changes);
-        return $result;
-    }
-           
-    /* LILAC - Add Template to Host */
-    public function addHostTemplateToHost( $templateHostName, $hostName, $exportConfiguration = FALSE ){
-        $error = "";
-        $success = "";
-        
-        $nhp = new NagiosHostPeer;
-        $host = $nhp->getByName($hostName);
-        
-		if(!$host) {
-			$error .= "Host $hostName not found\n";
-		}
-        
-        $nhtp = new NagiosHostTemplatePeer;
-		// Find host template
-		$template_host = $nhtp->getByName($templateHostName);
-		if(!$template_host) {
-			$error .= "Host Template $templateHostName not found\n";
-		}
-        
-        	
-        // We need to get the count of templates already inherited
-        if( $host ){
-            $templateList = $host->getNagiosHostTemplateInheritances();
-            foreach($templateList as $tempTemplate) {
-                if($tempTemplate->getId() == $template_host->getId()) {
-                    $error .= "That template already exists in the inheritance chain\n";
-                }
-            }    
-        }
-        
-        if(empty($error)) {
-            $newInheritance = new NagiosHostTemplateInheritance();
-            $newInheritance->setNagiosHost($host);
-            $newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($template_host);
-            $newInheritance->setOrder(count($templateList));
-            try {
-                $newInheritance->save();
-                $success .= "Host template ".$templateHostName." added to ".$hostName."\n";
-                
-                // Export
-                if( $exportConfiguration == TRUE )
-                    $this->exportConfigurationToNagios($error, $success);
-            }
-            catch(Exception $e) {
-                $error .= $e->getMessage();
-            }		
-        }
-        
-        $logs = $this->getLogs($error, $success);
-        
-        return $logs;
-	}
-    
-    /* LILAC - Add Contact to Host Template */
-	public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
-        $error = "";
-        $success = "";
-
-        $ncp = new NagiosContactPeer;
-        // Find host contact
-        $tempContact = $ncp->getByName( $contactName );
-        if(!$tempContact) {
-            $error .= "Contact $contactName not found\n";	
-        }
-        
-        $nhtp = new NagiosHostTemplatePeer;
-		// Find host template
-		$template_host = $nhtp->getByName($templateHostName);
-		if(!$template_host) {
-			$error .= "Host Template $templateHostName not found\n";
-		}
-
-        
-        if( empty($error) ) {
-            $c = new Criteria();
-            $c->add(NagiosHostContactMemberPeer::TEMPLATE, $template_host->getId());
-            $c->add(NagiosHostContactMemberPeer::CONTACT, $tempContact->getId());
-            $membership = NagiosHostContactMemberPeer::doSelectOne($c);
-            if($membership) {
-                $error .= "That contact already exists in that list!\n";
-            }
-            else {
-                $membership = new NagiosHostContactMember();
-                $membership->setTemplate( $template_host->getId() );
-                $membership->setNagiosContact($tempContact);
-                $membership->save();
-                $success .= "Contact ".$contactName." added to host template ".$templateHostName."\n";
-                
-                // Export
-                if( $exportConfiguration == TRUE )
-                    $this->exportConfigurationToNagios($error, $success);
-            }
-        } 
-        
-        $logs = $this->getLogs($error, $success);
-        
-        return $logs;
-    }
-    
-	/* LILAC - Add Contact Group to Host Template */
-    public function addContactGroupToHostTemplate( $contactGroupName, $templateHostName, $exportConfiguration = FALSE ){
-        $error = "";
-        $success = "";
-
-        $ncgp = new NagiosContactGroupPeer;
-        $tempContactGroup = $ncgp->getByName( $contactGroupName );
-        if(!$tempContactGroup) {
-            $error .= "Contact group $contactGroupName not found\n";	
-        }
-        
-        $nhtp = new NagiosHostTemplatePeer;
-		// Find host template
-		$template_host = $nhtp->getByName($templateHostName);
-		if(!$template_host) {
-			$error .= "Host Template $templateHostName not found\n";
-		}
-        
-        if( empty($error) ) {
-            $c = new Criteria();
-            $c->add(NagiosHostContactgroupPeer::HOST_TEMPLATE, $template_host->getId());
-            $c->add(NagiosHostContactgroupPeer::CONTACTGROUP, $tempContactGroup->getId());
-            $membership = NagiosHostContactgroupPeer::doSelectOne($c);
-            if($membership) {
-                $error .= "That contact group already exists in that list!\n";
-            }
-            else {
-                $membership = new NagiosHostContactgroup();
-                $membership->setHostTemplate( $template_host->getId() );
-                $membership->setNagiosContactgroup($tempContactGroup);
-                $membership->save();
-                $success .= "Contact group ".$contactGroupName." added to host template ".$templateHostName."\n";
-                
-                // Export
-                if( $exportConfiguration == TRUE )
-                    $this->exportConfigurationToNagios($error, $success);
-            }
-        } 
-             
-        $logs = $this->getLogs($error, $success);
-        
-        return $logs;
-    }
-    
-    /* LILAC - Add Contact to Host */
-	public function addContactToExistingHost( $hostName, $contactName, $exportConfiguration = FALSE ){
-        $error = "";
-        $success = "";
-        
-        $nhp = new NagiosHostPeer;
-        $host = $nhp->getByName($hostName);
-        
-		if(!$host) {
-			$error .= "Host $hostName not found\n";
-		}
-        
-        // Lauch actions if no errors
-		if(empty($error)) {	
-            if( $contactName != NULL ){
-                //Add a contact to a host
-                $this->addContactToHost( $host, $contactName, $error, $success );
-                
-                // Export
-                if( $exportConfiguration == TRUE )
-                    $this->exportConfigurationToNagios($error, $success);
-            }
-        }
-        
-        $logs = $this->getLogs($error, $success);
-        
-        return $logs;
-    }
-    
-	/* LILAC - Add Contact Group to Host */
-    public function addContactGroupToExistingHost( $hostName, $contactGroupName, $exportConfiguration = FALSE ){
-        $error = "";
-        $success = "";
-        
-        $nhp = new NagiosHostPeer;
-        $host = $nhp->getByName($hostName);
-        
-		if(!$host) {
-			$error .= "Host $hostName not found\n";
-		}
-        
-        // Lauch actions if no errors
-		if(empty($error)) {	
-            if( $contactGroupName != NULL ){
-                //Add a contact group to a host
-                $this->addContactGroupToHost( $host, $contactGroupName, $error, $success );
-                
-                // Export
-                if( $exportConfiguration == TRUE )
-                    $this->exportConfigurationToNagios($error, $success);
-            }
-        }
-        
-        $logs = $this->getLogs($error, $success);
-        
-        return $logs;
-	}
-
-	/* LILAC - Delete contact Group */
-	public function deleteContactGroup($contactGroupName){
-		$error = "";
-		$success = "";
-		try {
-			$ncp = new NagiosContactGroupPeer;
-			// Find host contact
-			$contactGroup = $ncp->getByName( $contactGroupName );
-			if(!$contactGroup) {
-				$error .= "Contact Group $contactGroupName doesn't exist\n";
-			}else{
-				$contactGroup->delete();
-				$success .="$contactGroupName as been deleted\n";
-			}
-		}catch(Exception $e) {
-			$error .= $e->getMessage()."\n";
-		}
-
-		$logs = $this->getLogs($error, $success);
-        
-        return $logs;
-	}
-
-	/* LILAC - Delete contact */
-	public function deleteContact($contactName){
-		$error = "";
-		$success = "";
-		try {
-			$ncp = new NagiosContactPeer;
-			// Find host contact
-			$contact = $ncp->getByName( $contactName );
-			if(!$contact) {
-				$error .= "Contact $contactName doesn't exist\n";
-			}else{
-				$contact->delete();
-				$success .="$contactName as been deleted\n";
-			}
-		}catch(Exception $e) {
-			$error .= $e->getMessage()."\n";
-		}
-
-		$logs = $this->getLogs($error, $success);
-        
-        return $logs;
-	}
-	
-	/* LILAC - Get Contact */	
-	public function getContact($contactName=FALSE){
-		if(!$contactName){
-			$c = new Criteria();
-			$c->addAscendingOrderByColumn(NagiosContactPeer::NAME);
-			$result=array();
-			$contact_list = NagiosContactPeer::doSelect($c);
-			foreach($contact_list as $contact){
-				array_push($result,$contact->toArray());
-			}
-			return $result;
-		}else {
-			$ncp = new NagiosContactPeer;
-			// Find host contact
-			$contact = $ncp->getByName( $contactName );
-			if(!$contact) {
-				return "Contact $contactName doesn't exist\n";
-			}else{
-				return $contact->toArray();
-			}
-		}
-		
-	}
-
-
-	/* LILAC - Get ContactGroup */
-	public function getContactGroups($contactGroupName=FALSE){
-		if(!$contactGroupName){
-			$c = new Criteria();
-			$c->addAscendingOrderByColumn(NagiosContactGroupPeer::NAME);
-			$result=array();
-			$contactGroup_list = NagiosContactGroupPeer::doSelect($c);
-			foreach($contactGroup_list as $contactGroup){
-				array_push($result,$contactGroup->toArray());
-			}
-			return $result;
-		}else {
-			$ncgp = new NagiosContactGroupPeer;
-			// Find host contact
-			$contactGroup = $ncgp->getByName( $contactGroupName );
-			if(!$contactGroup) {
-				return "ContactGroup named $contactGroupName doesn't exist\n";
-			}else{
-				return $contactGroup->toArray();
-			}
-		}
-	}
-    
 	/* LILAC - Add Contact */
     public function addContactToHost( $tempHost, $contactName, &$error, &$success, $exportConfiguration = FALSE ){
         $ncp = new NagiosContactPeer;
@@ -880,182 +765,212 @@ class ObjectManager {
             }	
         }
 	}
-
-	/* LILAC - delete service template */
-    public function deleteServiceTemplate($templateName){
-		$error = "";
+           
+    /* LILAC - Add Template to Host */
+    public function addHostTemplateToHost( $templateHostName, $hostName, $exportConfiguration = FALSE ){
+        $error = "";
 		$success = "";
-		
-		try{
-			$targetTemplate = NagiosServiceTemplatePeer::getByName($templateName);
-
-			if(!$targetTemplate) {
-				$error .= "The command '".$templateName."'does not exist\n";
-			}
-			else{
-				$targetTemplate->delete();
-				$success .= "The command '".$templateName."' deleted.\n";
-			}
-		}catch(Exception $e) {
-			$error .= $e->getMessage()."\n";
-		}
-		$logs = $this->getLogs($error, $success);
+		$code = 0;
         
-        return $logs;
-	}
-	
-	/* LILAC - create service template */
-	public function createServiceTemplate($templateName, $templateDescription="", $servicesGroup=array(), $contacts=array(), $contactsGroup=array(), $checkCommand, $checkCommandParameters=array(), $templatesToInherit=array(), $exportConfiguration = FALSE){
-		$error = "";
-		$success = "";
-		
-		try{
-			$t=NagiosServiceTemplatePeer::getByName($templateName);
-			if(!$t){
-				$nst=new NagiosServiceTemplate;
-				$nst->setName($templateName);
-				$nst->setDescription($templateDescription);
-				
-				if($templatesToInherit=array()){
-					if($nst->addTemplateInheritance("GENERIC_SERVICE")){
-						$success .= "The Template 'GENERIC_SERVICE' add to service Template ".$templateName."\n";
-					}else {
-						$error .= "The template 'GENERIC_SERVICE' doesn't exist.\n";
-					}
-				}else{
-					foreach($templatesToInherit as $template){
-						if($nst->addTemplateInheritance($template)){
-							$success .= "The Template '".$template."' add to service Template ".$templateName."\n";
-						}else {
-							$error .= "The template '".$template."' doesn't exist.\n";
-						}
-					}
-				}
-	
-				foreach($servicesGroup as $serviceGroup){
-					if($nst->addServicegroupByName($serviceGroup)){
-						$success .= "The Service group '".$serviceGroup."' add to service Template ".$templateName."\n";
-					}else {
-						$error .= "The Service group '".$serviceGroup."' doesn't exist.\n";
-					}
-				}
-				
-				foreach($contactsGroup as $contactGroup){
-					if($nst->addServicegroupByName($contactGroup)){
-						$success .= "The Contact group '".$contactGroup."' add to service Template ".$templateName."\n";
-					}else {
-						$error .= "The Contact group '".$contactGroup."' doesn't exist.\n";
-					}
-				}
-				
-				foreach($contacts as $contact){
-					if($nst->addServicegroupByName($contact)){
-						$success .= "The Contact '".$contact."' add to service Template ".$templateName."\n";
-					}else {
-						$error .= "The Contact '".$contact."' doesn't exist.\n";
-					}
-				}
-				
-	
-				if($nst->setCheckCommandByName($checkCommand)){
-					$success .= "The command '".$checkCommand."' add to service Template ".$templateName."\n";
-				}else{
-					$error .= "The command '".$checkCommand."' doesn't exist.\n";
-				}
-	
-				foreach($checkCommandParameters as $arg){
-					if($nst->addCheckCommandParameter($arg)){
-						$success .= "The parameter'".$arg."' add to service Template ".$templateName."\n";
-					}else {
-						$error .= "The Contact '".$arg."' doesn't exist.\n";
-					}
-				}
-	
-				// Export
-				if( $exportConfiguration == TRUE )
-					$this->exportConfigurationToNagios($error, $success);
-	
-			}else{
-				$error .= "The Service template '".$templateName."' already exist.\n";
-			}
-		}catch(Exception $e) {
-			$error .= $e->getMessage()."\n";
-		}
-		
-
-		$logs = $this->getLogs($error, $success);
+        $nhp = new NagiosHostPeer;
+        $host = $nhp->getByName($hostName);
         
-        return $logs;
-
-	}
-	
-	/* LILAC - Get Service by Host */
-	public function getServicesByHost($hostName){
-		$nhp = new NagiosHostPeer();
-		$host = $nhp->getByName($hostName);
-		if(!$host){
-			return "No host named $hostName.\n";
-		}else{
-			$c = new Criteria();
-			$c->add(NagiosServicePeer::HOST, $host->getId());
-			$c->addAscendingOrderByColumn(NagiosServicePeer::ID);
-			$services=NagiosServicePeer::doSelect($c);
-			$result= array();
-			foreach($services as $service) {
-				array_push($result,$service->toArray());
-			} 
-			return $result;
-		}
-	}
-
-	/* LILAC - Get Service by HostTemplate */	
-	public function getServicesByHostTemplate($templateHostName){	
-		$nhtp = new NagiosHostTemplatePeer();
-		$templateHost = $nhtp->getByName($templateHostName);
-		if(!$templateHost) {
-			return "No hostTemplate named $templateHostName.\n";
-		}else {
-			$c = new Criteria();
-			$c->add(NagiosServicePeer::HOST_TEMPLATE, $templateHost->getId());
-			$c->addAscendingOrderByColumn(NagiosServicePeer::DESCRIPTION );
-			$services=NagiosServicePeer::doSelect($c);
-			$result= array();
-			foreach($services as $service) {
-				array_push($result,$service->toArray());
-			} 
-			return $result;
-		}
-	}
-
-	/* LILAC - Add Host template to Service */
-
-	/* LILAC - Delete Host Template to Service */
-
-	/* LILAC - Delete Service */
-	public function deleteService($serviceName,$hostName, $exportConfiguration = FALSE ){
-		$error = "";
-        $success = "";
-        $code=0;
-        $nsp = new NagiosHostPeer;
-		
-		$host = $nsp->getByName($hostName);    
 		if(!$host) {
-			$code++;
-			$error .= "Host $hostName doesn't exist\n";
-		}else{
-			$c = new Criteria();
-			$c->add(NagiosServicePeer::DESCRIPTION, $serviceName);
-			$services=$host->getNagiosServices($c);
-			if(count($services)==1){
-				$services[0]->delete();
-				$success .= "$serviceName in host $hostName had been deleted";
-			}else{
-				$error .= "Service didn't exist or to much services had been returned";
-				$code++;
-			}  
+			$error .= "Host $hostName not found\n";
 		}
-		
-		$logs = $this->getLogs($error, $success);
+        
+        $nhtp = new NagiosHostTemplatePeer;
+		// Find host template
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			$error .= "Host Template $templateHostName not found\n";
+		}
+        
+        	
+        // We need to get the count of templates already inherited
+        if( $host ){
+            $templateList = $host->getNagiosHostTemplateInheritances();
+            foreach($templateList as $tempTemplate) {
+                if($tempTemplate->getId() == $template_host->getId()) {
+                    $error .= "That template already exists in the inheritance chain\n";
+                }
+            }    
+        }
+        
+        if(empty($error)) {
+            $newInheritance = new NagiosHostTemplateInheritance();
+            $newInheritance->setNagiosHost($host);
+            $newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($template_host);
+            $newInheritance->setOrder(count($templateList));
+            try {
+                $newInheritance->save();
+                $success .= "Host template ".$templateHostName." added to ".$hostName."\n";
+                
+                // Export
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            catch(Exception $e) {
+				$code=1;
+                $error .= $e->getMessage();
+            }		
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+		return array("code"=>$code,"description"=>$logs);
+	}
+    
+    /* LILAC - Add Contact to Host Template */
+	public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+
+        $ncp = new NagiosContactPeer;
+        // Find host contact
+        $tempContact = $ncp->getByName( $contactName );
+        if(!$tempContact) {
+            $error .= "Contact $contactName not found\n";	
+        }
+        
+        $nhtp = new NagiosHostTemplatePeer;
+		// Find host template
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			$error .= "Host Template $templateHostName not found\n";
+		}
+
+        
+        if( empty($error) ) {
+            $c = new Criteria();
+            $c->add(NagiosHostContactMemberPeer::TEMPLATE, $template_host->getId());
+            $c->add(NagiosHostContactMemberPeer::CONTACT, $tempContact->getId());
+            $membership = NagiosHostContactMemberPeer::doSelectOne($c);
+            if($membership) {
+				$code=1;
+                $error .= "That contact already exists in that list!\n";
+            }
+            else {
+                $membership = new NagiosHostContactMember();
+                $membership->setTemplate( $template_host->getId() );
+                $membership->setNagiosContact($tempContact);
+                $membership->save();
+                $success .= "Contact ".$contactName." added to host template ".$templateHostName."\n";
+                
+                // Export
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+    }
+    
+	/* LILAC - Add Contact Group to Host Template */
+    public function addContactGroupToHostTemplate( $contactGroupName, $templateHostName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+
+        $ncgp = new NagiosContactGroupPeer;
+        $tempContactGroup = $ncgp->getByName( $contactGroupName );
+        if(!$tempContactGroup) {
+            $error .= "Contact group $contactGroupName not found\n";	
+        }
+        
+        $nhtp = new NagiosHostTemplatePeer;
+		// Find host template
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			$error .= "Host Template $templateHostName not found\n";
+		}
+        
+        if( empty($error) ) {
+            $c = new Criteria();
+            $c->add(NagiosHostContactgroupPeer::HOST_TEMPLATE, $template_host->getId());
+            $c->add(NagiosHostContactgroupPeer::CONTACTGROUP, $tempContactGroup->getId());
+            $membership = NagiosHostContactgroupPeer::doSelectOne($c);
+            if($membership) {
+				$code=1;
+                $error .= "That contact group already exists in that list!\n";
+            }
+            else {
+                $membership = new NagiosHostContactgroup();
+                $membership->setHostTemplate( $template_host->getId() );
+                $membership->setNagiosContactgroup($tempContactGroup);
+                $membership->save();
+                $success .= "Contact group ".$contactGroupName." added to host template ".$templateHostName."\n";
+                
+                // Export
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+        }else $code=1;
+             
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+    }
+    
+    /* LILAC - Add Contact to Host */
+	public function addContactToExistingHost( $hostName, $contactName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nhp = new NagiosHostPeer;
+        $host = $nhp->getByName($hostName);
+        
+		if(!$host) {
+			$error .= "Host $hostName not found\n";
+		}
+        
+        // Lauch actions if no errors
+		if(empty($error)) {	
+            if( $contactName != NULL ){
+                //Add a contact to a host
+                $this->addContactToHost( $host, $contactName, $error, $success );
+                
+                // Export
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+    }
+    
+	/* LILAC - Add Contact Group to Host */
+    public function addContactGroupToExistingHost( $hostName, $contactGroupName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code =0;
+        
+        $nhp = new NagiosHostPeer;
+        $host = $nhp->getByName($hostName);
+        
+		if(!$host) {
+			$error .= "Host $hostName not found\n";
+		}
+        
+        // Lauch actions if no errors
+		if(empty($error)) {	
+            if( $contactGroupName != NULL ){
+                //Add a contact group to a host
+                $this->addContactGroupToHost( $host, $contactGroupName, $error, $success );
+                
+                // Export
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
 	}
@@ -1092,9 +1007,9 @@ class ObjectManager {
 					
 
 				}
-				
 				$success .= "$serviceName in host $hostName has been updated.";
 				$services[0]->save();
+
 			}else{
 				$error .= "Service didn't exist or to much services had been returned";
 				$code++;
@@ -1106,95 +1021,55 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	/* LILAC - Create Service */
-    public function createService( $hostName, $services, $host = NULL, $checkCommand=NULL, $exportConfiguration = FALSE ){
-        
-        $error = "";
-        $success = "";
-        	    
-        $nsp = new NagiosHostPeer;
-        
-        if( $host == NULL ){
-            $host = $nsp->getByName($hostName);
-            
-            if(!$host) {
-                $error .= "Host $hostName doesn't exist\n";
-            }
+	/* LILAC - Modify Command */
+    public function modifyCommand($commandName, $newCommandName=NULL, $commandLine, $commandDescription=NULL){
+        /*---Modify check command ==> 'dummy_ok'---*/
+		//TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
+		$error = "";
+		$success = "";
+		$code=0;
+		$changes=0;
+		$ncp = new NagiosCommandPeer;
+		$targetCommand = $ncp->getByName($commandName);
+        if(!$targetCommand) {
+			$code=1;
+            $error .= $error .= "The command '".$commandName."' does not exist\n";
         }
-        
-        $nstp = new NagiosServiceTemplatePeer;
-		
-        //Test if the parent templates exist
-        foreach($services as $key => $service) {
-            $templateName = $service[0];
-            $template = $nstp->getByName($templateName);
-            if(!$template) {
-                $error .= "Service Template $templateName not found\n";	
-            }       
-        }
-		
-		if(empty($error)) {	
-			try {
-				// service interface
-				foreach($services as $key => $service) {
-					$tempService = new NagiosService();
-					$tempService->setDescription($key);
-					$tempService->setHost($host->getId());
-					if($checkCommand != NULL){
-						$cmd = NagiosCommandPeer::getByName($checkCommand);
-						if($tempService->setCheckCommand($cmd->getId())){
-							$success .= "The command '".$checkCommand."' add to service ".$templateName."\n";
-						}else{
-							$error .= "The command '".$checkCommand."' doesn't exist.\n";
-						}
-					}
-					
-		
-					$tempService->save();
-					$success .= "Service $key added\n";
-					
-					$newInheritance = new NagiosServiceTemplateInheritance();
-					$newInheritance->setNagiosService($tempService);
-					$template = NagiosServiceTemplatePeer::getByName($service[0]);
-					$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($template);
-					$newInheritance->save();
-					$success .= "Service Template ".$service[0]." added to service $key\n";
+        else{
+			if(isset($newCommandName) && $newCommandName!=$commandName){
+				$targetCommand->setName($newCommandName);
+				$changes++;
+			} 
+			if(isset($commandDescription) && $commandDescription!=$targetCommand->getDescription()){
+				$targetCommand->setDescription($commandDescription);
+				$changes++;
+			} 
+			if($commandLine != $targetCommand->getLine()){
+				$targetCommand->setLine($commandLine);
+				$changes++;
+			}
+			
+			$state=$targetCommand->save();   
 
-					for($i=1 ; $i < count($service) ; $i++) {
-						$param = new NagiosServiceCheckCommandParameter();
-						$param->setService($tempService->getId());
-						$param->setParameter($service[$i]);
-						$param->save();
-						$success .= "Command Parameter ".$service[$i]." added to $key\n";
-					}
-				}
-				
-				// Export
-                if( $exportConfiguration == TRUE )
-				    $this->exportConfigurationToNagios($error, $success);
-			}
-			catch(Exception $e) {
-				$error .= $e->getMessage()."\n";
-			}
+			//if no changes state = false 
+			if(!$state){
+				$code=1;
+				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
+			}else{
+				$success .= "The command '".$targetCommand->getName()."' success to update.\n";
+			} 
 		}
-                
-        $logs = $this->getLogs($error, $success);
-        
-        return $logs;
-        
-	}
-    
-	/* LILAC - List Hosts */
-	public function listHosts( $hostName = false, $hostTemplate = false ){
 		
-		return true;
-		
+		$logs = $this->getLogs($error, $success);
+        
+        $result=array("code"=>$code,"description"=>$logs,"changes"=>$changes);
+        return $result;
 	}
 
 	/* LILAC - modify nagiosResources */
 	public function modifyNagiosRessources($ressources){
 		$error = "";
-        $success = "";
+		$success = "";
 		$code=0;
 		try{
 			$resourceCfg = NagiosResourcePeer::doSelectOne(new Criteria());
@@ -1221,6 +1096,174 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 
+	/* LILAC - Delete contact Group */
+	public function deleteContactGroup($contactGroupName){
+		$error = "";
+		$success = "";
+		$code = 0;
+		try {
+			$ncp = new NagiosContactGroupPeer;
+			// Find host contact
+			$contactGroup = $ncp->getByName( $contactGroupName );
+			if(!$contactGroup) {
+				$code=1;
+				$error .= "Contact Group $contactGroupName doesn't exist\n";
+			}else{
+				$contactGroup->delete();
+				$success .="$contactGroupName as been deleted\n";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete contact */
+	public function deleteContact($contactName){
+		$error = "";
+		$success = "";
+		$code = 0;
+		try {
+			$ncp = new NagiosContactPeer;
+			// Find host contact
+			$contact = $ncp->getByName( $contactName );
+			if(!$contact) {
+				$code=1;
+				$error .= "Contact $contactName doesn't exist\n";
+			}else{
+				$contact->delete();
+				$success .="$contactName as been deleted\n";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - delete service template */
+    public function deleteServiceTemplate($templateName){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetTemplate = NagiosServiceTemplatePeer::getByName($templateName);
+
+			if(!$targetTemplate) {
+				$code=1;
+				$error .= "The command '".$templateName."'does not exist\n";
+			}
+			else{
+				$targetTemplate->delete();
+				$success .= "The command '".$templateName."' deleted.\n";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		$logs = $this->getLogs($error, $success);
+        
+        return $logs;
+	}
+
+	/* LILAC - Delete Host */
+	public function deleteHost( $hostName, $exportConfiguration = FALSE ){
+		$error = "";
+		$success = "";
+		$code=0;
+
+		try {
+			$nhp = new NagiosHostPeer;
+			$host = $nhp->getByName($hostName);
+
+			if($host) {
+				$host->delete();
+				$success .= "Host ".$hostName." deleted\n";
+			} else {
+				$code=1;
+				$error .= "Host ".$hostName." not found\n";
+			}
+
+			// Export
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios();
+		}
+		catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/* LILAC - delete Command */
+    function deleteCommand($commandName){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$ncp = new NagiosCommandPeer;
+
+			$targetCommand = $ncp->getByName($commandName);
+			if(!$targetCommand) {
+				$code=1;
+				$error .= "The command '".$commandName."'does not exist\n";
+			}
+			else{
+				$targetCommand->delete();
+				$success .= "The command '".$commandName."' deleted.\n";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/* LILAC - Add Host template to Service */
+
+	/* LILAC - Delete Host Template to Service */
+
+	/* LILAC - Delete Service */
+	public function deleteService($serviceName,$hostName, $exportConfiguration = FALSE ){
+		$error = "";
+        $success = "";
+        $code=0;
+        $nsp = new NagiosHostPeer;
+		
+		$host = $nsp->getByName($hostName);    
+		if(!$host) {
+			$code++;
+			$error .= "Host $hostName doesn't exist\n";
+		}else{
+			$c = new Criteria();
+			$c->add(NagiosServicePeer::DESCRIPTION, $serviceName);
+			$services=$host->getNagiosServices($c);
+			if(count($services)==1){
+				$services[0]->delete();
+				$success .= "$serviceName in host $hostName had been deleted";
+			}else{
+				$error .= "Service didn't exist or to much services had been returned";
+				$code++;
+			}  
+		}
+		
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
 	
     /* EONWEB - Create User */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
