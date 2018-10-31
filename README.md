@@ -135,6 +135,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteContactGroup` | POST | [**contactGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | delete the given contact Group  |
 | `deleteService` | POST | [**serviceName, hostName**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | delete the given service  |
 | `modifyService` | POST | [**serviceName, hostName, column=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)  |
+| `modifyNagiosRessources` | POST | [**ressources**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify ressources represented in nagios by $USERi$, you passed an collection of "Useri":"value" or "" if you want to remove a ressource an example is given bellow |
 
 
 
@@ -275,6 +276,19 @@ To illustrate the EON API features tab, you will find a few implementation examp
 		"CheckCommand":"check_api_eon",
 		"IsVolatile":"enable"
   	}
+}
+```
+
+* /modifyNagiosRessources
+```json 
+{
+  "ressources":{
+    "User17":"12",
+    "User21":"admin",
+    "User18":"",
+    "User19":"",
+    "User20":"/root"
+  }
 }
 ```
 

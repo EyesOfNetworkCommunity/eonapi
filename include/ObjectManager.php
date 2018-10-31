@@ -1190,6 +1190,37 @@ class ObjectManager {
 		return true;
 		
 	}
+
+	/* LILAC - modify nagiosResources */
+	public function modifyNagiosRessources($ressources){
+		$error = "";
+        $success = "";
+		$code=0;
+		try{
+			$resourceCfg = NagiosResourcePeer::doSelectOne(new Criteria());
+			if(!$resourceCfg) {
+				$resourceCfg = new NagiosResource();
+				$resourceCfg->save();
+			}
+			
+			foreach($ressources as $key => $value){
+				$resourceCfg->setByName($key,$value);
+			}
+			$row=$resourceCfg->save();
+			
+			if($row == 0 ) $code++;
+			else $success .= "Ressources updated.";
+
+		}catch (Exception $e){
+			$code++;
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	
     /* EONWEB - Create User */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){

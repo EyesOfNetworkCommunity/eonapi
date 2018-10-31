@@ -55,6 +55,7 @@ addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteService', 'deleteService');
 addRoute('post', '/modifyService', 'modifyService');
+addRoute('post', '/modifyNagiosRessources', 'modifyNagiosRessources');
 
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
