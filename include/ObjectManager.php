@@ -742,44 +742,57 @@ class ObjectManager {
 	}
 
 	/* LILAC - Global add function */
-	public function createMultipleObjects($objects, $exportConfiguration=FALSE){
+	public function createMultipleObjects($hosts=array(),$hostTemplates=array(),$hostGroups=array(),$commands=array(),$serviceTemplates=array(), $exportConfiguration=FALSE){
 		$error = "";
-		$success = "";
+		$succes = "";
 		
-		foreach($objects as $obj){
-			if(isset($obj->type)){
-				if($obj->type=="host"){
-					$hostAlias=(!isset($obj->hostAlias) ? NULL : $obj->hostAlias);
-					$contactName=(!isset($obj->contactName) ? $contactName=NULL:$obj->contactName);
-					$contactGroupName=(!isset($obj->contactGroupName) ? $contactGroupName=NULL:$obj->contactGroupName);
-					$success.=implode(" ",$this->createHost($obj->$templateHostName, $obj->hostName, $obj->hostIp, $hostAlias, $contactName, $contactGroupName, FALSE));
-				}
-				if($obj->type=="host_template"){
-					$templateHostDescription=(!isset($obj->templateHostDescription) ? NULL : $obj->templateHostDescription);
-					$createHostgroup =(!isset($obj->createHostgroup) ? NULL : $obj->createHostgroup);
-					$success.=implode(" ",$this->createHostTemplate($obj->templateHostName ,$obj->templateHostDescription, $obj->createHostgroup, $exportConfiguration ));
-				}
-				if($obj->type=="host_group"){
-					$success.=implode(" ",$this->createHostGroup( $obj->hostGroupName, $exportConfiguration ));
-				}
-				if($obj->type=="command"){
-					$commandDescription=(!isset($obj->commandDescription) ? NULL : $obj->commandDescription);
-					$success.=implode(" ",$this->createCommand($obj->commandName,$obj->commandLine,$commandDescription));
-				}
-				if($obj->type=="service_template"){
-					$templatesToInherit=(!isset($obj->templatesToInherit) ? NULL : $obj->templatesToInherit);
-					$templateDescription=(!isset($obj->templateDescription) ? NULL : $obj->templateDescription);
-					$servicesGroup=(!isset($obj->servicesGroup) ? NULL : $obj->servicesGroup);
-					$contacts=(!isset($obj->contacts) ? NULL : $obj->contacts);
-					$contactsGroup=(!isset($obj->contactsGroup) ? NULL : $obj->contactsGroup);
-					$checkCommandParameters=(!isset($obj->checkCommandParameters) ? NULL : $obj->checkCommandParameters);
-					$success.=implode(" ",$this->createServiceTemplate($obj->templateName, $templateDescription, $servicesGroup, $contacts, $contactsGroup, $obj->checkCommand, $checkCommandParameters, $templatesToInherit, $exportConfiguration));
-				}
-			}else{
-				$error .= "you have to put a type:name_type_object in the object you want to add in nagios with this function.";
-			}	
+		foreach($hosts as $obj){
+			$hostAlias=(!isset($obj->hostAlias) ? NULL : $obj->hostAlias);
+			$contactName=(!isset($obj->contactName) ? $contactName=NULL:$obj->contactName);
+			$contactGroupName=(!isset($obj->contactGroupName) ? $contactGroupName=NULL:$obj->contactGroupName);
+			$result=$this->createHost($obj->$templateHostName, $obj->hostName, $obj->hostIp, $hostAlias, $contactName, $contactGroupName, $exportConfiguration);
+			if($result["code"] > 0){
+				$error.=" | ".$result["description"];
+			}else $succes.=" | ".$result["description"];
 		}
-		$logs = $this->getLogs($error, $success);
+			
+		foreach($hostTemplates as $obj){
+			$templateHostDescription=(!isset($obj->templateHostDescription) ? NULL : $obj->templateHostDescription);
+			$createHostgroup =(!isset($obj->createHostgroup) ? NULL : $obj->createHostgroup);
+			$result=$this->createHostTemplate($obj->templateHostName ,$obj->templateHostDescription, $obj->createHostgroup, $exportConfiguration );
+			if($result["code"] > 0){
+				$error.=" | ".$result["description"];
+			}else $succes.=" | ".$result["description"];
+		}
+		
+		foreach($hostGroups as $obj){
+			$result=$this->createHostGroup( $obj->hostGroupName, $exportConfiguration );
+			if($result["code"] > 0){
+				$error.=" | ".$result["description"];
+			}else $succes.=" | ".$result["description"];
+		}
+
+		foreach($commands as $obj){
+			$commandDescription=(!isset($obj->commandDescription) ? NULL : $obj->commandDescription);
+			$result=$this->createCommand($obj->commandName,$obj->commandLine,$commandDescription);
+			if($result["code"] > 0){
+				$error.=" | ".$result["description"];
+			}else $succes.=" | ".$result["description"];
+		}
+		foreach($serviceTemplates as $obj){
+			$templatesToInherit=(!isset($obj->templatesToInherit) ? NULL : $obj->templatesToInherit);
+			$templateDescription=(!isset($obj->templateDescription) ? NULL : $obj->templateDescription);
+			$servicesGroup=(!isset($obj->servicesGroup) ? NULL : $obj->servicesGroup);
+			$contacts=(!isset($obj->contacts) ? NULL : $obj->contacts);
+			$contactsGroup=(!isset($obj->contactsGroup) ? NULL : $obj->contactsGroup);
+			$checkCommandParameters=(!isset($obj->checkCommandParameters) ? NULL : $obj->checkCommandParameters);
+			$result=$this->createServiceTemplate($obj->templateName, $templateDescription, $servicesGroup, $contacts, $contactsGroup, $obj->checkCommand, $checkCommandParameters, $templatesToInherit, $exportConfiguration);
+			if($result["code"] > 0){
+				$error.=" | ".$result["description"];
+			}else $succes.=" | ".$result["description"];
+		}
+
+		$logs = $this->getLogs($error, $succes);
         
 		return $logs;
 	}
