@@ -1384,8 +1384,9 @@ class ObjectManager {
 
 		return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Modify Host */
-	public function modifyHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function modifyHost( $templateHostName=NULL, $hostName,$newHostName=NULL, $hostIp=NULL, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
@@ -1393,45 +1394,52 @@ class ObjectManager {
         $nhp = new NagiosHostPeer;
 		// Find host
 		$host = $nhp->getByName($hostName);
-		if($host) {
+		if(!isset($host)) {
 			$code=1;
-			$error .= "Host $hostName already exists\n";
-		}
-
-        $nhtp = new NagiosHostTemplatePeer;
-		// Find host template
-		$template_host = $nhtp->getByName($templateHostName);
-		if(!$template_host) {
-			$code=1;
-			$error .= "Host Template $templateHostName not found\n";
+			$error .= "Host $hostName doesn't exist\n";
 		}
         
 		// Lauch actions if no errors
 		if(empty($error)) {	
 			try {
 				// host
-				$tempHost = new NagiosHost();
-				$tempHost->setName($hostName);
-				$tempHost->setAlias($hostAlias);
-				$tempHost->setAddress($hostIp);
-				$tempHost->save();
-				$success .= "Host $hostName added\n";
+				if(isset($newHostName)){
+					$host->setName($newHostName);
+				}
+				$host->setAlias($hostAlias);
+				if(isset($hostIp)){
+					$host->setAddress($hostIp);
+				}
+				$host->save();
+				$success .= "Host $hostName updated\n";
                 
 				// host-template
-				$newInheritance = new NagiosHostTemplateInheritance();
-				$newInheritance->setNagiosHost($tempHost);
-				$newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($template_host);
-				$newInheritance->save();
-				$success .= "Host Template ".$templateHostName." added to host ".$hostName."\n";
+				if(isset($templateHostName)){
+					$nhtp = new NagiosHostTemplatePeer;
+					// Find host template
+					$template_host = $nhtp->getByName($templateHostName);
+					if(!$template_host) {
+						$code=1;
+						$error .= "Host Template $templateHostName not found\n";
+					}else{
+						$newInheritance = new NagiosHostTemplateInheritance();
+						$newInheritance->setNagiosHost($host);
+						$newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($template_host);
+						$newInheritance->save();
+						$success .= "Host Template ".$templateHostName." added to host ".$hostName."\n";
+					}
+					
+				}
+				
                 
                 if( $contactName != NULL ){
                     //Add a contact to a host
-                    $this->addContactToHost( $tempHost, $contactName, $error, $success );    
+                    $this->addContactToHost( $host, $contactName, $error, $success );    
                 }
                 
                 if( $contactGroupName != NULL ){
                     //Add a contact group to a host
-                    $this->addContactGroupToHost( $tempHost, $contactGroupName, $error, $success );    
+                    $this->addContactGroupToHost( $host, $contactGroupName, $error, $success );    
                 }
                                 
 				// Export
