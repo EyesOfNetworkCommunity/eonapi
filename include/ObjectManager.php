@@ -1296,7 +1296,7 @@ class ObjectManager {
 	}
 	
 	/* LILAC - Add Template to Host Template */
-	public function addInheritanceTemplateToHostTemplate( $InheritanceTemplateName, $templateHostName, $exportConfiguration = FALSE ){
+	public function addInheritanceTemplateToHostTemplate( $inheritanceTemplateName, $templateHostName, $exportConfiguration = FALSE ){
         $error = "";
 		$success = "";
 		$code=0;
@@ -1310,14 +1310,138 @@ class ObjectManager {
         
         if( empty($error) ) {
 			
-            if($template_host->addTemplateInheritance($InheritanceTemplateName)) {
-				$success .= "Template Ihneritance ".$InheritanceTemplateName." added to host template ".$templateHostName."\n";
+            if($template_host->addTemplateInheritance($inheritanceTemplateName)) {
+				$success .= "Template Ihneritance ".$inheritanceTemplateName." added to host template ".$templateHostName."\n";
                 if( $exportConfiguration == TRUE )
                     $this->exportConfigurationToNagios($error, $success);
             }
             else {
 				$code=1;
 				$error .= "That Template ihneritance already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/* LILAC - Add Service groupe to Service Template */
+	public function addServiceGroupeToServiceTemplate( $serviceGroupName, $templateServiceName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nstp = new NagiosServiceTemplatePeer;
+		// Find host template
+		$template_service = $nstp->getByName($templateServiceName);
+		if(!$template_service) {
+			$error .= "Service Template $templateServiceName not found\n";
+		}
+        
+        if( empty($error) ) {
+			
+            if($template_service->addServicegroupByName($serviceGroupName)) {
+				$success .= "Service Group ".$serviceGroupName." added to service template ".$templateServiceName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That Service Group already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/* LILAC - Add contact to Service Template */
+	public function addContactToServiceTemplate( $contactName, $templateServiceName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nstp = new NagiosServiceTemplatePeer;
+		// Find host template
+		$template_service = $nstp->getByName($templateServiceName);
+		if(!$template_service) {
+			$error .= "Service Template $templateServiceName not found\n";
+		}
+        
+        if( empty($error) ) {
+			
+            if($template_service->addContactByName($contactName)) {
+				$success .= "Contact ".$contactName." added to service template ".$templateServiceName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That contact already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/* LILAC - Add contact Group to Service Template */
+	public function addContactGroupToServiceTemplate( $contactGroupName, $templateServiceName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nstp = new NagiosServiceTemplatePeer;
+		// Find host template
+		$template_service = $nstp->getByName($templateServiceName);
+		if(!$template_service) {
+			$error .= "Service Template $templateServiceName not found\n";
+		}
+        
+        if( empty($error) ) {
+			
+            if($template_service->addContactGroupByName($contactGroupName)) {
+				$success .= "Contact group ".$contactGroupName." added to service template ".$templateServiceName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That contact group already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/* LILAC - Add Inheritance service Template to Service Template */
+	public function addInheritServiceTemplateToServiceTemplate( $inheritServiceTemplateName, $templateServiceName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nstp = new NagiosServiceTemplatePeer;
+		// Find host template
+		$template_service = $nstp->getByName($templateServiceName);
+		if(!$template_service) {
+			$error .= "Service Template $templateServiceName not found\n";
+		}
+        
+        if( empty($error) ) {
+			
+            if($template_service->addTemplateInheritance($inheritServiceTemplateName)) {
+				$success .= "Inherit template ".$inheritServiceTemplateName." added to service template ".$templateServiceName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That Inheritance template already exists in that list or didn't exist!\n";
             }
         }else $code=1;
         
@@ -1958,18 +2082,18 @@ class ObjectManager {
 	}
 
 	/* LILAC - Delete Inheritance Template to Hosts template */
-	public function deleteInheritanceTemplateToHostTemplate($InheritanceTemplateName, $templateHostName, $exportConfiguration = FALSE){
+	public function deleteInheritanceTemplateToHostTemplate($inheritanceTemplateName, $templateHostName, $exportConfiguration = FALSE){
 		$error = "";
 		$success = "";
 		$code=0;
 		
 		try{
-			$targetInheritanceTemplate= NagiosHostTemplatePeer::getByName($InheritanceTemplateName);
+			$targetInheritanceTemplate= NagiosHostTemplatePeer::getByName($inheritanceTemplateName);
 			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
 
 			if(!$targetInheritanceTemplate or !$targetTemplateHost) {
 				$code=1;
-				$error .= (!$targetInheritanceTemplate ? "The  Inheritance Template '".$InheritanceTemplateName."'does not exist\n" : "The Template host '".$targetTemplateHost."'does not exist\n")  ;
+				$error .= (!$targetInheritanceTemplate ? "The  Inheritance Template '".$inheritanceTemplateName."'does not exist\n" : "The Template host '".$targetTemplateHost."'does not exist\n")  ;
 			}else{
 				$c = new Criteria();
 				$c->add(NagiosHostTemplateInheritancePeer::SOURCE_TEMPLATE, $targetTemplateHost->getId());
@@ -1977,9 +2101,10 @@ class ObjectManager {
 				$membership = NagiosHostTemplateInheritancePeer::doSelectOne($c);
 				if($membership) {
 					$membership->delete();
-					$success .= "The  Inheritance Template '".$InheritanceTemplateName."' has been deleted.\n";
+					$success .= "The  Inheritance Template '".$inheritanceTemplateName."' has been deleted.\n";
 				}else{
-					$error .= "The  Inheritance Template'".$InheritanceTemplateName."' doesn't link with this host : $templateHostName.\n";
+					$code=1;
+					$error .= "The  Inheritance Template'".$inheritanceTemplateName."' doesn't link with this host : $templateHostName.\n";
 				}
 			}
 		}catch(Exception $e) {
@@ -1991,6 +2116,151 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
+
+	/* LILAC - Delete Inheritance Template to Service template */
+	public function deleteInheritanceTemplateToServiceTemplate($inheritanceTemplateName, $templateServiceName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetInheritanceTemplate= NagiosServiceTemplatePeer::getByName($inheritanceTemplateName);
+			$targetTemplateService = NagiosServiceTemplatePeer::getByName($templateServiceName);
+
+			if(!$targetInheritanceTemplate or !$targetTemplateService) {
+				$code=1;
+				$error .= (!$targetInheritanceTemplate ? "The  Inheritance Template '".$inheritanceTemplateName."'does not exist\n" : "The Template service '".$templateServiceName."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosServiceTemplateInheritancePeer::SOURCE_TEMPLATE, $targetTemplateService->getId());
+				$c->add(NagiosServiceTemplateInheritancePeer::TARGET_TEMPLATE, $targetInheritanceTemplate->getId());
+				$membership = NagiosServiceTemplateInheritancePeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The  Inheritance Template '".$inheritanceTemplateName."' has been deleted.\n";
+				}else{
+					$code=1;
+					$error .= "The  Inheritance Template'".$inheritanceTemplateName."' doesn't link with this host : $templateServiceName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete Contact Group to Service template */
+	public function deleteContactGroupToServiceTemplate($contactGroupName, $templateServiceName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetContactGroup= NagiosContactGroupPeer::getByName($contactGroupName);
+			$targetTemplateService = NagiosServiceTemplatePeer::getByName($templateServiceName);
+
+			if(!$targetContactGroup or !$targetTemplateService) {
+				$code=1;
+				$error .= (!$targetContactGroup ? "The  Contact Group '".$contactGroupName."'does not exist\n" : "The Template service '".$templateServiceName."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosServiceContactGroupMemberPeer::CONTACT_GROUP, $targetContactGroup->getId());
+				$c->add(NagiosServiceContactGroupMemberPeer::TEMPLATE, $targetTemplateService->getId());
+				$membership = NagiosServiceContactGroupMemberPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The  Contact Group '".$contactGroupName."' has been deleted.\n";
+				}else{
+					$code=1;
+					$error .= "The  Contact Group '".$contactGroupName."' doesn't link with this host : $templateServiceName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete Contact  to Service template */
+	public function deleteContactToServiceTemplate($contactName, $templateServiceName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetContact = NagiosContactPeer::getByName($contactName);
+			$targetTemplateService = NagiosServiceTemplatePeer::getByName($templateServiceName);
+
+			if(!$targetContact or !$targetTemplateService) {
+				$code=1;
+				$error .= (!$targetContact ? "The  Contact  '".$contactName."'does not exist\n" : "The Template service '".$templateServiceName."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosServiceContactMemberPeer::CONTACT, $targetContact->getId());
+				$c->add(NagiosServiceContactMemberPeer::TEMPLATE, $targetTemplateService->getId());
+				$membership = NagiosServiceContactMemberPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The  Contact '".$contactName."' has been deleted.\n";
+				}else{
+					$code=1;
+					$error .= "The  Contact '".$contactName."' doesn't link with this host : $templateServiceName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete service group to Service template */
+	public function deleteServiceGroupToServiceTemplate($serviceGroupName, $templateServiceName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetServiceGroup = NagiosServiceGroupPeer::getByName($serviceGroupName);
+			$targetTemplateService = NagiosServiceTemplatePeer::getByName($templateServiceName);
+
+			if(!$targetServiceGroup or !$targetTemplateService) {
+				$code=1;
+				$error .= (!$targetServiceGroup ? "The  service group  '".$serviceGroupName."'does not exist\n" : "The Template service '".$templateServiceName."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosServiceGroupMemberPeer::SERVICE_GROUP, $targetServiceGroup->getId());
+				$c->add(NagiosServiceGroupMemberPeer::TEMPLATE, $targetTemplateService->getId());
+				$membership = NagiosServiceGroupMemberPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The  service group '".$serviceGroupName."' has been deleted.\n";
+				}else{
+					$code=1;
+					$error .= "The  service group '".$serviceGroupName."' doesn't link with this host : $templateServiceName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
 ########################################## DUPLIICATE
 	/* LILAC - duplicate Service */
 	public function duplicateService($hostName, $service, $exportConfiguration = FALSE ){

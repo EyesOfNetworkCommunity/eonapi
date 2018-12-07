@@ -60,6 +60,14 @@ addRoute('post', '/addContactGroupToHostTemplate', 'addContactGroupToHostTemplat
 addRoute('post', '/addServiceToTemplate', 'addServiceToTemplate');
 addRoute('post', '/addServicesToHost', 'addServicesToHost');
 addRoute('post', '/addEventBroker','addEventBroker');
+addRoute('post', '/addServiceGroupeToServiceTemplate','addServiceGroupeToServiceTemplate');
+addRoute('post', '/addContactToServiceTemplate','addContactToServiceTemplate');
+addRoute('post', '/addContactGroupToServiceTemplate','addContactGroupToServiceTemplate');
+addRoute('post', '/addInheritServiceTemplateToServiceTemplate','addInheritServiceTemplateToServiceTemplate');
+
+
+
+
 
 // addRoute('post', '/modifyContact', 'modifyContact');
 // addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
@@ -85,9 +93,12 @@ addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteContactToHostTemplate', 'deleteContactToHostTemplate');
 addRoute('post', '/deleteHostGroupToHostTemplate', 'deleteHostGroupToHostTemplate');
+addRoute('post', '/deleteContactToServiceTemplate', 'deleteContactToServiceTemplate');
 addRoute('post', '/deleteContactGroupToHostTemplate', 'deleteContactGroupToHostTemplate');
+addRoute('post', '/deleteContactGroupToServiceTemplate', 'deleteContactGroupToServiceTemplate');
+addRoute('post', '/deleteServiceGroupToServiceTemplate', 'deleteServiceGroupToServiceTemplate');
 addRoute('post', '/deleteInheritanceTemplateToHostTemplate', 'deleteInheritanceTemplateToHostTemplate');
-
+addRoute('post', '/deleteInheritanceTemplateToServiceTemplate', 'deleteInheritanceTemplateToServiceTemplate');
 
 // addRoute('post', '/deleteUser','deleteUser');
 
