@@ -1819,6 +1819,42 @@ class ObjectManager {
 		return $logs;
 
 	}
+
+	/* LILAC - Delete HostGroup to Hosts template */
+	public function deleteHostGroupToHostTemplate($hostGroupName, $templateHostName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetHostGroup= NagiosHostgroupPeer::getByName($hostGroupName);
+			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
+			$find=false;
+
+			if(!$targetHostGroup or !$targetTemplateHost) {
+				$code=1;
+				$error .= (!$targetContactGp ? "The Host group '".$targetHostGroup."'does not exist\n" : "The Template host '".$targetTemplateHost."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosHostgroupMembershipPeer::HOST_TEMPLATE, $targetTemplateHost->getId());
+				$c->add(NagiosHostgroupMembershipPeer::HOSTGROUP, $targetHostGroup->getId());
+				$membership = NagiosHostgroupMembershipPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The host group '".$hostGroupName."' has been deleted.\n";
+				}else{
+					$error .= "The host group '".$contactGroupName."' doesn't link with this host : $templateHostName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
 ########################################## DUPLIICATE
 	/* LILAC - duplicate Service */
 	public function duplicateService($hostName, $service, $exportConfiguration = FALSE ){

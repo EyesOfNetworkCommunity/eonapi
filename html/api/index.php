@@ -83,6 +83,8 @@ addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/delEventBroker','delEventBroker');
+addRoute('post', '/deleteHostGroupToHostTemplate','deleteHostGroupToHostTemplate');
+
 // addRoute('post', '/deleteUser','deleteUser');
 
 addRoute('post', '/duplicateService', 'duplicateService');
