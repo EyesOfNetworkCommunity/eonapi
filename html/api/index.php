@@ -84,6 +84,8 @@ addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/delEventBroker','delEventBroker');
 addRoute('post', '/deleteHostGroupToHostTemplate','deleteHostGroupToHostTemplate');
+addRoute('post', '/deleteContactToHostTemplate','deleteContactToHostTemplate');
+addRoute('post', '/deleteContactGroupToHostTemplate','deleteContactGroupToHostTemplate');
 
 // addRoute('post', '/deleteUser','deleteUser');
 

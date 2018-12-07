@@ -1843,7 +1843,79 @@ class ObjectManager {
 					$membership->delete();
 					$success .= "The host group '".$hostGroupName."' has been deleted.\n";
 				}else{
-					$error .= "The host group '".$contactGroupName."' doesn't link with this host : $templateHostName.\n";
+					$error .= "The host group '".$hostGroupName."' doesn't link with this host : $templateHostName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete contact to Hosts template */
+	public function deleteContactToHostTemplate($contactName, $templateHostName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetContact= NagiosContactPeer::getByName($contactName);
+			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
+			$find=false;
+
+			if(!$targetContact or !$targetTemplateHost) {
+				$code=1;
+				$error .= (!$targetContact ? "The contact '".$contactName."'does not exist\n" : "The Template host '".$targetTemplateHost."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosHostContactMemberPeer::TEMPLATE,$targetTemplateHost->getId());
+				$c->add(NagiosHostcontactMemberPeer::CONTACT, $targetContact->getId());
+				$membership = NagiosHostContactMemberPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The contact '".$contactName."' has been deleted.\n";
+				}else{
+					$error .= "The contact '".$contactName."' doesn't link with this host : $templateHostName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete contact group to Hosts template */
+	public function deleteContactGroupToHostTemplate($contactGroupName, $templateHostName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetContactGroup= NagiosContactGroupPeer::getByName($contactGroupName);
+			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
+			$find=false;
+
+			if(!$targetContactGroup or !$targetTemplateHost) {
+				$code=1;
+				$error .= (!$targetContactGroup ? "The contact group '".$contactGroupName."'does not exist\n" : "The Template host '".$targetTemplateHost."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosHostContactgroupPeer::HOST_TEMPLATE, $targetTemplateHost->getId());
+				$c->add(NagiosHostcontactgroupPeer::CONTACTGROUP, $targetContactGroup->getId());
+				$membership = NagiosHostContactgroupPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The contact group '".$contactGroupName."' has been deleted.\n";
+				}else{
+					$error .= "The contact group'".$contactGroupName."' doesn't link with this host : $templateHostName.\n";
 				}
 			}
 		}catch(Exception $e) {
