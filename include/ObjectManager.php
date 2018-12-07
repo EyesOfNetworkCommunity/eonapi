@@ -1263,6 +1263,37 @@ class ObjectManager {
 		return $logs;
 
 	}
+
+	/* LILAC - Add Host Groupe to Host Template */
+	public function addHostGroupToHostTemplate( $hostGroupName, $templateHostName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nhtp = new NagiosHostTemplatePeer;
+		// Find host template
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			$error .= "Host Template $templateHostName not found\n";
+		}
+        
+        if( empty($error) ) {
+			
+            if($template_host->addHostgroupByName($hostGroupName)) {
+				$success .= "Hostgroup ".$hostGroupName." added to host template ".$templateHostName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That hostGroup already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+    }
 ########################################## MODIFY
 	/* LILAC - Modify Service --- */
 	public function modifyServicefromHost($hostName, $service, $exportConfiguration = FALSE ){
@@ -1457,6 +1488,7 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);        
 	}
+	
 ########################################## DELETE
 	/* LILAC - Delete contact */
 	public function deleteContact($contactName){

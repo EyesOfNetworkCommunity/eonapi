@@ -49,6 +49,8 @@ addRoute('post', '/createCommand', 'createCommand');
 addRoute('post', '/createUser','createUser');
 addRoute('post', '/createMultipleObjects','createMultipleObjects');
 
+
+addRoute('post', '/addHostGroupToHostTemplate','addHostGroupToHostTemplate');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
 addRoute('post', '/addHostTemplateToHost', 'addHostTemplateToHost');
