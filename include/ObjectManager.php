@@ -1293,6 +1293,37 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/* LILAC - Add Template to Host Template */
+	public function addInheritanceTemplateToHostTemplate( $InheritanceTemplateName, $templateHostName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nhtp = new NagiosHostTemplatePeer;
+		// Find host template
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			$error .= "Host Template $templateHostName not found\n";
+		}
+        
+        if( empty($error) ) {
+			
+            if($template_host->addTemplateInheritance($InheritanceTemplateName)) {
+				$success .= "Template Ihneritance ".$InheritanceTemplateName." added to host template ".$templateHostName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That Template ihneritance already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
     }
 ########################################## MODIFY
 	/* LILAC - Modify Service --- */
@@ -1865,7 +1896,6 @@ class ObjectManager {
 		try{
 			$targetContact= NagiosContactPeer::getByName($contactName);
 			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
-			$find=false;
 
 			if(!$targetContact or !$targetTemplateHost) {
 				$code=1;
@@ -1901,7 +1931,6 @@ class ObjectManager {
 		try{
 			$targetContactGroup= NagiosContactGroupPeer::getByName($contactGroupName);
 			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
-			$find=false;
 
 			if(!$targetContactGroup or !$targetTemplateHost) {
 				$code=1;
@@ -1916,6 +1945,41 @@ class ObjectManager {
 					$success .= "The contact group '".$contactGroupName."' has been deleted.\n";
 				}else{
 					$error .= "The contact group'".$contactGroupName."' doesn't link with this host : $templateHostName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete Inheritance Template to Hosts template */
+	public function deleteInheritanceTemplateToHostTemplate($InheritanceTemplateName, $templateHostName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetInheritanceTemplate= NagiosHostTemplatePeer::getByName($InheritanceTemplateName);
+			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
+
+			if(!$targetInheritanceTemplate or !$targetTemplateHost) {
+				$code=1;
+				$error .= (!$targetInheritanceTemplate ? "The  Inheritance Template '".$InheritanceTemplateName."'does not exist\n" : "The Template host '".$targetTemplateHost."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosHostTemplateInheritancePeer::SOURCE_TEMPLATE, $targetTemplateHost->getId());
+				$c->add(NagiosHostTemplateInheritancePeer::TARGET_TEMPLATE, $targetInheritanceTemplate->getId());
+				$membership = NagiosHostTemplateInheritancePeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The  Inheritance Template '".$InheritanceTemplateName."' has been deleted.\n";
+				}else{
+					$error .= "The  Inheritance Template'".$InheritanceTemplateName."' doesn't link with this host : $templateHostName.\n";
 				}
 			}
 		}catch(Exception $e) {

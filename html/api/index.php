@@ -50,6 +50,7 @@ addRoute('post', '/createUser','createUser');
 addRoute('post', '/createMultipleObjects','createMultipleObjects');
 
 
+addRoute('post', '/addInheritanceTemplateToHostTemplate','addInheritanceTemplateToHostTemplate');
 addRoute('post', '/addHostGroupToHostTemplate','addHostGroupToHostTemplate');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
@@ -64,28 +65,29 @@ addRoute('post', '/addEventBroker','addEventBroker');
 // addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
 // addRoute('post', '/modifyServiceTemplate', 'modifyServiceTemplate');
 // addRoute('post', '/modifyHostTemplate', 'modifyHostTemplate');
+addRoute('post', '/modifyHost', 'modifyHost');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
 addRoute('post', '/modifyNagiosRessources', 'modifyNagiosRessources');
-addRoute('post', '/modifyHost', 'modifyHost');
 // addRoute('post', '/modifyUser','modifyUser');
 // addRoute('post', '/modifyContactGroup','modifyContactGroup');
 
-
-addRoute('post', '/deleteContact', 'deleteContact');
-addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
-addRoute('post', '/deleteService', 'deleteService');
-addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
-addRoute('post', '/deleteCommand', 'deleteCommand');
 addRoute('post', '/deleteHost', 'deleteHost');
+addRoute('post', '/deleteContact', 'deleteContact');
+addRoute('post', '/deleteService', 'deleteService');
+addRoute('post', '/deleteCommand', 'deleteCommand');
+addRoute('post', '/delEventBroker', 'delEventBroker');
+addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
-addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
+addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
-addRoute('post', '/delEventBroker','delEventBroker');
-addRoute('post', '/deleteHostGroupToHostTemplate','deleteHostGroupToHostTemplate');
-addRoute('post', '/deleteContactToHostTemplate','deleteContactToHostTemplate');
-addRoute('post', '/deleteContactGroupToHostTemplate','deleteContactGroupToHostTemplate');
+addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
+addRoute('post', '/deleteContactToHostTemplate', 'deleteContactToHostTemplate');
+addRoute('post', '/deleteHostGroupToHostTemplate', 'deleteHostGroupToHostTemplate');
+addRoute('post', '/deleteContactGroupToHostTemplate', 'deleteContactGroupToHostTemplate');
+addRoute('post', '/deleteInheritanceTemplateToHostTemplate', 'deleteInheritanceTemplateToHostTemplate');
+
 
 // addRoute('post', '/deleteUser','deleteUser');
 
