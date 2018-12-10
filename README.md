@@ -123,6 +123,12 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addServiceTemplateFromService` | POST | [**serviceTemplateName, serviceName, hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service template in the given service of the specified host. |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact group to a nagios host template. |
 | `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a command to Nagios.returncode=0 or 1 if failed |
+| `addHostGroupToHostTemplate` | POST | [**hostGroupName,templateHostName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a Host group to a host template. returncode=0 or 1 if failed |
+| `addInheritanceTemplateToHostTemplate` | POST | [**inheritanceTemplateName,templateHostName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a Inherit host template to a host template. returncode=0 or 1 if failed |
+| `addServiceGroupeToServiceTemplate` | POST | [**serviceGroupName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a service group to a service template. returncode=0 or 1 if failed |
+| `addContactToServiceTemplate` | POST | [**contactName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a contact to a service template. returncode=0 or 1 if failed |
+| `addContactGroupToServiceTemplate` | POST | [**contactGroupName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a contact group to a service template. returncode=0 or 1 if failed |
+| `addInheritServiceTemplateToServiceTemplate` | POST | [**inheritServiceTemplateName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a inherited service template to a service template. returncode=0 or 1 if failed |
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
@@ -139,7 +145,14 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a command to Nagios. |
 | `deleteHost` | POST | [**hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a nagios host. |
 | `deleteServiceTemplateFromService` | POST | [**serviceTemplateName, serviceName, hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a service template in the given service of the specified host. |
-
+| `deleteHostGroupToHostTemplate` | POST | [**hostGroupName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a Host group in the given Host Template. returncode=0 or 1 if failed |
+| `deleteContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a Contact in the given Host Template. returncode=0 or 1 if failed |
+| `deleteContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a Contact group in the given Host Template. returncode=0 or 1 if failed |
+| `deleteInheritanceTemplateToHostTemplate` | POST | [**inheritanceTemplateName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a inherited template in the given Host Template. returncode=0 or 1 if failed |
+| `deleteInheritanceTemplateToServiceTemplate` | POST | [**inheritanceTemplateName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a inherited Service template in the given service Template. returncode=0 or 1 if failed|
+| `deleteContactGroupToServiceTemplate` | POST | [**contactGroupName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a contact group in the given service Template. returncode=0 or 1 if failed|
+| `deleteContactToServiceTemplate` | POST | [**contactName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a contact in the given service Template. returncode=0 or 1 if failed|
+| `deleteServiceGroupToServiceTemplate` | POST | [**serviceGroupName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a service group in the given service Template. returncode=0 or 1 if failed|
 
 
 
