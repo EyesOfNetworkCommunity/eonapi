@@ -77,8 +77,12 @@ addRoute('post', '/modifyHost', 'modifyHost');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
 addRoute('post', '/modifyNagiosRessources', 'modifyNagiosRessources');
+addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
+addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
+
 // addRoute('post', '/modifyUser','modifyUser');
 // addRoute('post', '/modifyContactGroup','modifyContactGroup');
+
 
 addRoute('post', '/deleteHost', 'deleteHost');
 addRoute('post', '/deleteContact', 'deleteContact');

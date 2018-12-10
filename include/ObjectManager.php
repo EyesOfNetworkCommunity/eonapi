@@ -1643,6 +1643,58 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);        
 	}
+
+	/* LILAC - Modify CheckCommand for a service template--- */  
+    public function modifyCheckCommandToServiceTemplate($commandName, $serviceTemplateName, $exportConfiguration=FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+
+		$targetTemplateService = NagiosServiceTemplatePeer::getByName($serviceTemplateName);
+		if(!$targetTemplateService) {
+			$code=1;
+            $error .= "The Template service '".$serviceTemplateName."' does not exist\n";
+        }else{
+			if($targetTemplateService->setCheckCommandByName($commandName)){
+				$success .="The command : $commandName had been set to the service template: $serviceTemplateName.";
+				$targetTemplateService->save();
+			}else{
+				$code=1;
+				$error .= "The command '".$commandName."' failed to update\n";
+			}
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        $result=array("code"=>$code,"description"=>$logs,"changes"=>$code);
+        return $result;
+	}
+
+	/* LILAC - Modify CheckCommand for a host template--- */  
+    public function modifyCheckCommandToHostTemplate($commandName, $hostTemplateName, $exportConfiguration=FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+
+		$targetTemplateHost = NagiosHostTemplatePeer::getByName($hostTemplateName);
+		if(!$targetTemplateHost) {
+			$code=1;
+            $error .= "The Template service '".$hostTemplateName."' does not exist\n";
+        }else{
+			if($targetTemplateHost->setCheckCommandByName($commandName)){
+				$success .="The command : $commandName had been set to the service template: $hostTemplateName.";
+				$targetTemplateHost->save();
+			}else{
+				$code=1;
+				$error .= "The command '".$commandName."' failed to update\n";
+			}
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        $result=array("code"=>$code,"description"=>$logs,"changes"=>$code);
+        return $result;
+	}
 	
 ########################################## DELETE
 	/* LILAC - Delete contact */
