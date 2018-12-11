@@ -2085,6 +2085,7 @@ class ObjectManager {
 					$membership->delete();
 					$success .= "The contact '".$contactName."' has been deleted.\n";
 				}else{
+					$code=1;
 					$error .= "The contact '".$contactName."' doesn't link with this host : $templateHostName.\n";
 				}
 			}
@@ -2120,6 +2121,7 @@ class ObjectManager {
 					$membership->delete();
 					$success .= "The contact group '".$contactGroupName."' has been deleted.\n";
 				}else{
+					$code=1;
 					$error .= "The contact group'".$contactGroupName."' doesn't link with this host : $templateHostName.\n";
 				}
 			}
