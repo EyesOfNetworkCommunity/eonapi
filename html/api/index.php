@@ -23,6 +23,7 @@ $app->get('/getAuthenticationStatus','getAuthenticationStatus');
 
 //POST (parameters in body)
 addRoute('post', '/getHost', 'getHost');
+addRoute('post', '/getHostGroup', 'getHostGroup');
 addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate');
 addRoute('post', '/getHostTemplate', 'getHostTemplate');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup');

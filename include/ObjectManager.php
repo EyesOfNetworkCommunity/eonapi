@@ -115,6 +115,18 @@ class ObjectManager {
 			}
 		}
 	}
+
+	/* LILAC - Get HostGroup */
+	public function getHostGroup( $hostGroupName){
+		$nhgp = new NagiosHostgroupPeer;
+		//Find HostGroup
+		$hostGroup = $nhgp->getByName( $hostGroupName );
+		if(!$hostGroup) {
+			return "HostGroup named $hostGroupName not found\n";
+		}else{
+			return $hostGroup->toArray();
+		}
+	}
 	/* LILAC - Get Contact */	
 	public function getContact($contactName=FALSE){
 		if(!$contactName){
