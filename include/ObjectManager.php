@@ -2062,6 +2062,7 @@ class ObjectManager {
 					$membership->delete();
 					$success .= "The host group '".$hostGroupName."' has been deleted.\n";
 				}else{
+					$code=1;
 					$error .= "The host group '".$hostGroupName."' doesn't link with this host : $templateHostName.\n";
 				}
 			}
