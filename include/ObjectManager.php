@@ -1683,18 +1683,18 @@ class ObjectManager {
 	}
 
 	/* LILAC - Modify CheckCommand for a host template--- */  
-    public function modifyCheckCommandToHostTemplate($commandName, $hostTemplateName, $exportConfiguration=FALSE){
+    public function modifyCheckCommandToHostTemplate($commandName, $templateHostName, $exportConfiguration=FALSE){
 		$error = "";
 		$success = "";
 		$code=0;
 
-		$targetTemplateHost = NagiosHostTemplatePeer::getByName($hostTemplateName);
+		$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
 		if(!$targetTemplateHost) {
 			$code=1;
-            $error .= "The Template service '".$hostTemplateName."' does not exist\n";
+            $error .= "The Template service '".$templateHostName."' does not exist\n";
         }else{
 			if($targetTemplateHost->setCheckCommandByName($commandName)){
-				$success .="The command : $commandName had been set to the service template: $hostTemplateName.";
+				$success .="The command : $commandName had been set to the service template: $templateHostName.";
 				$targetTemplateHost->save();
 			}else{
 				$code=1;
