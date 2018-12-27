@@ -54,6 +54,7 @@ addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addServicesToHost', 'addServicesToHost');
+addRoute('post', '/addHostGroupToHost', 'addHostGroupToHost');
 addRoute('post', '/addServiceToTemplate', 'addServiceToTemplate');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
 addRoute('post', '/addHostTemplateToHost', 'addHostTemplateToHost');
@@ -65,9 +66,6 @@ addRoute('post', '/addContactGroupToServiceTemplate', 'addContactGroupToServiceT
 addRoute('post', '/addServiceGroupeToServiceTemplate', 'addServiceGroupeToServiceTemplate');
 addRoute('post', '/addInheritanceTemplateToHostTemplate', 'addInheritanceTemplateToHostTemplate');
 addRoute('post', '/addInheritServiceTemplateToServiceTemplate', 'addInheritServiceTemplateToServiceTemplate');
-
-
-
 
 
 // addRoute('post', '/modifyContact', 'modifyContact');
@@ -93,6 +91,7 @@ addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
+addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteContactToHostTemplate', 'deleteContactToHostTemplate');
@@ -103,6 +102,7 @@ addRoute('post', '/deleteContactGroupToServiceTemplate', 'deleteContactGroupToSe
 addRoute('post', '/deleteServiceGroupToServiceTemplate', 'deleteServiceGroupToServiceTemplate');
 addRoute('post', '/deleteInheritanceTemplateToHostTemplate', 'deleteInheritanceTemplateToHostTemplate');
 addRoute('post', '/deleteInheritanceTemplateToServiceTemplate', 'deleteInheritanceTemplateToServiceTemplate');
+
 
 // addRoute('post', '/deleteUser','deleteUser');
 

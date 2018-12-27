@@ -1345,6 +1345,37 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
+
+	/* LILAC - Add Host Groupe to Host */
+	public function addHostGroupToHost( $hostGroupName, $hostName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nhp = new NagiosHostPeer;
+		// Find host 
+		$host = $nhp->getByName($hostName);
+		if(!$host) {
+			$error .= "Host $hostName not found\n";
+		}
+        
+        if( empty($error) ) {
+			
+            if($host->addHostgroupByName($hostGroupName)) {
+				$success .= "Hostgroup ".$hostGroupName." added to host ".$hostName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That hostGroup already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
 	
 	/* LILAC - Add Template to Host Template */
 	public function addInheritanceTemplateToHostTemplate( $inheritanceTemplateName, $templateHostName, $exportConfiguration = FALSE ){
@@ -2103,6 +2134,43 @@ class ObjectManager {
 				}else{
 					$code=1;
 					$error .= "The host group '".$hostGroupName."' doesn't link with this host : $templateHostName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete HostGroup to Host */
+	public function deleteHostGroupToHost($hostGroupName, $hostName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetHostGroup= NagiosHostgroupPeer::getByName($hostGroupName);
+			$targetHost = NagiosHostPeer::getByName($hostName);
+			$find=false;
+
+			if(!$targetHostGroup or !$targetHost) {
+				$code=1;
+				$error .= (!$targetContactGp ? "The Host group '".$targetHostGroup."'does not exist\n" : "The host '".$targetHost."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosHostgroupMembershipPeer::HOST, $targetHost->getId());
+				$c->add(NagiosHostgroupMembershipPeer::HOSTGROUP, $targetHostGroup->getId());
+				$membership = NagiosHostgroupMembershipPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The host group '".$hostGroupName."' has been deleted.\n";
+				}else{
+					$code=1;
+					$error .= "The host group '".$hostGroupName."' doesn't link with this host : $hostName.\n";
 				}
 			}
 		}catch(Exception $e) {
