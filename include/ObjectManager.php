@@ -843,7 +843,7 @@ class ObjectManager {
                 $membership->setHost( $host->getId() );
                 $membership->setNagiosContact( $tempContact );
                 $membership->save();
-                $hostName = $tempHost->getName();
+                $hostName = $host->getName();
                 $success .= "Contact $contactName added to host $hostName\n";
                 // Export
                 if( $exportConfiguration == TRUE )
