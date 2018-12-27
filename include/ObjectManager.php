@@ -813,10 +813,49 @@ class ObjectManager {
 	public function addContactToHost( $hostName, $contactName, $exportConfiguration = FALSE ){
         $error = "";
 		$success = "";
-		$code=0; 
+		$code=0;
 
+        $ncp = new NagiosContactPeer;
+        // Find host contact
+        $tempContact = $ncp->getByName( $contactName );
+        if(!$tempContact) {
+            $error .= "Contact $contactName not found\n";	
+        }
+        
         $nhp = new NagiosHostPeer;
-        $host = $nhp->getByName($hostName);
+		$host = $nhp->getByName($hostName);
+		if(!$host) {
+			$error .= "Host Template $hostName not found\n";
+		}
+
+        
+        if( empty($error) ) {
+            $c = new Criteria();
+            $c->add(NagiosHostContactMemberPeer::HOST, $host->getId());
+            $c->add(NagiosHostContactMemberPeer::CONTACT, $tempContact->getId());
+            $membership = NagiosHostContactMemberPeer::doSelectOne($c);
+            if($membership) {
+				$code=1;
+                $error .= "That contact already exists in that list!\n";
+            }
+            else {
+                $membership = new NagiosHostContactMember();
+                $membership->setHost( $host->getId() );
+                $membership->setNagiosContact( $tempContact );
+                $membership->save();
+                $hostName = $tempHost->getName();
+                $success .= "Contact $contactName added to host $hostName\n";
+                // Export
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs); 
+
+        
         
 		if(!$host) {
 			$error .= "Host $hostName not found\n";
@@ -1892,8 +1931,8 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return $logs;
 	}
-	/* LILAC - Delete HostTemplates to Hosts */
-	public function deleteHostTemplateToHosts($templateHostName, $hostName, $exportConfiguration = FALSE){
+	/* LILAC - Delete HostTemplates to Host */
+	public function deleteHostTemplateToHost($templateHostName, $hostName, $exportConfiguration = FALSE){
 		$error = "";
 		$success = "";
 		$code=0;
