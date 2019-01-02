@@ -215,7 +215,9 @@ class ObjectManager {
 			$services=NagiosServicePeer::doSelect($c);
 			$result= array();
 			foreach($services as $service) {
-				array_push($result,$service->toArray());
+				$answer = $service->toArray();
+				$answer["parameters"]=$service->getNagiosServiceCheckCommandParameters()->toArray();
+				array_push($result,$answer);
 			} 
 			return $result;
 		}
@@ -233,7 +235,9 @@ class ObjectManager {
 			$services=NagiosServicePeer::doSelect($c);
 			$result= array();
 			foreach($services as $service) {
-				array_push($result,$service->toArray());
+				$answer = $service->toArray();
+				$answer["parameters"]=$service->getNagiosServiceCheckCommandParameters()->toArray();
+				array_push($result,$answer);
 			} 
 			return $result;
 		}
