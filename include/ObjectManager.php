@@ -1199,72 +1199,69 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
         
 	}
-	/* LILAC - Add Services to Host*/
-    public function addServicesToHost ($hostName, $services, $host = NULL, $exportConfiguration = FALSE ){
+	/* LILAC - Add Service to Host*/
+    public function addServiceToHost ($hostName, $service, $exportConfiguration = FALSE ){
 		
         $error = "";
 		$success = "";
 		$code=0;
         	    
         $nsp = new NagiosHostPeer;
-        
-        if( $host == NULL ){
-            $host = $nsp->getByName($hostName);
-            
-            if(!$host) {
-				$code=1;
-                $error .= "Host $hostName doesn't exist\n";
-            }
-        }
-        
-        $nstp = new NagiosServiceTemplatePeer;
+
+		$host = $nsp->getByName($hostName);
 		
-        //Test if the parent templates exist
-        foreach($services as $service) {
-            $templateName = $service->inheritance;
-            $template = $nstp->getByName($templateName);
-            if(!$template) {
+		if(!$host) {
+			$code=1;
+			$error .= "Host $hostName doesn't exist\n";
+		}
+
+		$nstp = new NagiosServiceTemplatePeer;
+		//Test if the parent templates are given and set exist
+		if(isset($service->inheritance)) {
+			$templateName = $service->inheritance;
+			$template = $nstp->getByName($templateName);
+			if(!$template) {
 				$code=1;
 				$error .= "Service Template $templateName not found\n";	
-            }       
+			}       
 		}
 		
 		if(empty($error)) {	
 			try {
 				// service interface
-				foreach($services as $service) {
-					$tempService = new NagiosService();
-					$tempService->setDescription($service->name);
-					$tempService->setHost($host->getId());
-					$tempService->save();
-					$success .= "Service $service->name added\n";
-					
+				$tempService = new NagiosService();
+				$tempService->setDescription($service->name);
+				$tempService->setHost($host->getId());
+				$tempService->save();
+				$success .= "Service $service->name added\n";
+				if(isset($service->inheritance)) {
 					$templateService = NagiosServiceTemplatePeer::getByName($service->inheritance);
 					$newInheritance = new NagiosServiceTemplateInheritance();
 					$newInheritance->setNagiosService($tempService);
 					$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($templateService);
 					$newInheritance->save();
 					$success .= "Service Template ".$service->inheritance." added to service $service->name \n";
-					
-					if(isset($service->command)){
-						$cmd = NagiosCommandPeer::getByName($service->command);
-						if($cmd){
-							$tempService->setCheckCommand($cmd->getId());
-							$tempService->save();
-							$success .= "The command '".$service->command."' add to service $service->name \n";
-						}else{
-							$code=1;
-							$error .= "The command '".$service->command."' doesn't exist.\n";
-						}
-						foreach($service->parameters as $params) {
-							$param = new NagiosServiceCheckCommandParameter();
-							$param->setService($tempService->getId());
-							$param->setParameter($params);
-							$param->save();
-							$success .= "Command Parameter ".$params." added to $service->name\n";
-						}
+				}
+				
+				if(isset($service->command)){
+					$cmd = NagiosCommandPeer::getByName($service->command);
+					if($cmd){
+						$tempService->setCheckCommand($cmd->getId());
+						$tempService->save();
+						$success .= "The command '".$service->command."' add to service $service->name \n";
+					}else{
+						$code=1;
+						$error .= "The command '".$service->command."' doesn't exist.\n";
+					}
+					foreach($service->parameters as $params) {
+						$param = new NagiosServiceCheckCommandParameter();
+						$param->setService($tempService->getId());
+						$param->setParameter($params);
+						$param->save();
+						$success .= "Command Parameter ".$params." added to $service->name\n";
 					}
 				}
+			
 				
 				// Export
                 if( $exportConfiguration == TRUE )
@@ -1281,6 +1278,7 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
         
 	}
+
 	/* LILAC - addEventBroker */
 	public function addEventBroker( $broker, $exportConfiguration = FALSE ){
 		

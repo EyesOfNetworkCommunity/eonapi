@@ -122,6 +122,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addHostTemplateToHost` | POST | [**templateHostName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a host template to a nagios host. |
 | `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact to a nagios host template. |
 | `addServiceTemplateFromService` | POST | [**serviceTemplateName, serviceName, hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service template in the given service of the specified host. |
+| `addServiceToHost` | POST | [**hostName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service in the given host. (allow to create a service with optional inherited template, optional command and parameters in a specified host) See example bellow for utilisation |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact group to a nagios host template. |
 | `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a command to Nagios.returncode=0 or 1 if failed |
 | `addHostGroupToHostTemplate` | POST | [**hostGroupName,templateHostName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a Host group to a host template. returncode=0 or 1 if failed |
@@ -295,6 +296,18 @@ To illustrate the EON API features tab, you will find a few implementation examp
 		"CheckCommand":"check_api_eon",
 		"IsVolatile":"enable"
   	}
+}
+```
+* /addServiceToHost
+```json 
+{
+  "hostName":"localhost",
+  "service": {
+    "name":"Foe",
+	"inheritance":"EMC", //optinal and the template have to exist
+    "command":"check_ftp", //optional and the command have to exist
+    "parameters":["toto","titi"] //optional
+  }
 }
 ```
 

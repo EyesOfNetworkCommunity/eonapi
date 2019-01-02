@@ -53,7 +53,7 @@ addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
-addRoute('post', '/addServicesToHost', 'addServicesToHost');
+addRoute('post', '/addServiceToHost', 'addServiceToHost');
 addRoute('post', '/addHostGroupToHost', 'addHostGroupToHost');
 addRoute('post', '/addServiceToTemplate', 'addServiceToTemplate');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
