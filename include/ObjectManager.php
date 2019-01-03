@@ -858,29 +858,8 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs); 
-
-        
-        
-		if(!$host) {
-			$error .= "Host $hostName not found\n";
-		}
-        
-        // Lauch actions if no errors
-		if(empty($error)) {	
-            if( $contactName != NULL ){
-				//Add a contact to a host
-                $this->addContactToExistingHost( $host, $contactName, $error, $success );
-                
-                // Export
-                if( $exportConfiguration == TRUE )
-                    $this->exportConfigurationToNagios($error, $success);
-            }
-        }else $code=1;
-        
-        $logs = $this->getLogs($error, $success);
-        
-        return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Add Contact Group to Host */
     public function addContactGroupToHost( $hostName, $contactGroupName, $exportConfiguration = FALSE ){
         $error = "";
@@ -893,88 +872,46 @@ class ObjectManager {
 		if(!$host) {
 			$error .= "Host $hostName not found\n";
 		}
+
+		$ncgp = new NagiosContactGroupPeer;
+		// Find host group contact
+		$tempContactGroup = $ncgp->getByName( $contactGroupName );
+		if(!$tempContactGroup) {
+			$error .= "Contact group $contactGroupName not found\n";	
+		}
         
         // Lauch actions if no errors
 		if(empty($error)) {	
-            if( $contactGroupName != NULL ){
-                //Add a contact group to a host
-                $this->addContactGroupToExistingHost( $host, $contactGroupName, $error, $success );
-                
-                // Export
-                if( $exportConfiguration == TRUE )
-                    $this->exportConfigurationToNagios($error, $success);
+			//Add a contact group to a host
+			$c = new Criteria();
+            $c->add(NagiosHostContactgroupPeer::HOST, $host->getId());
+            $c->add(NagiosHostContactgroupPeer::CONTACTGROUP, $tempContactGroup->getId());
+            $membership = NagiosHostContactgroupPeer::doSelectOne($c);
+            
+            //Test if contact group doesn't already exist
+            if($membership) {
+				$code=1;
+                $error .= "That contact group already exists in that list!\n";
             }
+            else{
+                $membership = new NagiosHostContactgroup();
+                $membership->setHost( $host->getId() );
+                $membership->setNagiosContactGroup( $tempContactGroup );
+                $membership->save();
+                $hostName = $host->getName();
+                $success .= "Contact group $contactGroupName added to host $hostName\n";   
+			}	
+			
+            if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+				
         }else $code=1;
         
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
 	}
-	#########################################Verify why
-	/* LILAC - Add Contact */
-    public function addContactToExistingHost( $tempHost, $contactName, &$error, &$success, $exportConfiguration = FALSE ){
-        $ncp = new NagiosContactPeer;
-        
-        // Find host contact
-        $tempContact = $ncp->getByName( $contactName );
-        if(!$tempContact) {
-            $error .= "Contact $contactName not found\n";	
-        }
-        
-        //If contact exists
-        if($tempContact) {
-            $c = new Criteria();
-            $c->add(NagiosHostContactMemberPeer::HOST, $tempHost->getId());
-            $c->add(NagiosHostContactMemberPeer::CONTACT, $tempContact->getId());
-            $membership = NagiosHostContactMemberPeer::doSelectOne($c);
-            
-            //Test if contact doesn't already exist
-            if($membership) {
-                $error .= "That contact already exists in that list!\n";
-            }
-            else{
-                // host-contact
-                $membership = new NagiosHostContactMember();
-                $membership->setHost( $tempHost->getId() );
-                $membership->setNagiosContact( $tempContact );
-                $membership->save();
-                $hostName = $tempHost->getName();
-                $success .= "Contact $contactName added to host $hostName\n";
-            }
-        }    
-    }
-	/* LILAC - Add Contact Group to Host */
-    public function addContactGroupToExistingHost( $tempHost, $contactGroupName, &$error, &$success, $exportConfiguration = FALSE ){
-        $ncgp = new NagiosContactGroupPeer;
 
-        // Find host group contact
-        $tempContactGroup = $ncgp->getByName( $contactGroupName );
-        if(!$tempContactGroup) {
-            $error .= "Contact group $contactGroupName not found\n";	
-        }
-
-
-        if($tempContactGroup) {
-            $c = new Criteria();
-            $c->add(NagiosHostContactgroupPeer::HOST, $tempHost->getId());
-            $c->add(NagiosHostContactgroupPeer::CONTACTGROUP, $tempContactGroup->getId());
-            $membership = NagiosHostContactgroupPeer::doSelectOne($c);
-            
-            //Test if contact group doesn't already exist
-            if($membership) {
-                $error .= "That contact group already exists in that list!\n";
-            }
-            else{
-                $membership = new NagiosHostContactgroup();
-                $membership->setHost( $tempHost->getId() );
-                $membership->setNagiosContactGroup( $tempContactGroup );
-                $membership->save();
-                $hostName = $tempHost->getName();
-                $success .= "Contact group $contactGroupName added to host $hostName\n";   
-            }	
-        }
-	} 
-	#########################################End Verify why
     /* LILAC - Add Template to Host */
     public function addHostTemplateToHost( $templateHostName, $hostName, $exportConfiguration = FALSE ){
         $error = "";
@@ -1543,35 +1480,51 @@ class ObjectManager {
 		$mod=false;
 		
 		$host 			= NagiosHostPeer::getByName($hostName);    
-		$services 		= NagiosServicePeer::getByHostAndDescription($hostName,$service->name);
+		$nagioService 		= NagiosServicePeer::getByHostAndDescription($hostName,$service->name);
 
 		if(!$host) {
 			$code=1;
 			$error .= "Host $hostName doesn't exist\n";
 		}
-		if(!$services){
+		if(!$nagioService){
 			$code=1;
 			$error .= "Service $service->name doesn't exist\n";
 		}else{ 
-			if(isset($service->command) && $services->getCheckCommand()!== $service->command )
+			if(isset($service->command) && $nagioService->getCheckCommand()!== $service->command )
 			{
 				$command=NagiosCommandPeer::getByName($service->command);
-				$services->setCheckCommand($command->getId());
-				$services->save();
+				$nagioService->setCheckCommand($command->getId());
+				$nagioService->save();
 				$mod=true;
 			}
-			if(isset($service->new_name) && $services->getDescription()!==$service->new_name)
+			if(isset($service->new_name) && $nagioService->getDescription()!==$service->new_name)
 			{
-				$services->setDescription($service->new_name);
-				$services->save();
+				$nagioService->setDescription($service->new_name);
+				$nagioService->save();
 				$mod=true;
+			}
+			if(isset($service->parameters)){
+				//We prepared the list of existing parameters in the service
+				$tempListParam=[];
+				foreach($nagioService->getNagiosServiceCheckCommandParameters()->toArray() as $paramObject){
+					array_push($tempListParam,$paramObject["Parameter"]);
+				}
+				foreach ($service->parameters as $paramName){
+					
+					if(!in_array($paramName, $tempListParam)){
+						$param = new NagiosServiceCheckCommandParameter();
+						$param->setService($nagioService->getId());
+						$param->setParameter($paramName);
+						$param->save();
+						$mod=true;
+					}
+				}
 			}
 			if($mod){
-				$success .= $services->getDescription()." in host $hostName has been updated.";
-				$code=2;
+				$success .= $nagioService->getDescription()." in host $hostName has been updated.\n";
 			} else{
 				$code=1;
-				$error .=  $services->getDescription()." in host $hostName  failed to update\n";
+				$error .=  $nagioService->getDescription()." in host $hostName don't update\n";
 			}
 		}
 		$logs = $this->getLogs($error, $success);
@@ -1739,12 +1692,19 @@ class ObjectManager {
 			$code=1;
             $error .= "The Template service '".$serviceTemplateName."' does not exist\n";
         }else{
-			if($targetTemplateService->setCheckCommandByName($commandName)){
-				$success .="The command : $commandName had been set to the service template: $serviceTemplateName.";
-				$targetTemplateService->save();
-			}else{
+			$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateService->getCheckCommand());
+
+			if($cmd->getName() == $commandName){
 				$code=1;
-				$error .= "The command '".$commandName."' failed to update\n";
+				$error .= "The command '".$commandName."' is already set to this template\n";
+			}else{
+				if($targetTemplateService->setCheckCommandByName($commandName)){
+					$success .="The command : $commandName had been set to the service template: $serviceTemplateName.";
+					$targetTemplateService->save();
+				}else{
+					$code=1;
+					$error .= "The command '".$commandName."' failed to update\n";
+				}
 			}
 		}
 
@@ -1765,18 +1725,26 @@ class ObjectManager {
 			$code=1;
             $error .= "The Template service '".$templateHostName."' does not exist\n";
         }else{
-			if($targetTemplateHost->setCheckCommandByName($commandName)){
-				$success .="The command : $commandName had been set to the service template: $templateHostName.";
-				$targetTemplateHost->save();
-			}else{
+			$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateHost->getCheckCommand());
+
+			if($cmd->getName() == $commandName){
 				$code=1;
-				$error .= "The command '".$commandName."' failed to update\n";
+				$error .= "The command '".$commandName."' is already set to this template\n";
+			}else{
+				if($targetTemplateHost->setCheckCommandByName($commandName)){
+					$success .="The command : $commandName had been set to the service template: $templateHostName.||";
+					$targetTemplateHost->save();
+				}else{
+					$code=1;
+					$error .= "The command '".$commandName."' failed to update\n";
+				}
 			}
+			
 		}
 
 		$logs = $this->getLogs($error, $success);
         
-        $result=array("code"=>$code,"description"=>$logs,"changes"=>$code);
+        $result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
 	
