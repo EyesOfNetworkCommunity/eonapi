@@ -391,14 +391,14 @@ class ObjectManager {
 				$newInheritance->save();
 				$success .= "Host Template ".$templateHostName." added to host ".$hostName."\n";
                 
-                if( $contactName != NULL ){
+                if( $contactName != NULL){
 					//Add a contact to a host
-                    $this->addContactToHost( $tempHost->getName(), $contactName );    
+                    $code = $this->addContactToHost( $tempHost->getName(), $contactName )["code"];  
                 }
                 
-                if( $contactGroupName != NULL ){
+                if( $contactGroupName != NULL && $code==0){
                     //Add a contact group to a host
-                    $this->addContactGroupToHost( $tempHost->getName(), $contactGroupName );    
+                    $code = $this->addContactGroupToHost( $tempHost->getName(), $contactGroupName )["code"];    
                 }
                                 
 				// Export
@@ -1626,16 +1626,26 @@ class ObjectManager {
 		if(empty($error)) {	
 			try {
 				// host
+				$changed=0;
 				if(isset($newHostName)){
-					$host->setName($newHostName);
+					if($host->getName() != $newHostName){
+						$host->setName($newHostName);
+						$changed++;
+					}
 				}
 				$host->setAlias($hostAlias);
-				if(isset($hostIp)){
-					$host->setAddress($hostIp);
+				if(isset($hostIp) ){
+					if($host->getAddress() !=$hostIp){
+						$host->setAddress($hostIp);
+						$changed++;
+					}						
+					
 				}
 				$host->save();
-				$success .= "Host $hostName updated\n";
-                
+				if($changed>0){
+					$success .= "Host $hostName updated\n";
+				}
+
 				// host-template
 				if(isset($templateHostName)){
 					$nhtp = new NagiosHostTemplatePeer;
@@ -1645,36 +1655,51 @@ class ObjectManager {
 						$code=1;
 						$error .= "Host Template $templateHostName not found\n";
 					}else{
-						$newInheritance = new NagiosHostTemplateInheritance();
-						$newInheritance->setNagiosHost($host);
-						$newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($template_host);
-						$newInheritance->save();
-						$success .= "Host Template ".$templateHostName." added to host ".$hostName."\n";
+						$c = new Criteria();
+						$c->add(NagiosHostTemplateInheritancePeer::SOURCE_TEMPLATE, $targetTemplateHost->getId());
+						$c->add(NagiosHostTemplateInheritancePeer::TARGET_TEMPLATE, $targetInheritanceTemplate->getId());
+						$membership = NagiosHostTemplateInheritancePeer::doSelectOne($c);
+						if(!$membership) {
+							$newInheritance = new NagiosHostTemplateInheritance();
+							$newInheritance->setNagiosHost($host);
+							$newInheritance->setNagiosHostTemplateRelatedByTargetTemplate($template_host);
+							$newInheritance->save();
+							$changed++;
+							$success .= "Host Template ".$templateHostName." added to host ".$hostName."\n";
+						}
+						else {
+							$error .= "Host Template ".$templateHostName." already linked to host ".$hostName."\n";
+						}
 					}
-					
 				}
-				
-                
+
                 if( $contactName != NULL ){
-                    //Add a contact to a host
-                    $this->addContactToHost( $host, $contactName, $error, $success );    
+					//Add a contact to a host
+                    if ($this->addContactToHost( $host, $contactName, $error, $success )["code"] == 0){
+						$changed++;
+					}
                 }
                 
                 if( $contactGroupName != NULL ){
                     //Add a contact group to a host
-                    $this->addContactGroupToHost( $host, $contactGroupName, $error, $success );    
+                    if($this->addContactGroupToHost( $host, $contactGroupName, $error, $success )["code"]==0){
+						$changed++;
+					}    
                 }
                                 
 				// Export
                 if( $exportConfiguration == TRUE )
-				    $this->exportConfigurationToNagios($error, $success);
+					$this->exportConfigurationToNagios($error, $success);
+					
+				if($changed==0){
+					$code=1;
+				}
 			}
 			catch(Exception $e) {
 				$code=1;
 				$error .= $e->getMessage()."\n";
 			}
 		}
-        
         
         $logs = $this->getLogs($error, $success);
         
