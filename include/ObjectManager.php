@@ -791,6 +791,56 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs); 
 	}
 
+	/* LILAC - Add command Parameter to a service Template */
+	public function addCheckCommandParameterToServiceTemplate($templateServiceName, $parameters){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+        $nstp = new NagiosServiceTemplatePeer();
+		// Find host template
+		
+		$template_service = $nstp->getByName($templateServiceName);
+		if(!$template_service) {
+			$error .= "Service Template $templateServiceName not found\n";
+		}
+	
+		if( empty($error) ) {
+			//We prepared the list of existing parameters in the service
+			$parameter_list = array();
+			$tempListParam = [];
+			$c = new Criteria();
+			$c->add(NagiosServiceCheckCommandParameterPeer::TEMPLATE, $template_service->getId());
+			$c->addAscendingOrderByColumn(NagiosServiceCheckCommandParameterPeer::ID);
+			
+			$parameter_list = NagiosServiceCheckCommandParameterPeer::doSelect($c);
+			foreach($parameter_list as $paramObject){
+				array_push($tempListParam,$paramObject->getParameter());
+			}
+			foreach ($parameters as $paramName){
+				
+				if(!in_array($paramName, $tempListParam)){
+					$param = new NagiosServiceCheckCommandParameter();
+					$param->setNagiosServiceTemplate($template_service);
+					$param->setParameter($paramName);
+					$param->save();
+					$changed++;
+				}
+			}
+		}
+		
+		
+		if($changed>0){
+			$success .= "$templateServiceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateServiceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Add Contact Group to Host */
     public function addContactGroupToHost( $hostName, $contactGroupName, $exportConfiguration = FALSE ){
         $error = "";

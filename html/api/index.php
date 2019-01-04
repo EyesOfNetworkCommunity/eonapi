@@ -65,8 +65,8 @@ addRoute('post', '/addContactGroupToHostTemplate', 'addContactGroupToHostTemplat
 addRoute('post', '/addContactGroupToServiceTemplate', 'addContactGroupToServiceTemplate');
 addRoute('post', '/addServiceGroupToServiceTemplate', 'addServiceGroupToServiceTemplate');
 addRoute('post', '/addInheritanceTemplateToHostTemplate', 'addInheritanceTemplateToHostTemplate');
+addRoute('post', '/addCheckCommandParameterToServiceTemplate', 'addCheckCommandParameterToServiceTemplate');
 addRoute('post', '/addInheritServiceTemplateToServiceTemplate', 'addInheritServiceTemplateToServiceTemplate');
-
 
 // addRoute('post', '/modifyContact', 'modifyContact');
 // addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
