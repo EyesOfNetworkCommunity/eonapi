@@ -841,6 +841,56 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 
+	/* LILAC - Add command Parameter to a Host Template */
+	public function addCheckCommandParameterToHostTemplate($templateHostName, $parameters){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+        $nhtp = new NagiosHostTemplatePeer();
+		// Find host template
+		
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			$error .= "Host Template $templateHostName not found\n";
+		}
+	
+		if( empty($error) ) {
+			//We prepared the list of existing parameters in the host
+			$parameter_list = array();
+			$tempListParam = [];
+			$c = new Criteria();
+			$c->add(NagiosHostCheckCommandParameterPeer::HOST_TEMPLATE, $template_host->getId());
+			$c->addAscendingOrderByColumn(NagiosHostCheckCommandParameterPeer::ID);
+			
+			$parameter_list = NagiosHostCheckCommandParameterPeer::doSelect($c);
+			foreach($parameter_list as $paramObject){
+				array_push($tempListParam,$paramObject->getParameter());
+			}
+			foreach ($parameters as $paramName){
+				
+				if(!in_array($paramName, $tempListParam)){
+					$param = new NagiosHostCheckCommandParameter();
+					$param->setNagiosHostTemplate($template_host);
+					$param->setParameter($paramName);
+					$param->save();
+					$changed++;
+				}
+			}
+		}
+		
+		
+		if($changed>0){
+			$success .= "$templateHostName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateHostName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Add Contact Group to Host */
     public function addContactGroupToHost( $hostName, $contactGroupName, $exportConfiguration = FALSE ){
         $error = "";
@@ -1754,6 +1804,101 @@ class ObjectManager {
 	}
 	
 ########################################## DELETE
+
+	/* LILAC - delete command Parameter to a service Template */
+	public function deleteCheckCommandParameterToServiceTemplate($templateServiceName, $parameters){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+        $nstp = new NagiosServiceTemplatePeer();
+		// Find host template
+		
+		$template_service = $nstp->getByName($templateServiceName);
+		if(!$template_service) {
+			$error .= "Service Template $templateServiceName not found\n";
+		}
+	
+		if( empty($error) ) {
+			//We prepared the list of existing parameters in the service
+			$parameter_list = array();
+			$tempListParam = [];
+			$c = new Criteria();
+			$c->add(NagiosServiceCheckCommandParameterPeer::TEMPLATE, $template_service->getId());
+			$c->addAscendingOrderByColumn(NagiosServiceCheckCommandParameterPeer::ID);
+			
+			$parameter_list = NagiosServiceCheckCommandParameterPeer::doSelect($c);
+			
+			foreach ($parameters as $paramName){
+				foreach($parameter_list as $paramObject){
+					if($paramName == $paramObject->getParameter() ){
+						$paramObject->delete();
+						$changed++;
+					}
+				}
+				
+			}
+		}
+		
+		
+		if($changed>0){
+			$success .= "$templateServiceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateServiceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - delete command Parameter to a host Template */
+	public function deleteCheckCommandParameterToHostTemplate($templateHostName, $parameters){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+        $nhtp = new NagiosHostTemplatePeer();
+		// Find host template
+		
+		$template_host = $nhtp->getByName($templateHostName);
+		if(!$template_host) {
+			$error .= "Host Template $templateHostName not found\n";
+		}
+	
+		if( empty($error) ) {
+			//We prepared the list of existing parameters in the host
+			$parameter_list = array();
+			$tempListParam = [];
+			$c = new Criteria();
+			$c->add(NagiosHostCheckCommandParameterPeer::HOST_TEMPLATE, $template_host->getId());
+			$c->addAscendingOrderByColumn(NagiosHostCheckCommandParameterPeer::ID);
+			
+			$parameter_list = NagiosHostCheckCommandParameterPeer::doSelect($c);
+			
+			foreach ($parameters as $paramName){
+				foreach($parameter_list as $paramObject){
+					if($paramName == $paramObject->getParameter() ){
+						$paramObject->delete();
+						$changed++;
+					}
+				}
+				
+			}
+		}
+		
+		
+		if($changed>0){
+			$success .= "$templateHostName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateHostName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Delete contact */
 	public function deleteContact($contactName){
 		$error = "";
