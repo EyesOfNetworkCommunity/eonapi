@@ -786,6 +786,132 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 
+	/* LILAC - Add Custom Argument to a host Template*/
+	public function addCustomArgumentsToHostTemplate($templateHostName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nhtp = new NagiosHostTemplatePeer;
+		$templateHost = $nhtp->getByName($templateHostName);
+		// Find host
+		if(!$templateHost) {
+			$error .= "Template Host :  $templateHostName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosHostCustomObjectVarPeer::HOST_TEMPLATE, $templateHost->getId());
+				$nhcov = NagiosHostCustomObjectVarPeer::doSelectOne($c);
+				
+				if(!$nhcov){
+					$param = new NagiosHostCustomObjectVar();
+					$param->setNagiosHostTemplate($templateHost);
+					$param->setVarName($key);
+					$param->setVarValue($value);
+					$param->save();
+					$changed++;
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$templateHostName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateHostName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Add Custom Argument to a Service Template*/
+	public function addCustomArgumentsToServiceTemplate($templateServiceName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nstp = new NagiosServiceTemplatePeer;
+		$templateService = $nstp->getByName($templateServiceName);
+		// Find host
+		if(!$templateService) {
+			$error .= "Template Service:  $templateServiceName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosServiceCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosServiceCustomObjectVarPeer::SERVICE_TEMPLATE, $templateService->getId());
+				$nscov = NagiosServiceCustomObjectVarPeer::doSelectOne($c);
+				
+				if(!$nscov){
+					$param = new NagiosServiceCustomObjectVar();
+					$param->setNagiosServiceTemplate($templateService);
+					$param->setVarName($key);
+					$param->setVarValue($value);
+					$param->save();
+					$changed++;
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$templateServiceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateServiceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Add Custom Argument to a Service */
+	public function addCustomArgumentsToService($serviceName, $hostName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nsp = new NagiosServicePeer;
+		$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+		// Find host
+		if(!$service) {
+			$error .= "Service:  $serviceName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosServiceCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosServiceCustomObjectVarPeer::SERVICE, $service->getId());
+				$nscov = NagiosServiceCustomObjectVarPeer::doSelectOne($c);
+				
+				if(!$nscov){
+					$param = new NagiosServiceCustomObjectVar();
+					$param->setNagiosService($service);
+					$param->setVarName($key);
+					$param->setVarValue($value);
+					$param->save();
+					$changed++;
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$serviceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$serviceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Add Contact to Host */
 	public function addContactToHost( $hostName, $contactName, $exportConfiguration = FALSE ){
         $error = "";
@@ -2069,6 +2195,130 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
 		return array("code"=>$code,"description"=>$logs);
 	}
+
+	/* LILAC - Delete Custom Argument to a host */
+	public function deleteCustomArgumentsToHostTemplate($templateHostName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nhtp = new NagiosHostTemplatePeer;
+		$templateHost = $nhtp->getByName($templateHostName);
+		// Find template host
+		if(!$templateHost) {
+			$error .= "Tempalte Host :  $templateHostName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosHostCustomObjectVarPeer::HOST_TEMPLATE, $templateHost->getId());
+				$nhcov = NagiosHostCustomObjectVarPeer::doSelectOne($c);
+				
+				if($nhcov){
+					$nhcov->delete();
+					$success .= "$key has been deleted.\n";
+					$changed++;
+				}else{
+					$error .=  "$key not existed in that host\n";
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$templateHostName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateHostName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete Custom Argument to a Service Template */
+	public function deleteCustomArgumentsToServiceTemplate($templateServiceName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nstp = new NagiosServiceTemplatePeer;
+		$templateService = $nstp->getByName($templateServiceName);
+		// Find template host
+		if(!$templateService) {
+			$error .= "Tempalte Service:  $templateServiceName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosServiceCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosServiceCustomObjectVarPeer::SERVICE_TEMPLATE, $templateService->getId());
+				$nscov = NagiosServiceCustomObjectVarPeer::doSelectOne($c);
+				
+				if($nscov){
+					$nscov->delete();
+					$success .= "$key has been deleted.\n";
+					$changed++;
+				}else{
+					$error .=  "$key not existed in that host\n";
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$templateServiceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$templateServiceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete Custom Argument to a Service  */
+	public function deleteCustomArgumentsToService($serviceName, $hostName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nsp = new NagiosServicePeer;
+		$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+		// Find template host
+		if(!$service) {
+			$error .= "Service:  $serviceName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosServiceCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosServiceCustomObjectVarPeer::SERVICE, $service->getId());
+				$nscov = NagiosServiceCustomObjectVarPeer::doSelectOne($c);
+				
+				if($nscov){
+					$nscov->delete();
+					$success .= "$key has been deleted.\n";
+					$changed++;
+				}else{
+					$error .=  "$key not existed in that host\n";
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$serviceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$serviceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 
 	/* LILAC - Delete contact Group to Service */
 	public function deleteContactGroupToServiceInHost( $contactGroupName, $serviceName, $hostName, $exportConfiguration = FALSE ){
