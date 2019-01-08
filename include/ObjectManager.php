@@ -744,6 +744,48 @@ class ObjectManager {
 		return $logs;
 	}
 ########################################## ADD
+	/* LILAC - Add Custom Argument to a host */
+	public function addCustomArgumentsToHost($hostName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nhp = new NagiosHostPeer;
+		$host = $nhp->getByName($hostName);
+		// Find host
+		if(!$host) {
+			$error .= "Host :  $hostName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosHostCustomObjectVarPeer::HOST, $host->getId());
+				$nhcov = NagiosHostCustomObjectVarPeer::doSelectOne($c);
+				
+				if(!$nhcov){
+					$param = new NagiosHostCustomObjectVar();
+					$param->setNagiosHost($host);
+					$param->setVarName($key);
+					$param->setVarValue($value);
+					$param->save();
+					$changed++;
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$hostName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$hostName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Add Contact to Host */
 	public function addContactToHost( $hostName, $contactName, $exportConfiguration = FALSE ){
         $error = "";
@@ -1987,6 +2029,47 @@ class ObjectManager {
 	}
 	
 ########################################## DELETE
+	/* LILAC - Delete Custom Argument to a host */
+	public function deleteCustomArgumentsToHost($hostName, $customArguments){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+		$nhp = new NagiosHostPeer;
+		$host = $nhp->getByName($hostName);
+		// Find host
+		if(!$host) {
+			$error .= "Host :  $hostName not found\n";
+		}
+		if( empty($error) ) {
+			//We prepared the list of existing custom arg in the Host
+			foreach($customArguments as $key=>$value){
+				$c = new Criteria();
+				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
+				$c->add(NagiosHostCustomObjectVarPeer::HOST, $host->getId());
+				$nhcov = NagiosHostCustomObjectVarPeer::doSelectOne($c);
+				
+				if($nhcov){
+					$nhcov->delete();
+					$success .= "$key has been deleted.\n";
+					$changed++;
+				}else{
+					$error .=  "$key not existed in that host\n";
+				}
+			}
+		}
+		
+		if($changed>0){
+			$success .= "$hostName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$hostName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Delete contact Group to Service */
 	public function deleteContactGroupToServiceInHost( $contactGroupName, $serviceName, $hostName, $exportConfiguration = FALSE ){
         $error = "";

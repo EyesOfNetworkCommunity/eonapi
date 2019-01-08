@@ -60,6 +60,7 @@ addRoute('post', '/addServiceToTemplate', 'addServiceToTemplate');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
 addRoute('post', '/addHostTemplateToHost', 'addHostTemplateToHost');
 addRoute('post', '/addContactToHostTemplate', 'addContactToHostTemplate');
+addRoute('post', '/addCustomArgumentsToHost', 'addCustomArgumentsToHost');
 addRoute('post', '/addContactToServiceInHost', 'addContactToServiceInHost');
 addRoute('post', '/addHostGroupToHostTemplate', 'addHostGroupToHostTemplate');
 addRoute('post', '/addContactToServiceTemplate', 'addContactToServiceTemplate');
@@ -104,6 +105,7 @@ addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteContactToHostTemplate', 'deleteContactToHostTemplate');
+addRoute('post', '/deleteCustomArgumentsToHost', 'deleteCustomArgumentsToHost');
 addRoute('post', '/deleteContactToServiceInHost', 'deleteContactToServiceInHost');
 addRoute('post', '/deleteHostGroupToHostTemplate', 'deleteHostGroupToHostTemplate');
 addRoute('post', '/deleteContactToServiceTemplate', 'deleteContactToServiceTemplate');
@@ -117,6 +119,7 @@ addRoute('post', '/deleteCheckCommandParameterToHostTemplate', 'deleteCheckComma
 addRoute('post', '/deleteCheckCommandParameterToServiceInHost', 'deleteCheckCommandParameterToServiceInHost');
 addRoute('post', '/deleteCheckCommandParameterToServiceTemplate', 'deleteCheckCommandParameterToServiceTemplate');
 addRoute('post', '/deleteInheritServiceTemplateToServiceTemplate', 'deleteInheritServiceTemplateToServiceTemplate');
+
 
 
 // addRoute('post', '/deleteUser','deleteUser');
