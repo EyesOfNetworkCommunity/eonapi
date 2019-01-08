@@ -123,6 +123,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addServiceToHost` | POST | [**hostName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service in the given host. (allow to create a service with optional inherited template, optional command and parameters in a specified host) See example bellow for utilisation |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact group to a nagios host template. |
 | `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a command to Nagios.returncode=0 or 1 if failed |
+| `addCheckCommandParameterToServiceTemplate` | POST | [**templateServiceName,parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add command parameter to a service template.returncode=0 or 1 if failed /!\parameters is a list |
 | `addHostGroupToHostTemplate` | POST | [**hostGroupName,templateHostName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a Host group to a host template. returncode=0 or 1 if failed |
 | `addInheritanceTemplateToHostTemplate` | POST | [**inheritanceTemplateName,templateHostName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a Inherit host template to a host template. returncode=0 or 1 if failed |
 | `addServiceGroupeToServiceTemplate` | POST | [**serviceGroupName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a service group to a service template. returncode=0 or 1 if failed |
@@ -132,6 +133,11 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addContactToServiceTemplate` | POST | [**contactName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a contact to a service template. returncode=0 or 1 if failed |
 | `addContactGroupToServiceTemplate` | POST | [**contactGroupName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a contact group to a service template. returncode=0 or 1 if failed |
 | `addInheritServiceTemplateToServiceTemplate` | POST | [**inheritServiceTemplateName,templateServiceName,exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a inherited service template to a service template. returncode=0 or 1 if failed |
+| `addCustomArgumentsToService` | POST | [**serviceName,hostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a service. returncode=0 or 1 if failed or didn't changed |
+| `addCustomArgumentsToServiceTemplate` | POST | [**templateServiceName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a service template. returncode=0 or 1 if failed or didn't changed |
+| `addCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add command parameters in a service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
+| `addCustomArgumentsToHostTemplate` | POST | [**templateHostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a host template. returncode=0 or 1 if failed or didn't changed |
+| `addCustomArgumentsToHost` | POST | [**hostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a host. returncode=0 or 1 if failed or didn't changed |
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
@@ -160,6 +166,14 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteContactGroupToServiceTemplate` | POST | [**contactGroupName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a contact group in the given service Template. returncode=0 or 1 if failed|
 | `deleteContactToServiceTemplate` | POST | [**contactName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a contact in the given service Template. returncode=0 or 1 if failed|
 | `deleteServiceGroupToServiceTemplate` | POST | [**serviceGroupName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a service group in the given service Template. returncode=0 or 1 if failed|
+| `deleteCustomArgumentsToService` | POST | [**serviceName,hostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete customs arguments to a service. returncode=0 or 1 if failed or didn't changed |
+| `deleteCustomArgumentsToServiceTemplate` | POST | [**templateServiceName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete customs arguments to a service template. returncode=0 or 1 if failed or didn't changed |
+| `deleteCustomArgumentsToHostTemplate` | POST | [**templateHostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete customs arguments to a host template. returncode=0 or 1 if failed or didn't changed |
+| `deleteCustomArgumentsToHost` | POST | [**hostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete customs arguments to a host. returncode=0 or 1 if failed or didn't changed |
+|`deleteCheckCommandParameterToServiceTemplate` | POST | [**templateServiceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to a Service template. returncode=0 or 1 if failed or didn't changed /!\parameters is a list|
+|`deleteCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to a Service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
+|`deleteCheckCommandParameterToHostTemplate` | POST | [**templateHostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to host template. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
+
 
 
 
@@ -252,6 +266,18 @@ To illustrate the EON API features tab, you will find a few implementation examp
 }
 ```
 
+* /deleteCustomArgumentsToService
+```json 
+{
+  "serviceName":"toto",
+  "hostName":"DUMMY_HOST",
+  "customArguments":{
+    					"toto":"123",
+                      	"titi":"321"
+  					}
+}
+```
+
 * /addContactToHostTemplate
 ```json 
 {
@@ -324,6 +350,13 @@ To illustrate the EON API features tab, you will find a few implementation examp
     "User19":"",
     "User20":"/root"
   }
+}
+```
+* /addCheckCommandParameterToServiceTemplate
+```json
+{
+  "templateServiceName": "DUMMY_TEMPLATE",
+  "parameters": ["titi","toto"]
 }
 ```
 
