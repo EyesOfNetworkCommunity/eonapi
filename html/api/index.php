@@ -51,6 +51,7 @@ addRoute('post', '/createHostTemplate', 'createHostTemplate');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 
+
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addServiceToHost', 'addServiceToHost');
@@ -69,21 +70,25 @@ addRoute('post', '/addServiceGroupToServiceTemplate', 'addServiceGroupToServiceT
 addRoute('post', '/addServiceTemplateToServiceInHost', 'addServiceTemplateToServiceInHost');
 addRoute('post', '/addInheritanceTemplateToHostTemplate', 'addInheritanceTemplateToHostTemplate');
 addRoute('post', '/addCheckCommandParameterToHostTemplate', 'addCheckCommandParameterToHostTemplate');
+addRoute('post', '/addCheckCommandParameterToServiceInHost', 'addCheckCommandParameterToServiceInHost');
 addRoute('post', '/addCheckCommandParameterToServiceTemplate', 'addCheckCommandParameterToServiceTemplate');
 addRoute('post', '/addInheritServiceTemplateToServiceTemplate', 'addInheritServiceTemplateToServiceTemplate');
 
+
+// addRoute('post', '/modifyUser','modifyUser');
 // addRoute('post', '/modifyContact', 'modifyContact');
 // addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
-// addRoute('post', '/modifyServiceTemplate', 'modifyServiceTemplate');
+// addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
 // addRoute('post', '/modifyHostTemplate', 'modifyHostTemplate');
+// addRoute('post', '/modifyServiceTemplate', 'modifyServiceTemplate');
+
 addRoute('post', '/modifyHost', 'modifyHost');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
 addRoute('post', '/modifyNagiosRessources', 'modifyNagiosRessources');
 addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
-// addRoute('post', '/modifyUser','modifyUser');
-// addRoute('post', '/modifyContactGroup','modifyContactGroup');
+
 
 
 addRoute('post', '/deleteHost', 'deleteHost');
@@ -109,20 +114,22 @@ addRoute('post', '/deleteServiceGroupToServiceTemplate', 'deleteServiceGroupToSe
 addRoute('post', '/deleteServiceTemplateToServiceInHost', 'deleteServiceTemplateToServiceInHost');
 addRoute('post', '/deleteInheritanceTemplateToHostTemplate', 'deleteInheritanceTemplateToHostTemplate');
 addRoute('post', '/deleteCheckCommandParameterToHostTemplate', 'deleteCheckCommandParameterToHostTemplate');
+addRoute('post', '/deleteCheckCommandParameterToServiceInHost', 'deleteCheckCommandParameterToServiceInHost');
 addRoute('post', '/deleteCheckCommandParameterToServiceTemplate', 'deleteCheckCommandParameterToServiceTemplate');
 addRoute('post', '/deleteInheritServiceTemplateToServiceTemplate', 'deleteInheritServiceTemplateToServiceTemplate');
 
-// addRoute('post', '/deleteUser','deleteUser');
 
-addRoute('post', '/duplicateService', 'duplicateService');
+// addRoute('post', '/deleteUser','deleteUser');
 // addRoute('post', '/duplicateHost', 'duplicateHost');
 // addRoute('post', '/duplicateTemplate', 'duplicateTemplate');
 
-addRoute('post', '/exportConfiguration', 'exportConfiguration');
-addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
-addRoute('post', '/listNagiosObjects', 'listNagiosObjects', 'readonly');
-addRoute('post', '/listNagiosStates', 'listNagiosStates', 'readonly');
 addRoute('post', '/test', 'test');
+addRoute('post', '/duplicateService', 'duplicateService');
+addRoute('post', '/exportConfiguration', 'exportConfiguration');
+addRoute('post', '/listNagiosStates', 'listNagiosStates', 'readonly');
+addRoute('post', '/listNagiosObjects', 'listNagiosObjects', 'readonly');
+addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
+
  
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){

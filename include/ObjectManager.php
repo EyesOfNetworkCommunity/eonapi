@@ -841,6 +841,55 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 
+	/* LILAC - Add command Parameter to a service  */
+	public function addCheckCommandParameterToServiceInHost($serviceName, $hostName,$parameters){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+        
+		$nsp = new NagiosServicePeer();
+		$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+		if(!$service) {
+			$code=1;
+			$error .= "Service $serviceName or $hostName not found\n";
+		}
+		if(empty($error)){
+			//We prepared the list of existing parameters in the service
+			$parameter_list = array();
+			$tempListParam = [];
+			$c = new Criteria();
+			$c->add(NagiosServiceCheckCommandParameterPeer::SERVICE , $service->getId());
+			$c->addAscendingOrderByColumn(NagiosServiceCheckCommandParameterPeer::ID);
+			
+			$parameter_list = NagiosServiceCheckCommandParameterPeer::doSelect($c);
+			foreach($parameter_list as $paramObject){
+				array_push($tempListParam,$paramObject->getParameter());
+			}
+			foreach ($parameters as $paramName){
+				
+				if(!in_array($paramName, $tempListParam)){
+					$param = new NagiosServiceCheckCommandParameter();
+					$param->setNagiosService($service);
+					$param->setParameter($paramName);
+					$param->save();
+					$changed++;
+				}
+			}
+		}
+		
+		
+		if($changed>0){
+			$success .= "$serviceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$serviceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Add command Parameter to a Host Template */
 	public function addCheckCommandParameterToHostTemplate($templateHostName, $parameters){
 		$error = "";
@@ -2112,6 +2161,49 @@ class ObjectManager {
 		} else{
 			$code=1;
 			$error .=  "$templateServiceName don't update\n";
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - delete command Parameter to a service  */
+	public function deleteCheckCommandParameterToServiceInHost($serviceName, $hostName, $parameters){
+		$error = "";
+		$success = "";
+		$code=0;
+		$changed=0;
+        $nsp = new NagiosServicePeer();
+		$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+		if(!$service) {
+			$code=1;
+			$error .= "Service $serviceName or $hostName not found\n";
+		}
+		if(empty($error)){
+			//We prepared the list of existing parameters in the service
+			$parameter_list = array();
+			$tempListParam = [];
+			$c = new Criteria();
+			$c->add(NagiosServiceCheckCommandParameterPeer::SERVICE, $service->getId());
+			$c->addAscendingOrderByColumn(NagiosServiceCheckCommandParameterPeer::ID);
+			
+			$parameter_list = NagiosServiceCheckCommandParameterPeer::doSelect($c);
+			
+			foreach ($parameters as $paramName){
+				foreach($parameter_list as $paramObject){
+					if($paramName == $paramObject->getParameter() ){
+						$paramObject->delete();
+						$changed++;
+					}
+				}
+				
+			}
+		}
+		if($changed>0){
+			$success .= "$serviceName has been updated.\n";
+		} else{
+			$code=1;
+			$error .=  "$serviceName don't update\n";
 		}
 	
 		$logs = $this->getLogs($error, $success);
