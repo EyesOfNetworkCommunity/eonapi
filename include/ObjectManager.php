@@ -2232,6 +2232,33 @@ class ObjectManager {
 	}
 	
 ########################################## DELETE
+
+	/* LILAC - delete host Downtimes */
+    public function deleteHostDowntimes($idDowntime){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			//$success .= $date_end->format('d-m-Y H:i:s');
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			$cmdline = '['.$timestamp.'] DEL_HOST_DOWNTIME;'.$idDowntime.''.PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$success .= "Schedule host downtimes succesfully deleted.";
+		
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
 	/* LILAC - Delete Custom Argument to a host */
 	public function deleteCustomArgumentsToHost($hostName, $customArguments){
 		$error = "";

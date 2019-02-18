@@ -97,7 +97,6 @@ addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostT
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
 
 
-
 addRoute('post', '/deleteHost', 'deleteHost');
 addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteService', 'deleteService');
@@ -105,6 +104,7 @@ addRoute('post', '/deleteCommand', 'deleteCommand');
 addRoute('post', '/delEventBroker', 'delEventBroker');
 addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
+addRoute('post', '/deleteHostDowntimes', 'deleteHostDowntimes');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
