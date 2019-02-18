@@ -31,7 +31,8 @@ class ObjectManager {
 		# Get api userName
 		$request = \Slim\Slim::getInstance()->request();
 		$this->authUser = $request->get('username');  
-    }
+	}
+	
 	/* LILAC - List Hosts */
 	public function listHosts( $hostName = false, $hostTemplate = false ){
 		
@@ -350,6 +351,82 @@ class ObjectManager {
 	}
 
 ########################################## CREATE
+
+	/* LILAC - create host Downtimes */
+    public function createHostDowntimes($hostName,$comment,$startTime,$endTime,$user,$fixed=1,$duration=1000,$childHostAction=FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$date_start = new DateTime($startTime);
+			$start = $date_start->getTimestamp();	
+			$date_end = new DateTime($endTime);
+			$end = 	$date_end->getTimestamp();
+			//$success .= $date_end->format('d-m-Y H:i:s');
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(NagiosHostPeer::getByName($hostName)){
+				if(!$childHostAction){
+					$cmdline = '['.$timestamp.'] SCHEDULE_HOST_DOWNTIME;'.$hostName.';'.$start.';'.$end.';'.$fixed.';0;'.$duration.';'.$user.';'.$comment.'\n'.PHP_EOL;
+					$success.= file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+					$success .= "Schedule host downtimes succesfully save.";
+				}else{
+					$cmdline = '['.$timestamp.'] SCHEDULE_AND_PROPAGATE_HOST_DOWNTIME;'.$hostName.';'.$start.';'.$end.';'.$fixed.';0;'.$duration.';'.$user.';'.$comment.'\n'.PHP_EOL;
+					$success.= file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+					$success.="Schedule and propagate host downtimes succesfully save.";
+				}
+			}else{
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* LILAC - create service Downtimes */
+    public function createServiceDowntimes($hostName,$serviceName,$comment,$startTime,$endTime,$user,$fixed=1,$duration=1000){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$date_start = new DateTime($startTime);
+			$start = $date_start->getTimestamp();	
+			$date_end = new DateTime($endTime);
+			$end = 	$date_end->getTimestamp();
+			//$success .= $date_end->format('d-m-Y H:i:s');
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+
+			if(NagiosServicePeer::getByHostAndDescription($hostName,$serviceName) ){
+				$cmdline = '['.$timestamp.'] SCHEDULE_SVC_DOWNTIME;'.$hostName.';'.$serviceName.';'.$start.';'.$end.';'.$fixed.';0;'.$duration.';'.$user.';'.$comment.''.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				$success .= "Schedule service downtimes succesfully save.";
+			}else{
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
 	/* LILAC - Create Host and Services */
 	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
@@ -651,7 +728,7 @@ class ObjectManager {
         
         
         
-        $dom->save($file);
+        $dom->save($xml_file);
         $xml=$dom->saveXML();
 
         $fp=@fopen($xml_file,"w+");
@@ -3578,11 +3655,6 @@ class ObjectManager {
 
 	}
 	
-	public function test($tab){
-		foreach($tab as $t){
-			print_r($t->bonjour);
-		}
-	}
 	/* LIVESTATUS - set nagios objects */
 /*	private function SetNagiosObjects( $object, $backendid = NULL, $columns = FALSE, $filters = FALSE ) {
 	

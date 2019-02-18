@@ -46,8 +46,11 @@ addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate');
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
 addRoute('post', '/createCommand', 'createCommand');
+addRoute('post', '/createContact', 'createContact');
 addRoute('post', '/createHostGroup', 'createHostGroup');
 addRoute('post', '/createHostTemplate', 'createHostTemplate');
+addRoute('post', '/createHostDowntimes', 'createHostDowntimes');
+addRoute('post', '/createServiceDowntimes', 'createServiceDowntimes');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 
@@ -132,7 +135,7 @@ addRoute('post', '/deleteInheritServiceTemplateToServiceTemplate', 'deleteInheri
 // addRoute('post', '/duplicateHost', 'duplicateHost');
 // addRoute('post', '/duplicateTemplate', 'duplicateTemplate');
 
-addRoute('post', '/test', 'test');
+
 addRoute('post', '/duplicateService', 'duplicateService');
 addRoute('post', '/exportConfiguration', 'exportConfiguration');
 addRoute('post', '/listNagiosStates', 'listNagiosStates', 'readonly');
