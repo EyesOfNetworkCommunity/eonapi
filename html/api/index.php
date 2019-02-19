@@ -108,6 +108,7 @@ addRoute('post', '/deleteHostDowntimes', 'deleteHostDowntimes');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
+addRoute('post', '/deleteServiceDowntimes', 'deleteServiceDowntimes');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteContactToHostTemplate', 'deleteContactToHostTemplate');

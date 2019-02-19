@@ -369,12 +369,26 @@ class ObjectManager {
 			if(NagiosHostPeer::getByName($hostName)){
 				if(!$childHostAction){
 					$cmdline = '['.$timestamp.'] SCHEDULE_HOST_DOWNTIME;'.$hostName.';'.$start.';'.$end.';'.$fixed.';0;'.$duration.';'.$user.';'.$comment.'\n'.PHP_EOL;
-					$success.= file_put_contents($CommandFile, $cmdline,FILE_APPEND);
-					$success .= "Schedule host downtimes succesfully save.";
+					file_put_contents($CommandFile, $cmdline,FILE_APPEND);
 				}else{
 					$cmdline = '['.$timestamp.'] SCHEDULE_AND_PROPAGATE_HOST_DOWNTIME;'.$hostName.';'.$start.';'.$end.';'.$fixed.';0;'.$duration.';'.$user.';'.$comment.'\n'.PHP_EOL;
-					$success.= file_put_contents($CommandFile, $cmdline,FILE_APPEND);
-					$success.="Schedule and propagate host downtimes succesfully save.";
+					file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				}
+
+				$downtimesList = $this->getDowntimes();
+				$x=0;
+				$verify = False;
+				while($x < count($downtimesList) && !$verify){
+					if(strval($timestamp) == strval($downtimesList[$x]["entry_time"])){
+						$verify=True;
+						$success .= "Schedule host downtimes succesfully save. ref: $timestamp";
+					}
+					$x++;
+				}
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
 				}
 			}else{
 				$code = 1;
@@ -410,7 +424,23 @@ class ObjectManager {
 			if(NagiosServicePeer::getByHostAndDescription($hostName,$serviceName) ){
 				$cmdline = '['.$timestamp.'] SCHEDULE_SVC_DOWNTIME;'.$hostName.';'.$serviceName.';'.$start.';'.$end.';'.$fixed.';0;'.$duration.';'.$user.';'.$comment.''.PHP_EOL;
 				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
-				$success .= "Schedule service downtimes succesfully save.";
+				
+				$downtimesList = $this->getDowntimes();
+				$x=0;
+				$verify = False;
+				while($x < count($downtimesList) && !$verify){
+					if(strval($timestamp) == strval($downtimesList[$x]["entry_time"])){
+						$verify=True;
+						$success .= "Schedule host downtimes succesfully save. ref: $timestamp";
+					}
+					$x++;
+				}
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+
 			}else{
 				$code = 1;
 				$error.="$hostName and/or $serviceName didn't exist.";
@@ -2245,12 +2275,66 @@ class ObjectManager {
 			$timestamp = $date->getTimestamp();
 			$cmdline = '['.$timestamp.'] DEL_HOST_DOWNTIME;'.$idDowntime.''.PHP_EOL;
 			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
-			$success .= "Schedule host downtimes succesfully deleted.";
-		
+			$downtimesList = $this->getDowntimes();
+			$x=0;
+			$verify = True;
+			while($x < count($downtimesList) && $verify){
+				if($idDowntime != $downtimesList[$x]["id"]){
+					$verify=False;
+					$success .= "Schedule host downtimes succesfully deleted.";
+				}
+				$x++;
+			}
+
+			if($verify){
+				$code = 1;
+				$error.="An error occurred nothing happen.";
+			}
+			
 
 		}catch(Exception $e) {
 			$code=1;
-			$error .= $e->getMessage()."\n";
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* LILAC - delete service Downtimes */
+    public function deleteServiceDowntimes($idDowntime){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			//$success .= $date_end->format('d-m-Y H:i:s');
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			$cmdline = '['.$timestamp.'] DEL_SVC_DOWNTIME;'.$idDowntime.''.PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$downtimesList = $this->getDowntimes();
+			$x=0;
+			$verify = True;
+			while($x < count($downtimesList) && $verify){
+				if($idDowntime != $downtimesList[$x]["id"]){
+					$verify=False;
+					$success .= "Schedule service downtimes succesfully deleted.";
+				}
+				$x++;
+			}
+
+			if($verify){
+				$code = 1;
+				$error.="An error occurred nothing happen.";
+			}
+			
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
 		}
         
 		$logs = $this->getLogs($error, $success);
