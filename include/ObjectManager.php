@@ -458,7 +458,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Create Host and Services */
-	public function createHost( $templateHostName, $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function createHost( $templateHostName="GENERIC_HOST", $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
