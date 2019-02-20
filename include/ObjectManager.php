@@ -350,6 +350,30 @@ class ObjectManager {
 		return $ServiceDown;
 	}
 
+	/* LILAC - get Nagios ressources */
+	public function getResources(){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$resourceCfg = NagiosResourcePeer::doSelectOne(new Criteria());
+			if(!$resourceCfg) {
+				$code=1;
+				$error .= "No resources initialize."; 
+			}else{
+				return $resourceCfg->toArray();
+			}
+
+		}catch (Exception $e){
+			$code=1;
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 ########################################## CREATE
 
 	/* LILAC - create host Downtimes */
@@ -2069,7 +2093,7 @@ class ObjectManager {
         return $result;
 	}
 	/* LILAC - modify nagiosResources */
-	public function modifyNagiosRessources($ressources){
+	public function modifyNagiosResources($resources){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -2080,13 +2104,13 @@ class ObjectManager {
 				$resourceCfg->save();
 			}
 			
-			foreach($ressources as $key => $value){
+			foreach($resources as $key => $value){
 				$resourceCfg->setByName($key,$value);
 			}
 			$row=$resourceCfg->save();
 			
 			if($row == 0 ) $code++;
-			else $success .= "Ressources updated.";
+			else $success .= "Resources updated.";
 
 		}catch (Exception $e){
 			$code++;

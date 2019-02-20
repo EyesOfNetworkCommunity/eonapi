@@ -24,7 +24,9 @@ $app->get('/getAuthenticationStatus', 'getAuthenticationStatus');
 //POST (parameters in body)
 addRoute('get', '/getDowntimes', 'getDowntimes');
 addRoute('get', '/getHostsDown', 'getHostsDown');
+addRoute('get', '/getResources', 'getResources');
 addRoute('get', '/getServicesDown', 'getServicesDown');
+
 
 addRoute('post', '/getHost', 'getHost');
 addRoute('post', '/getContact', 'getContact');
@@ -92,7 +94,7 @@ addRoute('post', '/addInheritServiceTemplateToServiceTemplate', 'addInheritServi
 addRoute('post', '/modifyHost', 'modifyHost');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
-addRoute('post', '/modifyNagiosRessources', 'modifyNagiosRessources');
+addRoute('post', '/modifyNagiosResources', 'modifyNagiosResources');
 addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
 
