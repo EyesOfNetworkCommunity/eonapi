@@ -375,6 +375,121 @@ class ObjectManager {
 	}
 
 ########################################## CREATE
+	/* LILAC - create contact */ 
+	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="", $options=NULL, $exportConfiguration = FALSE ){
+		$error = "";
+		$success = "";
+		$code=0;
+
+		$ncp = new NagiosContactPeer;
+		// Find host
+		$contact = $ncp->getByName($contactName);
+		if($contact) {
+			$code=1;
+			$error .= "$contactName already exists\n";
+		}else{
+			$tempContact = new NagiosContact();
+			try{
+				$tempContact->setName($contactName);
+				$tempContact->setAlias($contactAlias);
+				$tempContact->setEmail($contactMail);
+				$tempContact->setPager($contactPager);
+				if($options){
+					if(array_key_exists('host_notification_period',$options)){
+						$tempContact->setHostNotificationPeriodByName(strval($options->host_notification_period));
+					}
+					if(array_key_exists('service_notification_period',$options)){
+						$tempContact->setServiceNotificationPeriodByName(strval($options->service_notification_period));
+					}
+					
+					if(!array_key_exists('host_notification_options_down',$options)){
+						$tempContact->setHostNotificationOnDown(0);
+					}else $tempContact->setHostNotificationOnDown(intval($options->host_notification_options_down));
+
+					if(!array_key_exists('host_notification_options_flapping',$options)){
+						$tempContact->setHostNotificationOnFlapping(0);
+					}else $tempContact->setHostNotificationOnFlapping($options->host_notification_options_flapping);
+
+					if(!array_key_exists('host_notification_options_recovery',$options)){
+						$tempContact->setHostNotificationOnRecovery(0);
+					}else $tempContact->setHostNotificationOnRecovery($options->host_notification_options_recovery);
+
+					if(!array_key_exists('host_notification_options_scheduled_downtime',$options)){
+						$tempContact->setHostNotificationOnScheduledDowntime(0);
+					}else $tempContact->setHostNotificationOnScheduledDowntime($options->host_notification_options_scheduled_downtime);
+					
+					if(!array_key_exists('host_notification_options_unreachable',$options)){
+						$tempContact->setHostNotificationOnUnreachable(0);
+					}else $tempContact->setHostNotificationOnUnreachable($options->host_notification_options_unreachable);
+					
+					if(!array_key_exists('service_notification_options_critical',$options)){
+						$tempContact->setServiceNotificationOnCritical(0);
+					}else $tempContact->setServiceNotificationOnCritical($options->service_notification_options_critical);
+					
+					if(!array_key_exists('service_notification_options_flapping',$options)){
+						$tempContact->setServiceNotificationOnFlapping(0);
+					}else $tempContact->setServiceNotificationOnFlapping($options->service_notification_options_flapping);
+					
+					if(!array_key_exists('service_notification_options_recovery',$options)){
+						$tempContact->setServiceNotificationOnRecovery(0);
+					}else $tempContact->setServiceNotificationOnRecovery($options->service_notification_options_recovery);
+					
+					if(!array_key_exists('service_notification_options_unknown',$options)){
+						$tempContact->setServiceNotificationOnUnknown(0);
+					}else $tempContact->setServiceNotificationOnUnknown($options->service_notification_options_unknown);
+					
+					if(!array_key_exists('service_notification_options_warning',$options)){
+						$tempContact->setServiceNotificationOnWarning(0);
+					}else $tempContact->setServiceNotificationOnWarning($options->service_notification_options_warning);
+					
+					if(!array_key_exists('can_submit_commands',$options)){
+						$tempContact->setCanSubmitCommands(0);
+					}else $tempContact->setCanSubmitCommands($options->can_submit_commands);
+					
+					if(!array_key_exists('retain_status_information',$options)){
+						$tempContact->setRetainStatusInformation(0);
+					}else $tempContact->setRetainStatusInformation($options->retain_status_information);
+					
+					if(!array_key_exists('retain_nonstatus_information',$options)){
+						$tempContact->setRetainNonstatusInformation(0);	
+					}else $tempContact->setRetainNonstatusInformation($options->retain_nonstatus_information);		
+					
+					if(!array_key_exists('host_notifications_enabled',$options)){
+						$tempContact->setHostNotificationsEnabled(0);
+					}else $tempContact->setHostNotificationsEnabled($options->host_notifications_enabled);
+					
+					if(!array_key_exists('service_notifications_enabled',$options)){
+						$tempContact->setServiceNotificationsEnabled(0);
+					}else $tempContact->setServiceNotificationsEnabled($options->service_notifications_enabled);	
+					
+				}
+				
+				$tempContact->save();
+			}catch(Exception $e) {
+				$code=1;
+				$error .= $e->getMessage();
+			}
+			
+			
+			if(!empty($contactGroup)){
+				$ncg= NagiosContactGroupPeer::getByName($contactGroup);
+				if($ncg) {
+					$contactGroupMember = new NagiosContactGroupMember();
+					$contactGroupMember->setContact($tempContact->getId());
+					$contactGroupMember->setContactgroup($ncg->getId());
+					$contactGroupMember->save();
+				}
+			}
+			$success .= "contact had been created."; 
+
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
 
 	/* LILAC - create host Downtimes */
     public function createHostDowntimes($hostName,$comment,$startTime,$endTime,$user,$fixed=1,$duration=1000,$childHostAction=FALSE){
@@ -650,7 +765,9 @@ class ObjectManager {
 				$hostGroup->setName( $hostGroupName );				
 				$hostGroup->save();				
 				
-                $success .= "Host group ".$hostGroupName." created\n";
+				$success .= "Host group ".$hostGroupName." created\n";
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
 			}
 		}
         

@@ -101,6 +101,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | Action URL **[API_function]** | Request type | Parameters (body/payload) | Expected response | Comments |
 | --- | --- | --- | --- | --- |
 | `getAuthenticationStatus` | GET | None | "status": "authorized" | Confirm that the provided user account has admin privileges and the permission to make advanced API calls. This means the association username/apiKey is correct.  |
+| `getResources` | GET | None | "status": "authorized" | Return the list of resources.  |
 | `getCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Return the informations of a command |
 | `getHost` | POST | [**hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return the given host |
 | `getHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return the given host group|
@@ -112,7 +113,10 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
 | `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
 | `createUser` | POST | [**userName, userMail, admin, filterName, filterValue, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
+| `createContact` | POST | [**contactName, contactMail, contactAlias="description", contactMail, contactPager, contactGroup, options, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact. In the options variables, you can set the same information than those given in the web interface. |
 | `createHostTemplate` | POST | [**templateHostName, templateHostDescription="",exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new nagios host template. |
+| `createHostDowntimes`| POST | [**hostName, comment, startTime, endTime, user, fixed=1, duration=1000**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a Host's downtimes |
+| `createServicesDowntimes`| POST | [**hostName, serviceName, comment, startTime, endTime, user, fixed=1, duration=1000 , childHostAction = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a Service's downtimes |
 | `createHostGroup` | POST | [**hostGroupName, &error = "", &success = "", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
 | `createServiceTemplate` | POST | [**templateName, templateDescription="", servicesGroup=array(), contacts=array(), contactsGroup=array(), checkCommand, checkCommandParameters=array(), templatesToInherit=array(), exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new Service template, if you didn't give templatesToInherit it will provide "GENERIC_SERVICE" as Inheritance template. The argument witch is by default array take names of objects they are bind. |
 | `addContactToHost` | POST | [**contactName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
@@ -150,6 +154,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `modifyCheckCommandToServiceTemplate` | POST | [**commandName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify Modify the check command associate with the given service template. returnCode=0 for data updated and 1 if it has failed  |
 | `modifyCheckCommandToHostTemplate` | POST | [**commandName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify the check command associate with the given host template. returnCode=0 for data updated and 1 if it has failed  |
 | `deleteContact` | POST | [**contactName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact |
+| `deleteHostDowntimes` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios host downtimes. |
+| `deleteServiceDowntimes` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios service downtimes. |
 | `deleteContactGroup` | POST | [**contactGroupName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact Group  |
 | `deleteService` | POST | [**serviceName, hostName**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | delete the given service  |
 | `deleteServiceTemplate` | POST | [**templateName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete the given Service template |
@@ -228,6 +234,21 @@ To illustrate the EON API features tab, you will find a few implementation examp
 	"filterName": "hostgroups",
 	"filterValue": "HOSTGROUP_JAMAICA",
 	"exportConfiguration": true
+}
+```
+
+* /createContact
+```json 
+{
+  "contactName": "bob",
+  "contactMail": "bob@eon.fr",
+  "contactPager": "bob_pager@eon.fr",
+  "contactGroup": "admins",
+  "options":{
+    "host_notification_period": "24x7",
+    "host_notification_options_down": 1,
+    "can_submit_commands":1
+  }
 }
 ```
 

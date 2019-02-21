@@ -40,11 +40,7 @@ addRoute('post', '/getServiceTemplate', 'getServiceTemplate');
 addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate');
-// addRoute('get', '/getAllHosts', 'getAllHosts');
-// addRoute('get', '/getService', 'getService');
 
-// addRoute('post', '/createContact', 'createContact');
-// addRoute('post', '/createContactGroups', 'createContactGroups');
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
 addRoute('post', '/createCommand', 'createCommand');
@@ -52,10 +48,9 @@ addRoute('post', '/createContact', 'createContact');
 addRoute('post', '/createHostGroup', 'createHostGroup');
 addRoute('post', '/createHostTemplate', 'createHostTemplate');
 addRoute('post', '/createHostDowntimes', 'createHostDowntimes');
-addRoute('post', '/createServiceDowntimes', 'createServiceDowntimes');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
-
+addRoute('post', '/createServiceDowntimes', 'createServiceDowntimes');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
@@ -83,21 +78,12 @@ addRoute('post', '/addCheckCommandParameterToServiceInHost', 'addCheckCommandPar
 addRoute('post', '/addCheckCommandParameterToServiceTemplate', 'addCheckCommandParameterToServiceTemplate');
 addRoute('post', '/addInheritServiceTemplateToServiceTemplate', 'addInheritServiceTemplateToServiceTemplate');
 
-
-// addRoute('post', '/modifyUser','modifyUser');
-// addRoute('post', '/modifyContact', 'modifyContact');
-// addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
-// addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
-// addRoute('post', '/modifyHostTemplate', 'modifyHostTemplate');
-// addRoute('post', '/modifyServiceTemplate', 'modifyServiceTemplate');
-
 addRoute('post', '/modifyHost', 'modifyHost');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
 addRoute('post', '/modifyNagiosResources', 'modifyNagiosResources');
 addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
-
 
 addRoute('post', '/deleteHost', 'deleteHost');
 addRoute('post', '/deleteContact', 'deleteContact');
@@ -131,13 +117,6 @@ addRoute('post', '/deleteCheckCommandParameterToHostTemplate', 'deleteCheckComma
 addRoute('post', '/deleteCheckCommandParameterToServiceInHost', 'deleteCheckCommandParameterToServiceInHost');
 addRoute('post', '/deleteCheckCommandParameterToServiceTemplate', 'deleteCheckCommandParameterToServiceTemplate');
 addRoute('post', '/deleteInheritServiceTemplateToServiceTemplate', 'deleteInheritServiceTemplateToServiceTemplate');
-
-
-
-// addRoute('post', '/deleteUser','deleteUser');
-// addRoute('post', '/duplicateHost', 'duplicateHost');
-// addRoute('post', '/duplicateTemplate', 'duplicateTemplate');
-
 
 addRoute('post', '/duplicateService', 'duplicateService');
 addRoute('post', '/exportConfiguration', 'exportConfiguration');
