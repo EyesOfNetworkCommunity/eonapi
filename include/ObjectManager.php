@@ -559,8 +559,13 @@ class ObjectManager {
 			//$success .= $date_end->format('d-m-Y H:i:s');
 			$date = new DateTime();
 			$timestamp = $date->getTimestamp();
-
-			if(NagiosServicePeer::getByHostAndDescription($hostName,$serviceName) ){
+			
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
 				$cmdline = '['.$timestamp.'] SCHEDULE_SVC_DOWNTIME;'.$hostName.';'.$serviceName.';'.$start.';'.$end.';'.$fixed.';0;'.$duration.';'.$user.';'.$comment.''.PHP_EOL;
 				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
 				
@@ -580,9 +585,6 @@ class ObjectManager {
 					$error.="An error occurred nothing happen.";
 				}
 
-			}else{
-				$code = 1;
-				$error.="$hostName and/or $serviceName didn't exist.";
 			}
 
 		}catch(Exception $e) {
@@ -741,8 +743,9 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
     }
+
     /* LILAC - Create Host Group */
-    public function createHostGroup( $hostGroupName, $exportConfiguration = FALSE ){
+    public function createHostGroup( $hostGroupName, $description="host group", $exportConfiguration = FALSE ){
         global $lilac;
         $error = "";
 		$success = "";
@@ -751,6 +754,7 @@ class ObjectManager {
         
         // Check for pre-existing contact with same name
 		if($lilac->hostgroup_exists( $hostGroupName )) {
+			$code = 1;
 			$error .= "A host group with that name already exists!\n";
 		}
 		else {
@@ -761,8 +765,8 @@ class ObjectManager {
 			else {
 				// All is well for error checking, add the hostgroup into the db.
 				$hostGroup = new NagiosHostgroup();
-				$hostGroup->setAlias( "host group" );
-				$hostGroup->setName( $hostGroupName );				
+				$hostGroup->setAlias( $description );
+				$hostGroup->setName( $hostGroupName );	
 				$hostGroup->save();				
 				
 				$success .= "Host group ".$hostGroupName." created\n";
@@ -3248,6 +3252,37 @@ class ObjectManager {
 		return $logs;
 
 	}
+
+	/* LILAC - Delete Host Group */
+    public function deleteHostGroup( $hostGroupName, $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        $hostGroup = NULL;
+        
+        // Check for pre-existing contact with same name
+		if($lilac->hostgroup_exists( $hostGroupName )) {
+			
+			// All is well for error checking, add the hostgroup into the db.
+			$hostGroup = NagiosHostgroupPeer::getByName($hostGroupName);
+			$hostGroup->delete();				
+			
+			$success .= "Host group ".$hostGroupName." deleted\n";
+			
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		}
+		else {
+			$code=1;
+			$error .= "A host group with that name didn't exists!\n";
+		}
+        
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}  
 
 	/* LILAC - Delete HostGroup to Hosts template */
 	public function deleteHostGroupToHostTemplate($hostGroupName, $templateHostName, $exportConfiguration = FALSE){

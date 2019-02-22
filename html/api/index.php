@@ -90,6 +90,7 @@ addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteService', 'deleteService');
 addRoute('post', '/deleteCommand', 'deleteCommand');
 addRoute('post', '/delEventBroker', 'delEventBroker');
+addRoute('post', '/deleteHostGroup', 'deleteHostGroup');
 addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
 addRoute('post', '/deleteHostDowntimes', 'deleteHostDowntimes');
