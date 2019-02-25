@@ -2347,24 +2347,29 @@ class ObjectManager {
 		$success = "";
 		$code=0;
 		$targetTemplateService = NagiosServiceTemplatePeer::getByName($templateServiceName);
-		if(!$targetTemplateService) {
-			$code=1;
-            $error .= "The Template service '".$templateServiceName."' does not exist\n";
-        }else{
-			$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateService->getCheckCommand());
-
-			if($cmd->getName() == $commandName){
+		try{
+			if(!$targetTemplateService) {
 				$code=1;
-				$error .= "The command '".$commandName."' is already set to this template\n";
+				$error .= "The Template service '".$templateServiceName."' does not exist\n";
 			}else{
-				if($targetTemplateService->setCheckCommandByName($commandName)){
-					$success .="The command : $commandName had been set to the service template: $templateServiceName.";
-					$targetTemplateService->save();
-				}else{
+				$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateService->getCheckCommand());
+
+				if($cmd->getName() == $commandName){
 					$code=1;
-					$error .= "The command '".$commandName."' failed to update\n";
+					$error .= "The command '".$commandName."' is already set to this template\n";
+				}else{
+					if($targetTemplateService->setCheckCommandByName($commandName)){
+						$success .="The command : $commandName had been set to the service template: $templateServiceName.";
+						$targetTemplateService->save();
+					}else{
+						$code=1;
+						$error .= "The command '".$commandName."' does not exist.\n";
+					}
 				}
 			}
+		}catch(Exception $e) {
+				$code=1;
+				$error .= $e->getMessage();
 		}
 		$logs = $this->getLogs($error, $success);
         
@@ -2377,27 +2382,31 @@ class ObjectManager {
 		$error = "";
 		$success = "";
 		$code=0;
-
-		$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
-		if(!$targetTemplateHost) {
-			$code=1;
-            $error .= "The Template service '".$templateHostName."' does not exist\n";
-        }else{
-			$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateHost->getCheckCommand());
-
-			if($cmd->getName() == $commandName){
-				$code=1;
-				$error .= "The command '".$commandName."' is already set to this template\n";
-			}else{
-				if($targetTemplateHost->setCheckCommandByName($commandName)){
-					$success .="The command : $commandName had been set to the service template: $templateHostName.||";
-					$targetTemplateHost->save();
-				}else{
-					$code=1;
-					$error .= "The command '".$commandName."' failed to update\n";
-				}
-			}
+		try{
 			
+			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
+			if(!$targetTemplateHost) {
+				$code=1;
+				$error .= "The Template service '".$templateHostName."' does not exist\n";
+			}else{
+				$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateHost->getCheckCommand());
+				if($cmd->getName() == $commandName){
+					$code=1;
+					$error .= "The command '".$commandName."' is already set to this template\n";
+				}else{
+					if($targetTemplateHost->setCheckCommandByName($commandName)){
+						$success .="The command : $commandName had been set to the service template: $templateHostName.||";
+						$targetTemplateHost->save();
+					}else{
+						$code=1;
+						$error .= "The command '".$commandName."' does not exist.\n";
+					}
+				}
+				
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
 		}
 
 		$logs = $this->getLogs($error, $success);
