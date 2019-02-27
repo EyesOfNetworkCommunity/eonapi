@@ -79,6 +79,7 @@ addRoute('post', '/addCheckCommandParameterToServiceTemplate', 'addCheckCommandP
 addRoute('post', '/addInheritServiceTemplateToServiceTemplate', 'addInheritServiceTemplateToServiceTemplate');
 
 addRoute('post', '/modifyHost', 'modifyHost');
+addRoute('post', '/modifyContact', 'modifyContact');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
 addRoute('post', '/modifyNagiosResources', 'modifyNagiosResources');

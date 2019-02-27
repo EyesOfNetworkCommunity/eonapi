@@ -376,7 +376,7 @@ class ObjectManager {
 
 ########################################## CREATE
 	/* LILAC - create contact */ 
-	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="", $options=NULL, $exportConfiguration = FALSE ){
+	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -394,6 +394,8 @@ class ObjectManager {
 				$tempContact->setAlias($contactAlias);
 				$tempContact->setEmail($contactMail);
 				$tempContact->setPager($contactPager);
+				$tempContact->addServiceNotificationCommandByName($serviceNotificationCommand);
+				$tempContact->addHostNotificationCommandByName($hostNotificationCommand);
 				if($options){
 					if(array_key_exists('host_notification_period',$options)){
 						$tempContact->setHostNotificationPeriodByName(strval($options->host_notification_period));
@@ -2105,6 +2107,163 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 ########################################## MODIFY
+
+	/* LILAC - modify contact */ 
+	public function modifyContact($contactName,$newContactName="", $contactAlias="", $contactMail="", $contactPager="", $contactGroup="" ,$serviceNotificationCommand="",$hostNotificationCommand="", $options=NULL, $exportConfiguration = FALSE ){
+		$error = "";
+		$success = "";
+		$code=0;
+
+		$ncp = new NagiosContactPeer;
+		// Find host
+		$tempContact = $ncp->getByName($contactName);
+		if(!empty($tempContact)) {
+			try{
+				if(!empty($newContactName))
+					$tempContact->setName($newContactName);
+				if(!empty($contactAlias))
+					$tempContact->setAlias($contactAlias);
+				if(!empty($contactMail))
+					$tempContact->setEmail($contactMail);
+				if(!empty($contactPager))
+					$tempContact->setPager($contactPager);
+				
+				if(!empty($serviceNotificationCommand)){
+					$commandService = NagiosCommandPeer::getByName($serviceNotificationCommand);
+					if(!empty($commandService)){
+						$c = new Criteria();
+						$c->add(NagiosContactNotificationCommandPeer::CONTACT_ID, $tempContact->getId());
+						$c->add(NagiosContactNotificationCommandPeer::COMMAND, $commandService->getId());
+						$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
+						if(!empty($ncnc)){
+							$ncnc->delete();
+							$success .= "$serviceNotificationCommand deleted to $contactName";
+						}else{
+							$tempContact->addServiceNotificationCommandByName($serviceNotificationCommand);
+							$success .= "$serviceNotificationCommand added to $contactName";
+						}
+					}else{
+						$code=1;
+						$error .= "$serviceNotificationCommand does not exist.";
+					}
+				}
+				
+				if(!empty($hostNotificationCommand)){
+					$commandHost = NagiosCommandPeer::getByName($hostNotificationCommand);
+					if(!empty($commandHost)){
+						$c = new Criteria();
+						$c->add(NagiosContactNotificationCommandPeer::CONTACT_ID, $tempContact->getId());
+						$c->add(NagiosContactNotificationCommandPeer::COMMAND,$commandHost->getId() );
+						$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
+						if(!empty($ncnc)){
+							$ncnc->delete();
+							$success .= "$hostNotificationCommand deleted to $contactName";
+						}else{
+							$tempContact->addHostNotificationCommandByName($hostNotificationCommand);
+							$success .= "$hostNotificationCommand added to $contactName";
+						}
+					}else{
+						$code=1;
+						$error .= "$hostNotificationCommand does not exist.";
+					}
+				}
+
+				if(!empty($options)){
+					
+					if(array_key_exists('host_notification_period',$options)){
+						$tempContact->setHostNotificationPeriodByName(strval($options->host_notification_period));
+					}
+					if(array_key_exists('service_notification_period',$options)){
+						$tempContact->setServiceNotificationPeriodByName(strval($options->service_notification_period));
+					}
+					
+					if(array_key_exists('host_notification_options_down',$options))
+						$tempContact->setHostNotificationOnDown(intval($options->host_notification_options_down));
+
+					if(array_key_exists('host_notification_options_flapping',$options))
+						$tempContact->setHostNotificationOnFlapping($options->host_notification_options_flapping);
+
+					if(array_key_exists('host_notification_options_recovery',$options))
+						$tempContact->setHostNotificationOnRecovery($options->host_notification_options_recovery);
+
+					if(array_key_exists('host_notification_options_scheduled_downtime',$options))
+						$tempContact->setHostNotificationOnScheduledDowntime($options->host_notification_options_scheduled_downtime);
+					
+					if(array_key_exists('host_notification_options_unreachable',$options))
+						$tempContact->setHostNotificationOnUnreachable($options->host_notification_options_unreachable);
+					
+					if(array_key_exists('service_notification_options_critical',$options))
+						$tempContact->setServiceNotificationOnCritical($options->service_notification_options_critical);
+					
+					if(array_key_exists('service_notification_options_flapping',$options))
+						$tempContact->setServiceNotificationOnFlapping($options->service_notification_options_flapping);
+					
+					if(array_key_exists('service_notification_options_recovery',$options))
+						$tempContact->setServiceNotificationOnRecovery($options->service_notification_options_recovery);
+					
+					if(array_key_exists('service_notification_options_unknown',$options))
+						$tempContact->setServiceNotificationOnUnknown($options->service_notification_options_unknown);
+					
+					if(array_key_exists('service_notification_options_warning',$options))
+						$tempContact->setServiceNotificationOnWarning($options->service_notification_options_warning);
+					
+					if(array_key_exists('can_submit_commands',$options))
+						$tempContact->setCanSubmitCommands($options->can_submit_commands);
+					
+					if(array_key_exists('retain_status_information',$options))
+						$tempContact->setRetainStatusInformation($options->retain_status_information);
+					
+					if(array_key_exists('retain_nonstatus_information',$options))
+						$tempContact->setRetainNonstatusInformation($options->retain_nonstatus_information);		
+					
+					if(array_key_exists('host_notifications_enabled',$options))
+						$tempContact->setHostNotificationsEnabled($options->host_notifications_enabled);
+					
+					if(array_key_exists('service_notifications_enabled',$options))
+						$tempContact->setServiceNotificationsEnabled($options->service_notifications_enabled);	
+				}
+				
+				$tempContact->save();
+
+				if(!empty($contactGroup)){
+					$ncg = NagiosContactGroupPeer::getByName($contactGroup);
+					if(!empty($ncg)) {
+						$c = new Criteria();
+						$c->add(NagiosContactGroupMemberPeer::CONTACT, $tempContact->getId());
+						$c->add(NagiosContactGroupMemberPeer::CONTACTGROUP,$ncg->getId() );
+						$ncgm = NagiosContactGroupMemberPeer::doSelectOne($c);
+						if(!empty($ncgm)){
+							$ncgm->delete();
+						}else{
+							$contactGroupMember = new NagiosContactGroupMember();
+							$contactGroupMember->setContact($tempContact->getId());
+							$contactGroupMember->setContactgroup($ncg->getId());
+							$contactGroupMember->save();
+						}
+						
+					}
+				}
+			}catch(Exception $e) {
+				$code=1;
+				$error .= $e->getMessage();
+			}
+			
+			
+			
+			$success .= "contact had been modified."; 
+
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		}else{
+			$code=1;
+			$error .= "$contactName already exists\n";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Modify Service --- */
 	public function modifyServicefromHost($hostName, $service, $exportConfiguration = FALSE ){
 		$error = "";
