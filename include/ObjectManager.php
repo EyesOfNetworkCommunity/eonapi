@@ -1942,6 +1942,103 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 	
+	/* LILAC - Add an existing contact Group to Contact */
+	public function addContactGroupToContact( $contactName, $contactGroupName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        try{
+			$contact = NagiosContactPeer::getByName($contactName);
+			// Find host template
+			if(!empty($contact)){
+				$ncg = NagiosContactGroupPeer::getByName($contactGroupName);
+				if(!empty($ncg)) {
+					$c = new Criteria();
+					$c->add(NagiosContactGroupMemberPeer::CONTACT, $contact->getId());
+					$c->add(NagiosContactGroupMemberPeer::CONTACTGROUP,$ncg->getId() );
+					$ncgm = NagiosContactGroupMemberPeer::doSelectOne($c);
+					if(!empty($ncgm)){
+						$code=1;
+						$error .= "$contactName already bind to the group $contactGroupName ";
+					}else{
+						$contactGroupMember = new NagiosContactGroupMember();
+						$contactGroupMember->setContact($contact->getId());
+						$contactGroupMember->setContactgroup($ncg->getId());
+						$contactGroupMember->save();
+						$success .= "Membership has been established."; 
+						if( $exportConfiguration == TRUE )
+							$this->exportConfigurationToNagios($error, $success);
+					}
+					
+				}else {
+					$code=1;
+					$error .= "$contactGroupName don't exist. ";
+				}
+			}else {
+				$code=1;
+				$error .= "$contactName don't exist. ";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Add an existing command notification to Contact */
+	public function addContactNotificationCommandToContact( $contactName, $commandName, $type_command, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        try{
+			$contact = NagiosContactPeer::getByName($contactName);
+			// Find host template
+			if(!empty($contact)){
+				
+				$commandService = NagiosCommandPeer::getByName($commandName);
+				if(!empty($commandService)){
+					$c = new Criteria();
+					$c->add(NagiosContactNotificationCommandPeer::CONTACT_ID, $contact->getId());
+					$c->add(NagiosContactNotificationCommandPeer::COMMAND, $commandService->getId());
+					$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
+					if(!empty($ncnc)){
+						$code=1;
+						$error .= "Notification command already linked to $contactName.";
+					}else{
+						if($type_command == "service"){
+							$contact->addServiceNotificationCommandByName($commandName);
+							$success .= "$commandName added to $contactName";
+						}else{
+							$contact->addHostNotificationCommandByName($commandName);
+							$success .= "$commandName added to $contactName";
+						}
+
+						if( $exportConfiguration == TRUE )
+							$this->exportConfigurationToNagios($error, $success);
+						
+					}
+					
+				}else{
+					$code=1;
+					$error .= "$commandName don't exist. ";
+				}
+			}else {
+				$code=1;
+				$error .= "$contactName don't exist. ";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Add Inheritance service Template to Service Template */
 	public function addInheritServiceTemplateToServiceTemplate( $inheritServiceTemplateName, $templateServiceName, $exportConfiguration = FALSE ){
         $error = "";
@@ -2820,6 +2917,50 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 
+	/* LILAC - Delete an existing command Notification to Contact */
+	public function deleteContactNotificationCommandToContact( $contactName, $commandName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        try{
+			$contact = NagiosContactPeer::getByName($contactName);
+			// Find host template
+			if(!empty($contact)){
+				
+				$commandService = NagiosCommandPeer::getByName($commandName);
+				if(!empty($commandService)){
+					$c = new Criteria();
+					$c->add(NagiosContactNotificationCommandPeer::CONTACT_ID, $contact->getId());
+					$c->add(NagiosContactNotificationCommandPeer::COMMAND, $commandService->getId());
+					$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
+					if(!empty($ncnc)){
+						$ncnc->delete();
+						$success .= "$commandName deleted to $contactName";
+						if( $exportConfiguration == TRUE )
+							$this->exportConfigurationToNagios($error, $success);
+					}else{
+						$code=1;
+						$error .= "Membership don't exist. ";
+					}
+					
+				}else{
+					$code=1;
+					$error .= "$commandName don't exist. ";
+				}
+			}else {
+				$code=1;
+				$error .= "$contactName don't exist. ";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
 
 	/* LILAC - Delete contact Group to Service */
 	public function deleteContactGroupToServiceInHost( $contactGroupName, $serviceName, $hostName, $exportConfiguration = FALSE ){
@@ -2859,6 +3000,49 @@ class ObjectManager {
 			
 		}
 
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - delete an existing contact Group to Contact */
+	public function deleteContactGroupToContact( $contactName, $contactGroupName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        try{
+			$contact = NagiosContactPeer::getByName($contactName);
+			// Find host template
+			if(!empty($contact)){
+				$ncg = NagiosContactGroupPeer::getByName($contactGroupName);
+				if(!empty($ncg)) {
+					$c = new Criteria();
+					$c->add(NagiosContactGroupMemberPeer::CONTACT, $contact->getId());
+					$c->add(NagiosContactGroupMemberPeer::CONTACTGROUP,$ncg->getId() );
+					$ncgm = NagiosContactGroupMemberPeer::doSelectOne($c);
+					if(!empty($ncgm)){
+						$ncgm->delete();
+						$success .= "Membership has been delete.";
+						if( $exportConfiguration == TRUE )
+							$this->exportConfigurationToNagios($error, $success);
+					}else{
+						$code=1;
+						$error .= "$contactName already bind to the group $contactGroupName ";
+					}
+					
+				}else {
+					$code=1;
+					$error .= "$contactGroupName don't exist. ";
+				}
+			}else {
+				$code=1;
+				$error .= "$contactName don't exist. ";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
