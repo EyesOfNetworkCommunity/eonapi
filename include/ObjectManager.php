@@ -2001,6 +2001,7 @@ class ObjectManager {
 				$commandService = NagiosCommandPeer::getByName($commandName);
 				if(!empty($commandService)){
 					$c = new Criteria();
+					$c->add(NagiosContactNotificationCommandPeer::TYPE, $type_command);
 					$c->add(NagiosContactNotificationCommandPeer::CONTACT_ID, $contact->getId());
 					$c->add(NagiosContactNotificationCommandPeer::COMMAND, $commandService->getId());
 					$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
@@ -2011,9 +2012,12 @@ class ObjectManager {
 						if($type_command == "service"){
 							$contact->addServiceNotificationCommandByName($commandName);
 							$success .= "$commandName added to $contactName";
-						}else{
+						}elseif($type_command == "host"){
 							$contact->addHostNotificationCommandByName($commandName);
 							$success .= "$commandName added to $contactName";
+						}else{
+							$code=1;
+							$error .= "type not found.";
 						}
 
 						if( $exportConfiguration == TRUE )
