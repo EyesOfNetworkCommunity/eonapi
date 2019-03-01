@@ -2213,21 +2213,42 @@ class ObjectManager {
 	public function modifyContact($contactName,$newContactName="", $contactAlias="", $contactMail="", $contactPager="", $contactGroup="" ,$serviceNotificationCommand="",$hostNotificationCommand="", $options=NULL, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
-		$code=0;
+		$code=1;
 
 		$ncp = new NagiosContactPeer;
 		// Find host
 		$tempContact = $ncp->getByName($contactName);
 		if(!empty($tempContact)) {
 			try{
-				if(!empty($newContactName))
-					$tempContact->setName($newContactName);
-				if(!empty($contactAlias))
-					$tempContact->setAlias($contactAlias);
-				if(!empty($contactMail))
-					$tempContact->setEmail($contactMail);
-				if(!empty($contactPager))
-					$tempContact->setPager($contactPager);
+				if(!empty($newContactName)){
+					if($contactName != $newContactName){
+						$tempContact->setName($newContactName);
+						$code=0;
+						$success .= "contact Name updated to  $contactName and become $newContactName";
+					}
+				}
+				if(!empty($contactAlias)){
+					if($tempContact->getAlias() != $contactAlias){
+						$tempContact->setAlias($contactAlias);
+						$code=0;
+						$success .= "contact Alias updated to  $contactName";
+					}
+				}
+				if(!empty($contactMail)){
+					if($tempContact->getEmail() != $contactMail){
+						$tempContact->setEmail($contactMail);
+						$code=0;
+						$success .= "contact mail updated to  $contactName";
+					}
+				}
+				if(!empty($contactPager)){
+					if($tempContact->getPager() != $contactPager){
+						$code=0;
+						$tempContact->setPager($contactPager);
+						$success .= "contact pager updated to  $contactName";
+
+					}
+				}
 				
 				if(!empty($serviceNotificationCommand)){
 					$commandService = NagiosCommandPeer::getByName($serviceNotificationCommand);
@@ -2238,13 +2259,14 @@ class ObjectManager {
 						$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
 						if(!empty($ncnc)){
 							$ncnc->delete();
+							$code=0;
 							$success .= "$serviceNotificationCommand deleted to $contactName";
 						}else{
 							$tempContact->addServiceNotificationCommandByName($serviceNotificationCommand);
+							$code=0;
 							$success .= "$serviceNotificationCommand added to $contactName";
 						}
 					}else{
-						$code=1;
 						$error .= "$serviceNotificationCommand does not exist.";
 					}
 				}
@@ -2258,9 +2280,11 @@ class ObjectManager {
 						$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
 						if(!empty($ncnc)){
 							$ncnc->delete();
+							$code=0;
 							$success .= "$hostNotificationCommand deleted to $contactName";
 						}else{
 							$tempContact->addHostNotificationCommandByName($hostNotificationCommand);
+							$code=0;
 							$success .= "$hostNotificationCommand added to $contactName";
 						}
 					}else{
@@ -2270,7 +2294,6 @@ class ObjectManager {
 				}
 
 				if(!empty($options)){
-					
 					if(array_key_exists('host_notification_period',$options)){
 						$tempContact->setHostNotificationPeriodByName(strval($options->host_notification_period));
 					}
@@ -2278,50 +2301,109 @@ class ObjectManager {
 						$tempContact->setServiceNotificationPeriodByName(strval($options->service_notification_period));
 					}
 					
-					if(array_key_exists('host_notification_options_down',$options))
-						$tempContact->setHostNotificationOnDown(intval($options->host_notification_options_down));
+					if(array_key_exists('host_notification_options_down',$options)){
+						if($tempContact->getHostNotificationOnDown() != $options->host_notification_options_down){
+							$code=0;
+							$tempContact->setHostNotificationOnDown(intval($options->host_notification_options_down));
+						}
+					}
+					if(array_key_exists('host_notification_options_flapping',$options)){
+						if($tempContact->getHostNotificationOnFlapping() != $options->host_notification_options_flapping){
+							$tempContact->setHostNotificationOnFlapping($options->host_notification_options_flapping);
+							$code=0;
+						}
+					}
 
-					if(array_key_exists('host_notification_options_flapping',$options))
-						$tempContact->setHostNotificationOnFlapping($options->host_notification_options_flapping);
+					if(array_key_exists('host_notification_options_recovery',$options)){
+						if($tempContact->getHostNotificationOnRecovery() != $options->host_notification_options_recovery){
+							$tempContact->setHostNotificationOnRecovery($options->host_notification_options_recovery);
+							$code=0;
+						}
+					}
 
-					if(array_key_exists('host_notification_options_recovery',$options))
-						$tempContact->setHostNotificationOnRecovery($options->host_notification_options_recovery);
-
-					if(array_key_exists('host_notification_options_scheduled_downtime',$options))
-						$tempContact->setHostNotificationOnScheduledDowntime($options->host_notification_options_scheduled_downtime);
+					if(array_key_exists('host_notification_options_scheduled_downtime',$options)){
+						if($tempContact->getHostNotificationOnScheduledDowntime() != $options->host_notification_options_scheduled_downtime){
+							$tempContact->setHostNotificationOnScheduledDowntime($options->host_notification_options_scheduled_downtime);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('host_notification_options_unreachable',$options))
-						$tempContact->setHostNotificationOnUnreachable($options->host_notification_options_unreachable);
+					if(array_key_exists('host_notification_options_unreachable',$options)){
+						if($tempContact->getHostNotificationOnUnreachable() != $options->host_notification_options_unreachable){
+							$tempContact->setHostNotificationOnUnreachable($options->host_notification_options_unreachable);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('service_notification_options_critical',$options))
-						$tempContact->setServiceNotificationOnCritical($options->service_notification_options_critical);
+					if(array_key_exists('service_notification_options_critical',$options)){
+						if($tempContact->getServiceNotificationOnCritical() != $options->service_notification_options_critical){
+							$tempContact->setServiceNotificationOnCritical($options->service_notification_options_critical);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('service_notification_options_flapping',$options))
-						$tempContact->setServiceNotificationOnFlapping($options->service_notification_options_flapping);
+					if(array_key_exists('service_notification_options_flapping',$options)){
+						if($tempContact->getServiceNotificationOnFlapping() != $options->service_notification_options_flapping){
+							$tempContact->setServiceNotificationOnFlapping($options->service_notification_options_flapping);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('service_notification_options_recovery',$options))
-						$tempContact->setServiceNotificationOnRecovery($options->service_notification_options_recovery);
+					if(array_key_exists('service_notification_options_recovery',$options)){
+						if($tempContact->getServiceNotificationOnRecovery() != $options->service_notification_options_recovery){
+							$tempContact->setServiceNotificationOnRecovery($options->service_notification_options_recovery);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('service_notification_options_unknown',$options))
-						$tempContact->setServiceNotificationOnUnknown($options->service_notification_options_unknown);
+					if(array_key_exists('service_notification_options_unknown',$options)){
+						if($tempContact->getServiceNotificationOnUnknown() != $options->service_notification_options_unknown){
+							$tempContact->setServiceNotificationOnUnknown($options->service_notification_options_unknown);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('service_notification_options_warning',$options))
-						$tempContact->setServiceNotificationOnWarning($options->service_notification_options_warning);
+					if(array_key_exists('service_notification_options_warning',$options)){
+						if($tempContact->getServiceNotificationOnWarning() != $options->service_notification_options_warning ){
+							$tempContact->setServiceNotificationOnWarning($options->service_notification_options_warning);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('can_submit_commands',$options))
-						$tempContact->setCanSubmitCommands($options->can_submit_commands);
+					if(array_key_exists('can_submit_commands',$options)){
+						if($tempContact->getCanSubmitCommands() != $options->can_submit_commands){
+							$tempContact->setCanSubmitCommands($options->can_submit_commands);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('retain_status_information',$options))
-						$tempContact->setRetainStatusInformation($options->retain_status_information);
+					if(array_key_exists('retain_status_information',$options)){
+						if($tempContact->getRetainStatusInformation() != $options->retain_status_information ){
+							$tempContact->setRetainStatusInformation($options->retain_status_information);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('retain_nonstatus_information',$options))
-						$tempContact->setRetainNonstatusInformation($options->retain_nonstatus_information);		
+					if(array_key_exists('retain_nonstatus_information',$options)){
+						if($tempContact->getRetainNonstatusInformation() != $options->retain_nonstatus_information){
+							$tempContact->setRetainNonstatusInformation($options->retain_nonstatus_information);		
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('host_notifications_enabled',$options))
-						$tempContact->setHostNotificationsEnabled($options->host_notifications_enabled);
+					if(array_key_exists('host_notifications_enabled',$options)){
+						if($tempContact->getHostNotificationsEnabled() != $options->host_notifications_enabled){
+							$tempContact->setHostNotificationsEnabled($options->host_notifications_enabled);
+							$code=0;
+						}
+					}
 					
-					if(array_key_exists('service_notifications_enabled',$options))
-						$tempContact->setServiceNotificationsEnabled($options->service_notifications_enabled);	
+					if(array_key_exists('service_notifications_enabled',$options)){
+						if($tempContact->getServiceNotificationsEnabled() != $options->service_notifications_enabled){
+							$tempContact->setServiceNotificationsEnabled($options->service_notifications_enabled);	
+							$code=0;
+						}
+					}
 				}
 				
 				$tempContact->save();
@@ -2335,13 +2417,16 @@ class ObjectManager {
 						$ncgm = NagiosContactGroupMemberPeer::doSelectOne($c);
 						if(!empty($ncgm)){
 							$ncgm->delete();
+							$code=0;
+							$success .= " | Membership deleted withcontact group";
 						}else{
 							$contactGroupMember = new NagiosContactGroupMember();
 							$contactGroupMember->setContact($tempContact->getId());
 							$contactGroupMember->setContactgroup($ncg->getId());
 							$contactGroupMember->save();
+							$success .= " | Membership created with contact group";
+							$code=0;
 						}
-						
 					}
 				}
 			}catch(Exception $e) {
@@ -2350,8 +2435,8 @@ class ObjectManager {
 			}
 			
 			
-			
-			$success .= "contact had been modified."; 
+			if($code==0)
+				$success .= "contact had been modified."; 
 
 			if( $exportConfiguration == TRUE )
 				$this->exportConfigurationToNagios($error, $success);
@@ -2922,7 +3007,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Delete an existing command Notification to Contact */
-	public function deleteContactNotificationCommandToContact( $contactName, $commandName, $exportConfiguration = FALSE ){
+	public function deleteContactNotificationCommandToContact( $contactName, $commandName,$type_command, $exportConfiguration = FALSE ){
         $error = "";
 		$success = "";
 		$code=0;
@@ -2934,6 +3019,8 @@ class ObjectManager {
 				$commandService = NagiosCommandPeer::getByName($commandName);
 				if(!empty($commandService)){
 					$c = new Criteria();
+					
+					$c->add(NagiosContactNotificationCommandPeer::TYPE, $type_command);
 					$c->add(NagiosContactNotificationCommandPeer::CONTACT_ID, $contact->getId());
 					$c->add(NagiosContactNotificationCommandPeer::COMMAND, $commandService->getId());
 					$ncnc = NagiosContactNotificationCommandPeer::doSelectOne($c);
