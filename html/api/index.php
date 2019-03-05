@@ -22,24 +22,24 @@ $app->get('/getApiKey', 'getApiKey');
 $app->get('/getAuthenticationStatus', 'getAuthenticationStatus');
 
 //POST (parameters in body)
-addRoute('get', '/getDowntimes', 'getDowntimes');
-addRoute('get', '/getHostsDown', 'getHostsDown');
-addRoute('get', '/getResources', 'getResources');
-addRoute('get', '/getServicesDown', 'getServicesDown');
+addRoute('get', '/getDowntimes', 'getDowntimes', 'operator');
+addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
+addRoute('get', '/getResources', 'getResources', 'operator');
+addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
 
 
-addRoute('post', '/getHost', 'getHost');
-addRoute('post', '/getContact', 'getContact');
-addRoute('post', '/getCommand', 'getCommand');
-addRoute('post', '/getHostGroup', 'getHostGroup');
-addRoute('post', '/getServiceGroup', 'getServiceGroup');
-addRoute('post', '/getHostTemplate', 'getHostTemplate');
-addRoute('post', '/getContactGroups', 'getContactGroups');
-addRoute('post', '/getServicesByHost', 'getServicesByHost');
-addRoute('post', '/getServiceTemplate', 'getServiceTemplate');
-addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate');
-addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup');
-addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate');
+addRoute('post', '/getHost', 'getHost', 'operator');
+addRoute('post', '/getContact', 'getContact', 'operator');
+addRoute('post', '/getCommand', 'getCommand', 'operator');
+addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');
+addRoute('post', '/getServiceGroup', 'getServiceGroup', 'operator');
+addRoute('post', '/getHostTemplate', 'getHostTemplate', 'operator');
+addRoute('post', '/getContactGroups', 'getContactGroups', 'operator');
+addRoute('post', '/getServicesByHost', 'getServicesByHost', 'operator');
+addRoute('post', '/getServiceTemplate', 'getServiceTemplate', 'operator');
+addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
+addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
+addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
 
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
@@ -47,10 +47,10 @@ addRoute('post', '/createCommand', 'createCommand');
 addRoute('post', '/createContact', 'createContact');
 addRoute('post', '/createHostGroup', 'createHostGroup');
 addRoute('post', '/createHostTemplate', 'createHostTemplate');
-addRoute('post', '/createHostDowntimes', 'createHostDowntimes');
+addRoute('post', '/createHostDowntime', 'createHostDowntime');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
-addRoute('post', '/createServiceDowntimes', 'createServiceDowntimes');
+addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
@@ -97,11 +97,11 @@ addRoute('post', '/delEventBroker', 'delEventBroker');
 addRoute('post', '/deleteHostGroup', 'deleteHostGroup');
 addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
-addRoute('post', '/deleteHostDowntimes', 'deleteHostDowntimes');
+addRoute('post', '/deleteHostDowntime', 'deleteHostDowntime');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
-addRoute('post', '/deleteServiceDowntimes', 'deleteServiceDowntimes');
+addRoute('post', '/deleteServiceDowntime', 'deleteServiceDowntime');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteContactGroupToContact', 'deleteContactGroupToContact');

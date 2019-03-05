@@ -493,8 +493,8 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	/* LILAC - create host Downtimes */
-    public function createHostDowntimes($hostName,$comment,$startTime,$endTime,$user,$fixed=1,$duration=1000,$childHostAction=FALSE){
+	/* LILAC - create host Downtime */
+    public function createHostDowntime($hostName,$comment,$startTime,$endTime,$user,$fixed=1,$duration=1000,$childHostAction=FALSE){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -547,8 +547,8 @@ class ObjectManager {
         return $result;
 	}
 
-	/* LILAC - create service Downtimes */
-    public function createServiceDowntimes($hostName,$serviceName,$comment,$startTime,$endTime,$user,$fixed=1,$duration=1000){
+	/* LILAC - create service Downtime */
+    public function createServiceDowntime($hostName,$serviceName,$comment,$startTime,$endTime,$user,$fixed=1,$duration=1000){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -2729,7 +2729,7 @@ class ObjectManager {
 			}else{
 				$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateService->getCheckCommand());
 
-				if($cmd->getName() == $commandName){
+				if($cmd && $cmd->getName() == $commandName){
 					$code=1;
 					$error .= "The command '".$commandName."' is already set to this template\n";
 				}else{
@@ -2765,7 +2765,7 @@ class ObjectManager {
 				$error .= "The Template service '".$templateHostName."' does not exist\n";
 			}else{
 				$cmd = NagiosCommandPeer::retrieveByPK($targetTemplateHost->getCheckCommand());
-				if($cmd->getName() == $commandName){
+				if($cmd && $cmd->getName() == $commandName){
 					$code=1;
 					$error .= "The command '".$commandName."' is already set to this template\n";
 				}else{
@@ -2793,7 +2793,7 @@ class ObjectManager {
 ########################################## DELETE
 
 	/* LILAC - delete host Downtimes */
-    public function deleteHostDowntimes($idDowntime){
+    public function deleteHostDowntime($idDowntime){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -2833,7 +2833,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - delete service Downtimes */
-    public function deleteServiceDowntimes($idDowntime){
+    public function deleteServiceDowntime($idDowntime){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -3577,7 +3577,7 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        return $logs;
+        return array("code"=>$code,"description"=>$logs);
 	}
 	/* LILAC - Delete HostTemplates to Host */
 	public function deleteHostTemplateToHost($templateHostName, $hostName, $exportConfiguration = FALSE){
@@ -3622,7 +3622,7 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        return $logs;
+        return array("code"=>$code,"description"=>$logs);
 	}
 	/* LILAC - Delete contact to Hosts */
 	public function deleteContactToHost($contactName, $hostName, $exportConfiguration = FALSE){
