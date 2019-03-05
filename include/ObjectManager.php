@@ -1880,6 +1880,36 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 	
+	/* LILAC - Add Service groupe to Service In Host */
+	public function addServiceGroupToServiceInHost( $serviceGroupName, $serviceName, $hostName, $exportConfiguration = FALSE ){
+        $error = "";
+		$success = "";
+		$code=0;
+        
+        $nsp = new NagiosServicePeer();
+		$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+		if(!$service) {
+			$code=1;
+			$error .= "Service $serviceName or $hostName not found\n";
+		}
+		if(empty($error)){
+			
+            if($service->addServicegroupByName($serviceGroupName)) {
+				$success .= "Service Group ".$serviceGroupName." added to service ".$serviceName."\n";
+                if( $exportConfiguration == TRUE )
+                    $this->exportConfigurationToNagios($error, $success);
+            }
+            else {
+				$code=1;
+				$error .= "That Service Group already exists in that list or didn't exist!\n";
+            }
+        }else $code=1;
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Add contact to Service Template */
 	public function addContactToServiceTemplate( $contactName, $templateServiceName, $exportConfiguration = FALSE ){
         $error = "";
@@ -4041,6 +4071,42 @@ class ObjectManager {
 				}else{
 					$code=1;
 					$error .= "The  service group '".$serviceGroupName."' doesn't link with this host : $templateServiceName.\n";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* LILAC - Delete service group to Service template */
+	public function deleteServiceGroupToServiceInHost($serviceGroupName, $serviceName, $hostName, $exportConfiguration = FALSE){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+			$targetServiceGroup = NagiosServiceGroupPeer::getByName($serviceGroupName);
+			$targetService = NagiosServicePeer::getByHostAndDescription($hostName,$serviceName);
+
+			if(!$targetServiceGroup or !$targetService) {
+				$code=1;
+				$error .= (!$targetServiceGroup ? "The  service group  '".$serviceGroupName."'does not exist\n" : "The service '".$serviceName."'does not exist\n")  ;
+			}else{
+				$c = new Criteria();
+				$c->add(NagiosServiceGroupMemberPeer::SERVICE_GROUP, $targetServiceGroup->getId());
+				$c->add(NagiosServiceGroupMemberPeer::SERVICE, $targetService->getId());
+				$membership = NagiosServiceGroupMemberPeer::doSelectOne($c);
+				if($membership) {
+					$membership->delete();
+					$success .= "The  service group '".$serviceGroupName."' has been deleted.\n";
+				}else{
+					$code=1;
+					$error .= "The  service group '".$serviceGroupName."' doesn't link with this service : $serviceName in this host $hostName.\n";
 				}
 			}
 		}catch(Exception $e) {

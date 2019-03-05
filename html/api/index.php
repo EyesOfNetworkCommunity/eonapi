@@ -68,6 +68,7 @@ addRoute('post', '/addCustomArgumentsToService', 'addCustomArgumentsToService');
 addRoute('post', '/addContactToServiceTemplate', 'addContactToServiceTemplate');
 addRoute('post', '/addContactGroupToHostTemplate', 'addContactGroupToHostTemplate');
 addRoute('post', '/addContactGroupToServiceInHost', 'addContactGroupToServiceInHost');
+addRoute('post', '/addServiceGroupToServiceInHost', 'addServiceGroupToServiceInHost');
 addRoute('post', '/addContactGroupToServiceTemplate', 'addContactGroupToServiceTemplate');
 addRoute('post', '/addCustomArgumentsToHostTemplate', 'addCustomArgumentsToHostTemplate');
 addRoute('post', '/addServiceGroupToServiceTemplate', 'addServiceGroupToServiceTemplate');
@@ -112,6 +113,7 @@ addRoute('post', '/deleteContactToServiceTemplate', 'deleteContactToServiceTempl
 addRoute('post', '/deleteCustomArgumentsToService', 'deleteCustomArgumentsToService');
 addRoute('post', '/deleteContactGroupToHostTemplate', 'deleteContactGroupToHostTemplate');
 addRoute('post', '/deleteContactGroupToServiceInHost', 'deleteContactGroupToServiceInHost');
+addRoute('post', '/deleteServiceGroupToServiceInHost', 'deleteServiceGroupToServiceInHost');
 addRoute('post', '/deleteContactGroupToServiceTemplate', 'deleteContactGroupToServiceTemplate');
 addRoute('post', '/deleteServiceGroupToServiceTemplate', 'deleteServiceGroupToServiceTemplate');
 addRoute('post', '/deleteCustomArgumentsToHostTemplate', 'deleteCustomArgumentsToHostTemplate');
