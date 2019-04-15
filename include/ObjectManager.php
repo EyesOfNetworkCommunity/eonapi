@@ -1665,12 +1665,14 @@ class ObjectManager {
 						$code=1;
 						$error .= "The command '".$service->command."' doesn't exist.\n";
 					}
-					foreach($service->parameters as $params) {
-						$param = new NagiosServiceCheckCommandParameter();
-						$param->setService($tempService->getId());
-						$param->setParameter($params);
-						$param->save();
-						$success .= "Command Parameter ".$params." added to $service->name\n";
+					if(isset($service->parameters)){
+						foreach($service->parameters as $params) {
+							$param = new NagiosServiceCheckCommandParameter();
+							$param->setService($tempService->getId());
+							$param->setParameter($params);
+							$param->save();
+							$success .= "Command Parameter ".$params." added to $service->name\n";
+						}
 					}
 				}
 			
@@ -1743,13 +1745,16 @@ class ObjectManager {
 						$code=1;
 						$error .= "The command '".$service->command."' doesn't exist.\n";
 					}
-					foreach($service->parameters as $params) {
-						$param = new NagiosServiceCheckCommandParameter();
-						$param->setService($tempService->getId());
-						$param->setParameter($params);
-						$param->save();
-						$success .= "Command Parameter ".$params." added to $service->name\n";
+					if(isset($service->parameters)){
+						foreach($service->parameters as $params) {
+							$param = new NagiosServiceCheckCommandParameter();
+							$param->setService($tempService->getId());
+							$param->setParameter($params);
+							$param->save();
+							$success .= "Command Parameter ".$params." added to $service->name\n";
+						}
 					}
+					
 				}
 			
 				
