@@ -153,7 +153,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `listNagiosObjects` | POST | [**object, backendid = NULL, columns = FALSE, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return nagios object like services, hosts, and their respective informations on which you can filter |
 | `listNagiosStates` | POST | [**backendid = NULL, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return states of hosts and services  |
 | `modifyContact` | POST | [**contactName, newContactName="", contactAlias="",contactMail="",contactPager="",contactGroup="",serviceNotificationCommand="",hostNotificationCommand="", $options=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given contact. if contact group is already set the membershib will be deleted, The same happen for contact notification command.  |
-| `modifyService` | POST | [**serviceName, hostName, column=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
+| `modifyServiceFromHostTemplate` | POST | [**hostTemplateName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
+| `modifyServiceFromHost` | POST | [**hostName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
 | `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs","changes":numerOfchanges] | modify a command to Nagios. returncode=0 or 1 if failed or nothing change |
 | `modifyNagiosRessources` | POST | [**ressources**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify ressources represented in nagios by $USERi$, you passed an collection of "Useri":"value" or "" if you want to remove a ressource an example is given bellow |
 | `modifyCheckCommandToServiceTemplate` | POST | [**commandName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify Modify the check command associate with the given service template. returnCode=0 for data updated and 1 if it has failed  |
@@ -163,6 +164,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteServiceDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios service downtime. |
 | `deleteContactGroup` | POST | [**contactGroupName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact Group  |
 | `deleteService` | POST | [**serviceName, hostName**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | delete the given service  |
+| `deleteServiceByHostTemplate` | POST | [**serviceName, hostTemplateName**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | delete the given service  |
 | `deleteServiceTemplate` | POST | [**templateName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete the given Service template |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a command to Nagios. |
 | `deleteHost` | POST | [**hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a nagios host. |
@@ -320,15 +322,15 @@ To illustrate the EON API features tab, you will find a few implementation examp
 }
 ```
 
-* /modifyService 
+* /modifyServiceFromHost
 ```json 
 {
-	"serviceName": "foe",
 	"hostName":"doe",
-	"columns":{
-		"DisplayName":"erased",
-		"CheckCommand":"check_api_eon",
-		"IsVolatile":"enable"
+	"service":{
+		"name":"Foe",
+	  "inheritance":"EMC", 
+    "command":"check_ftp",
+    "parameters":["toto","titi"] 
   	}
 }
 ```
