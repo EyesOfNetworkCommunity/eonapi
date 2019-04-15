@@ -9,6 +9,9 @@
 # Copyright (c) 2017 AXIANS C&S
 # Author: Adrien van den Haak <adrien.vandenhaak@axians.com>
 #
+# Copyright (c) 2017 AXIANS Cloud Builder
+# Contributor: Hoarau Jeremy <jeremy.hoarau@axians.com>
+#
 */
 
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
@@ -1560,72 +1563,69 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
     }
-	/* LILAC - Add Services to Host template*/
-    public function addServiceToTemplate ($templateName, $services, $template = NULL, $exportConfiguration = FALSE ){
+	/* LILAC - create Service to Host template*/
+    public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){
 		
         $error = "";
 		$success = "";
 		$code=0;
         	    
         $nsp = new NagiosHostTemplatePeer;
-        
-        if( $template == NULL ){
-            $template = $nsp->getByName($templateName);
-            
-            if(!$template) {
-				$code=1;
-                $error .= "template $templateName doesn't exist\n";
-            }
-        }
+		$template = $nsp->getByName($hostTemplateName);
+		
+		if(!$template) {
+			$code=1;
+			$error .= "template $hostTemplateName doesn't exist\n";
+		}
         
         $nstp = new NagiosServiceTemplatePeer;
 		
         //Test if the parent templates exist
-        foreach($services as $service) {
-            $serviceTemplateName = $service->inheritance;
-            $serviceTemplate = $nstp->getByName($serviceTemplateName);
-            if(!$serviceTemplate) {
+        if(isset($service->inheritance)) {
+			$templateName = $service->inheritance;
+			$serviceTemplate = $nstp->getByName($templateName);
+			if(!$serviceTemplate) {
 				$code=1;
-				$error .= "Service Template $serviceTemplateName not found\n";	
-            }       
+				$error .= "Service Template $templateName not found\n";	
+			}       
 		}
 		
 		if(empty($error)) {	
 			try {
 				// service interface
-				foreach($services as $service) {
-					$tempService = new NagiosService();
-					$tempService->setDescription($service->name);
-					$tempService->setHostTemplate($template->getId());
-					$tempService->save();
-					$success .= "Service $service->name added\n";
-					
-					$templateService = NagiosServiceTemplatePeer::getByName($service->inheritance);
+				
+				$tempService = new NagiosService();
+				$tempService->setDescription($service->name);
+				$tempService->setHostTemplate($template->getId());
+				$tempService->save();
+				$success .= "Service $service->name added\n";
+				if(isset($serviceTemplate)) {
 					$newInheritance = new NagiosServiceTemplateInheritance();
 					$newInheritance->setNagiosService($tempService);
-					$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($templateService);
+					$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($serviceTemplate);
 					$newInheritance->save();
 					$success .= "Service Template ".$service->inheritance." added to service $service->name \n";
-					
-					if(isset($service->command)){
-						$cmd = NagiosCommandPeer::getByName($service->command);
-						if($cmd){
-							$tempService->setCheckCommand($cmd->getId());
-							$tempService->save();
-							$success .= "The command '".$service->command."' add to service $service->name \n";
-						}else{
-							$code=1;
-							$error .= "The command '".$service->command."' doesn't exist.\n";
-						}
-						foreach($service->parameters as $params) {
-							$param = new NagiosServiceCheckCommandParameter();
-							$param->setService($tempService->getId());
-							$param->setParameter($params);
-							$param->save();
-							$success .= "Command Parameter ".$params." added to $service->name\n";
-						}
+				}
+				
+				if(isset($service->command)){
+					$cmd = NagiosCommandPeer::getByName($service->command);
+					if($cmd){
+						$tempService->setCheckCommand($cmd->getId());
+						$tempService->save();
+						$success .= "The command '".$service->command."' add to service $service->name \n";
+					}else{
+						$code=1;
+						$error .= "The command '".$service->command."' doesn't exist.\n";
+					}
+					foreach($service->parameters as $params) {
+						$param = new NagiosServiceCheckCommandParameter();
+						$param->setService($tempService->getId());
+						$param->setParameter($params);
+						$param->save();
+						$success .= "Command Parameter ".$params." added to $service->name\n";
 					}
 				}
+			
 				
 				// Export
                 if( $exportConfiguration == TRUE )
@@ -1642,8 +1642,8 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
         
 	}
-	/* LILAC - Add Service to Host*/
-    public function addServiceToHost ($hostName, $service, $exportConfiguration = FALSE ){
+	/* LILAC - create Service to Host*/
+    public function createServiceToHost ($hostName, $service, $exportConfiguration = FALSE ){
 		
         $error = "";
 		$success = "";
@@ -1677,11 +1677,10 @@ class ObjectManager {
 				$tempService->setHost($host->getId());
 				$tempService->save();
 				$success .= "Service $service->name added\n";
-				if(isset($service->inheritance)) {
-					$templateService = NagiosServiceTemplatePeer::getByName($service->inheritance);
+				if(isset($template)) {
 					$newInheritance = new NagiosServiceTemplateInheritance();
 					$newInheritance->setNagiosService($tempService);
-					$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($templateService);
+					$newInheritance->setNagiosServiceTemplateRelatedByTargetTemplate($template);
 					$newInheritance->save();
 					$success .= "Service Template ".$service->inheritance." added to service $service->name \n";
 				}

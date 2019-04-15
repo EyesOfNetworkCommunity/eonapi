@@ -119,6 +119,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `createServicesDowntime`| POST | [**hostName, serviceName, comment, startTime, endTime, user, fixed=1, duration=1000 , childHostAction = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a Service's downtime |
 | `createHostGroup` | POST | [**hostGroupName, &error = "", &success = "", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
 | `createServiceTemplate` | POST | [**templateName, templateDescription="", servicesGroup=array(), contacts=array(), contactsGroup=array(), checkCommand, checkCommandParameters=array(), templatesToInherit=array(), exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new Service template, if you didn't give templatesToInherit it will provide "GENERIC_SERVICE" as Inheritance template. The argument witch is by default array take names of objects they are bind. |
+| `createServiceToHost` | POST | [**hostName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a service in the given host. (allow to create a service with optional inherited template, optional command and parameters in a specified host) See example bellow for utilisation |
+| `createServiceToHostTemplate` | POST | [**hostTemplateName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a service in the given host template. (allow to create a service with optional inherited template, optional command and parameters in a specified host template) |
 | `addContactToHost` | POST | [**contactName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
 | `addContactGroupToHost` | POST | [**contactGroupName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
 | `addHostTemplateToHost` | POST | [**templateHostName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a host template to a nagios host. |
@@ -126,7 +128,6 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addContactNotificationCommandToContact` | POST | [**contactName, commandName, type_command, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact notification command to a nagios contact. |
 | `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact to a nagios host template. |
 | `addServiceTemplateFromService` | POST | [**serviceTemplateName, serviceName, hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service template in the given service of the specified host. |
-| `addServiceToHost` | POST | [**hostName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service in the given host. (allow to create a service with optional inherited template, optional command and parameters in a specified host) See example bellow for utilisation |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact group to a nagios host template. |
 | `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a command to Nagios.returncode=0 or 1 if failed |
 | `addCheckCommandParameterToServiceTemplate` | POST | [**templateServiceName,parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add command parameter to a service template.returncode=0 or 1 if failed /!\parameters is a list |
@@ -206,31 +207,7 @@ To illustrate the EON API features tab, you will find a few implementation examp
 }
 ```
 
-* /createService
-```json 
-{
-	"hostName": "HostName",
-	"services": {
-                "Service1": [
-                    "TEMPLATE_SERVICE_1",
-                    "127.0.0.1",
-                    "eth0",
-                    "1000000",
-                    "100",
-                    "110"
-                ],
-                "Service2": [
-                    "TEMPLATE_SERVICE_2",
-                    "3000",
-                    "80",
-                    "5000",
-                    "90"
-                ]
-        },
-	"exportConfiguration": true
-}
 
-```
 
 * /createUser
 ```json 
@@ -355,13 +332,13 @@ To illustrate the EON API features tab, you will find a few implementation examp
   	}
 }
 ```
-* /addServiceToHost
+* /createServiceToHost
 ```json 
 {
   "hostName":"localhost",
   "service": {
     "name":"Foe",
-	"inheritance":"EMC", //optinal and the template have to exist
+	  "inheritance":"EMC", //optinal and the template have to exist
     "command":"check_ftp", //optional and the command have to exist
     "parameters":["toto","titi"] //optional
   }

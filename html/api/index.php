@@ -48,15 +48,15 @@ addRoute('post', '/createContact', 'createContact');
 addRoute('post', '/createHostGroup', 'createHostGroup');
 addRoute('post', '/createHostTemplate', 'createHostTemplate');
 addRoute('post', '/createHostDowntime', 'createHostDowntime');
+addRoute('post', '/createServiceToHost', 'createServiceToHost');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
+addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
-addRoute('post', '/addServiceToHost', 'addServiceToHost');
 addRoute('post', '/addHostGroupToHost', 'addHostGroupToHost');
-addRoute('post', '/addServiceToTemplate', 'addServiceToTemplate');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
 addRoute('post', '/addHostTemplateToHost', 'addHostTemplateToHost');
 addRoute('post', '/addContactGroupToContact', 'addContactGroupToContact');
