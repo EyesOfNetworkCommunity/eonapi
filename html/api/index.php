@@ -46,6 +46,7 @@ addRoute('post', '/createHost', 'createHost');
 addRoute('post', '/createCommand', 'createCommand');
 addRoute('post', '/createContact', 'createContact');
 addRoute('post', '/createHostGroup', 'createHostGroup');
+addRoute('post', '/createContactGroup', 'createContactGroup');
 addRoute('post', '/createHostTemplate', 'createHostTemplate');
 addRoute('post', '/createHostDowntime', 'createHostDowntime');
 addRoute('post', '/createServiceToHost', 'createServiceToHost');

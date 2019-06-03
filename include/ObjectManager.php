@@ -306,6 +306,7 @@ class ObjectManager {
 		}
 		return($HostsDown);
 	}
+
 	/* EONWEB-LIVESTATUS - Get Services Down*/	
 	public function getServicesDown(){
 		
@@ -784,7 +785,45 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
+	} 
+	
+	/* LILAC - Create Contact Group */
+    public function createContactGroup( $contactGroupName, $description="contact group", $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        $contactGroup = NULL;
+        
+        // Check for pre-existing contact with same name
+		if($lilac->contactgroup_exists( $contactGroupName )) {
+			$code = 1;
+			$error .= "A Contact group with that name already exists!\n";
+		}
+		else {
+			// Field Error Checking
+			if( $contactGroupName == "" ) {
+				$error .= "Contact group name is required\n";
+			}
+			else {
+				// All is well for error checking, add the contactgroup into the db.
+				$contactGroup = new NagiosContactGroup();
+				$contactGroup->setAlias( $description );
+				$contactGroup->setName( $contactGroupName );	
+				$contactGroup->save();				
+				
+				$success .= "Contact group ".$contactGroupName." created\n";
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
+			}
+		}
+        
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
 	}  
+
 	/* LILAC - create service template */
 	public function createServiceTemplate($templateServiceName, $templateDescription="",$exportConfiguration = FALSE){
 		$error = "";
