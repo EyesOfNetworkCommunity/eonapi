@@ -104,6 +104,7 @@ addRoute('post', '/deleteCommand', 'deleteCommand');
 addRoute('post', '/delEventBroker', 'delEventBroker');
 addRoute('post', '/deleteHostGroup', 'deleteHostGroup');
 addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
+addRoute('post', '/deleteServiceGroup', 'deleteServiceGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
 addRoute('post', '/deleteHostDowntime', 'deleteHostDowntime');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');

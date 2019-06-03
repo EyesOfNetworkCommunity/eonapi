@@ -3936,6 +3936,33 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
+
+	/* LILAC - Delete service Group */
+	public function deleteServiceGroup($serviceGroupName){
+		$error = "";
+		$success = "";
+		$code = 0;
+		try {
+			$ncp = new NagiosServiceGroupPeer;
+			// Find service groupe
+			$serviceGroup = $ncp->getByName( $serviceGroupName );
+			if(!$serviceGroup) {
+				$code=1;
+				$error .= "Service Group $serviceGroupName doesn't exist\n";
+			}else{
+				$serviceGroup->delete();
+				$success .="$serviceGroupName as been deleted\n";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	}
+
 	/* LILAC - Delete Service by host*/
 	public function deleteService($serviceName, $hostName, $exportConfiguration = FALSE ){
 		$error = "";
