@@ -822,7 +822,44 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
-	}  
+	} 
+
+	/* LILAC - Create Service Group */
+    public function createServiceGroup( $serviceGroupName, $description="service group", $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        $serviceGroup = NULL;
+        
+        // Check for pre-existing service with same name
+		if($lilac->servicegroup_exists( $serviceGroupName )) {
+			$code = 1;
+			$error .= "A service group with that name already exists!\n";
+		}
+		else {
+			// Field Error Checking
+			if( $serviceGroupName == "" ) {
+				$error .= "Service group name is required\n";
+			}
+			else {
+				// All is well for error checking, add the servicegroup into the db.
+				$serviceGroup = new NagiosServiceGroup();
+				$serviceGroup->setAlias( $description );
+				$serviceGroup->setName( $serviceGroupName );	
+				$serviceGroup->save();				
+				
+				$success .= "Service group ".$serviceGroupName." created\n";
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
+			}
+		}
+        
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	} 
 
 	/* LILAC - create service template */
 	public function createServiceTemplate($templateServiceName, $templateDescription="",$exportConfiguration = FALSE){
