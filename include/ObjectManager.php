@@ -3147,6 +3147,64 @@ class ObjectManager {
         return $result;
 	}
 	
+
+
+	/* LILAC - Modify Nagios global main configuration */  
+    public function modifyNagiosMainConfiguration($requestConf=NULL, $exportConfiguration=FALSE){
+		$error = "";
+		$success = "";
+		$code=1;
+
+		$configurationFunctions = array("hostEventHandler"  			=> "setGlobalHostEventHandler",
+										"serviceEventHandler"			=> "setGlobalServiceEventHandler",
+										"hostPerfdata" 					=> "setHostPerfdataCommand",
+										"servicePerfdata" 				=> "setServicePerfdataCommand",
+										"hostPerfdataFileProcessing"	=> "setHostPerfdataFileProcessingCommand",
+										"servicePerfdataFileProcessing"	=> "setServicePerfdataFileProcessingCommand");
+
+		try{
+			$config = NagiosMainConfigurationPeer::doSelectOne(new Criteria());
+			if(!$config) {
+				// We need to create the config object on the fly
+				$config = new NagiosMainConfiguration();
+				$config->save();
+			}
+
+			if($requestConf){
+				foreach($requestConf as $key => $val){
+					if(!array_key_exists($key,$configurationFunctions)){
+						$error .= "$key is not a valid parameter. | ";
+					}else{
+						$handler = array($config,$configurationFunctions[$key]);
+						$command = NagiosCommandPeer::getByName($val);
+						if($command) {
+							if(is_callable($handler)){
+								//$config->setGlobalHostEventHandlerByName($val);
+								call_user_func_array($handler,array($command->getId()));
+								$success .= "$key update. | ";
+								$code=0;
+								$config->save();
+							}else {
+								$error.="An unexpected error occured.";
+							}
+						}else{
+							$error .= "Command name $val not found. | ";
+						}
+						
+					}
+				}
+			}						
+			
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+
+		$logs = $this->getLogs($error, $success);
+        
+        $result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
 ########################################## DELETE
 
 	/* LILAC - delete host Downtimes */

@@ -93,6 +93,7 @@ addRoute('post', '/modifyContact', 'modifyContact');
 addRoute('post', '/modifyCommand', 'modifyCommand');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
 addRoute('post', '/modifyNagiosResources', 'modifyNagiosResources');
+addRoute('post', '/modifyNagiosMainConfiguration', 'modifyNagiosMainConfiguration');
 addRoute('post', '/modifyServicefromHostTemplate', 'modifyServicefromHostTemplate');
 addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');

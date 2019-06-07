@@ -161,6 +161,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `modifyNagiosRessources` | POST | [**ressources**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify ressources represented in nagios by $USERi$, you passed an collection of "Useri":"value" or "" if you want to remove a ressource an example is given bellow |
 | `modifyCheckCommandToServiceTemplate` | POST | [**commandName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify Modify the check command associate with the given service template. returnCode=0 for data updated and 1 if it has failed  |
 | `modifyCheckCommandToHostTemplate` | POST | [**commandName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify the check command associate with the given host template. returnCode=0 for data updated and 1 if it has failed  |
+| `modifyNagiosMainConfiguration` | POST | [**requestConf, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify The Nagios global configuration. See bellow the different parameter that you can changed.|
 | `deleteContact` | POST | [**contactName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact |
 | `deleteHostDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios host downtime. |
 | `deleteServiceDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios service downtime. |
@@ -336,6 +337,22 @@ To illustrate the EON API features tab, you will find a few implementation examp
   	}
 }
 ```
+
+* /modifyNagiosMainConfiguration
+```json
+{
+  "requestConf":{
+    "hostEventHandler":"check_ping",
+    "hostEventHandler":"",
+    "serviceEventHandler":"",
+    "hostPerfdata":"",
+    "servicePerfdata":"",
+    "hostPerfdataFileProcessing":"",
+    "servicePerfdataFileProcessing":""
+    }
+}
+```
+
 * /createServiceToHost
 ```json 
 {
