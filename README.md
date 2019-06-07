@@ -342,13 +342,13 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json
 {
   "requestConf":{
-    "hostEventHandler":"check_ping",
-    "hostEventHandler":"",
-    "serviceEventHandler":"",
-    "hostPerfdata":"",
-    "servicePerfdata":"",
-    "hostPerfdataFileProcessing":"",
-    "servicePerfdataFileProcessing":""
+    "hostEventHandler":"check_ping",	//optinal
+    "hostEventHandler":"",				//optinal
+    "serviceEventHandler":"",			//optinal
+    "hostPerfdata":"",					//optinal
+    "servicePerfdata":"",				//optinal
+    "hostPerfdataFileProcessing":"",	//optinal
+    "servicePerfdataFileProcessing":"" 	//optinal
     }
 }
 ```
