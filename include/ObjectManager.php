@@ -22,6 +22,9 @@ include("/srv/eyesofnetwork/eonweb/include/function.php");
 include("/srv/eyesofnetwork/eonweb/include/livestatus/Client.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
+include("./dto/NotifierMethodDTO.php");
+include("./dto/NotifierRuleDTO.php");
+include("./dto/NotifierTimeperiodDTO.php");
 
 use Nagios\Livestatus\Client;
 
@@ -35,7 +38,44 @@ class ObjectManager {
 		$request = \Slim\Slim::getInstance()->request();
 		$this->authUser = $request->get('username');  
 	}
-	
+######################################### NOTIFIER CONTROLEUR
+	public function addNotifierMethod(){
+
+	}
+
+	public function addNotifierRule(){
+
+	}
+
+	public function addNotifierTimeperiod(){
+
+	}
+
+	public function deleteNotifierMethod(){
+
+	}
+
+	public function deleteNotifierRule(){
+
+	}
+
+	public function deleteNotifierTemperiod(){
+
+	}
+
+	public function modifyNotifierRules(){
+
+	}
+
+	public function modifyNotifierTemperiod(){
+
+	}
+
+	public function modifyNotifierMethod(){
+		
+	}
+
+##################################################
 	/* LILAC - List Hosts */
 	public function listHosts( $hostName = false, $hostTemplate = false ){
 		
