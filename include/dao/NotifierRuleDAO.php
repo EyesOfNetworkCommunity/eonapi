@@ -1,6 +1,5 @@
 <?php
 
-include("../config.php");
 
 /**
  *  Classe Data Access Object dedicated in method data recovery 
@@ -27,21 +26,22 @@ include("../config.php");
  */
 class NotifierRuleDAO {
     
-    private $connexion;
-    private $create_request_pattern               = "INSERT INTO rules(name, type, debug, contact, host, service ,state, notificationnumber, timeperiod_id, tracking, sort_key) VALUES(:name, :type, :debug, :contact, :host, :service, :state, :notificationnumber, :timeperiod_id, :tracking, :sort_key)";
-    private $update_rule_by_id_request            = "UPDATE rules SET name = :name, type = :type, debug = :debug, contact = :contact, host = :host, service = :service, state = :state, notificationnumber = :notificationnumber, timeperiod_id = :timeperiod_id, tracking = :tracking, sort_key = :sort_key WHERE id = :id";
-    private $add_rule_method_request              = "INSERT INTO rule_method VALUES(:rule_id, :method_id)";
-    private $delete_rule_method_request           = "DELETE FROM rule_method WHERE rule_id= :rule_id AND method_id= :method_id";
-    private $delete_rule_by_id_request            = "DELETE rules, rule_method FROM rules INNER JOIN rule_method ON rules.id = rule_method.rule_id WHERE id = :id ";
-    private $select_all_request                   = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, GROUP_CONCAT(method_id) as methods FROM rules,rule_method";
-    private $select_one_by_name_and_type_request  = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, GROUP_CONCAT(method_id) as methods FROM rules,rule_method WHERE rules.id = rule_method.rule_id AND name = :name AND type =:type";
-    private $select_linked_methods_id             = "SELECT method_id FROM rule_method WHERE rule_id = :id";
+    protected $connexion;
+    protected $create_request_pattern               = "INSERT INTO rules(name, type, debug, contact, host, service ,state, notificationnumber, timeperiod_id, tracking, sort_key) VALUES(:name, :type, :debug, :contact, :host, :service, :state, :notificationnumber, :timeperiod_id, :tracking, :sort_key)";
+    protected $update_rule_by_id_request            = "UPDATE rules SET name = :name, type = :type, debug = :debug, contact = :contact, host = :host, service = :service, state = :state, notificationnumber = :notificationnumber, timeperiod_id = :timeperiod_id, tracking = :tracking, sort_key = :sort_key WHERE id = :id";
+    protected $add_rule_method_request              = "INSERT INTO rule_method VALUES(:rule_id, :method_id)";
+    protected $delete_rule_method_request           = "DELETE FROM rule_method WHERE rule_id= :rule_id AND method_id= :method_id";
+    protected $delete_rule_by_id_request            = "DELETE rules, rule_method FROM rules INNER JOIN rule_method ON rules.id = rule_method.rule_id WHERE id = :id ";
+    protected $select_all_request                   = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, GROUP_CONCAT(method_id) as methods FROM rules,rule_method";
+    protected $select_one_by_name_and_type_request  = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, GROUP_CONCAT(method_id) as methods FROM rules,rule_method WHERE rules.id = rule_method.rule_id AND name = :name AND type =:type";
+    protected $select_linked_methods_id             = "SELECT method_id FROM rule_method WHERE rule_id = :id";
     
 
     function __construct(){
+        require_once("../config.php");
         try
         {
-            $connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
+            $this->connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
         }
         catch(Exception $e)
         {
@@ -67,9 +67,9 @@ class NotifierRuleDAO {
      * @return false or the id (int) if insert success
      * 
      */
-    protected function createRule($name,$type,$debug=0,$contact="*",$host="*",$service="*",$state="*",$notificationnumber="*",$timeperiod_id,$tracking=0,$sort_key=0){
+    public function createRule($name,$type,$debug=0,$contact="*",$host="*",$service="*",$state="*",$notificationnumber="*",$timeperiod_id,$tracking=0,$sort_key=0){
         try{
-            $request = $connexion->prepare($create_request_pattern);
+            $request = $this->connexion->prepare($create_request_pattern);
             $request->execute(array(
                 'name'                  => $name,
                 'type'                  => $type,
@@ -88,7 +88,7 @@ class NotifierRuleDAO {
             echo $e;
             return false;
         }
-        return $connexion->lastInsertId();
+        return $this->connexion->lastInsertId();
     }
 
     /**
@@ -110,9 +110,9 @@ class NotifierRuleDAO {
      * @return boolean
      * 
      */
-    protected function updateRule($id,$name,$type,$debug,$contact,$host,$service,$state,$notificationnumber,$timeperiod_id,$tracking,$sort_key,$methods_id_str){
+    public function updateRule($id,$name,$type,$debug,$contact,$host,$service,$state,$notificationnumber,$timeperiod_id,$tracking,$sort_key,$methods_id_str){
         try{
-            $request = $connexion->prepare($update_rule_by_id_request);
+            $request = $this->connexion->prepare($update_rule_by_id_request);
             $request->execute(array(
                 'id'                    => $id,
                 'name'                  => $name,
@@ -133,7 +133,7 @@ class NotifierRuleDAO {
             //Delete the method that have benn unlink from rule
             foreach($tab as $method_id){
                 if(!in_array($method_id,split(",",$methods_id_str)){
-                    $request = $connexion->prepare($delete_rule_method_request);
+                    $request = $this->connexion->prepare($delete_rule_method_request);
                     $request->execute(array(
                         'rule_id'       => $id,
                         'method_id'     => $method_id
@@ -144,7 +144,7 @@ class NotifierRuleDAO {
             //Add the method that have been linked to rule
             foreach(split(",",$methods_id_str) as $method_id){
                 if(!in_array($method_id,tab){
-                    $request = $connexion->prepare($add_rule_method_request);
+                    $request = $this->connexion->prepare($add_rule_method_request);
                     $request->execute(array(
                         'rule_id'       => $id,
                         'method_id'     => $method_id
@@ -167,10 +167,10 @@ class NotifierRuleDAO {
      * @return boolean
      * 
      */
-    protected function deleteRule($id){
+    public function deleteRule($id){
         try{
             //DELETE rule and rule_method where rule_id = id
-            $request = $connexion->prepare($delete_rule_by_id_request);
+            $request = $this->connexion->prepare($delete_rule_by_id_request);
             $request->execute(array(
                 'id' => $id
             ));
@@ -191,7 +191,7 @@ class NotifierRuleDAO {
     public function selectAllRules(){
         $result = array();
         try{
-            $request = $connexion->query($select_all_request);
+            $request = $this->connexion->query($select_all_request);
             while($row = $request->fetch()){
                 array_push($result, $row);
             } 
@@ -214,7 +214,7 @@ class NotifierRuleDAO {
     public function selectOneRule($name,$type){
         $result = false;
         try{
-            $request = $connexion->prepare($select_one_by_name_and_type_request);
+            $request = $this->connexion->prepare($select_one_by_name_and_type_request);
             $request->execute(array(
                 'name' => $name,
                 'type' => $type
@@ -239,7 +239,7 @@ class NotifierRuleDAO {
     public function selectLinkedMethodsId($id){
         $result = array();
         try{
-            $request = $connexion->prepare($select_linked_methods_id);
+            $request = $this->connexion->prepare($select_linked_methods_id);
             $request->execute(array(
                 'id' => $id
             ));

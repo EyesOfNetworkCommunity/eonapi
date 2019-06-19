@@ -1,6 +1,5 @@
 <?php
 
-include("../config.php");
 
 /**
  *  Classe Data Access Object dedicated in method data recovery 
@@ -26,7 +25,6 @@ include("../config.php");
  *  
  */
 class NotifierMethodDAO {
-    
     private $connexion;
     private $create_request_pattern                 = "INSERT INTO methods VALUES('',:name,:type,:line)";
     private $update_method_by_id_request            = "UPDATE methods SET name = :name, type = :type, line = :line WHERE id = :id";
@@ -36,9 +34,10 @@ class NotifierMethodDAO {
     private $select_one_by_id_request               = "SELECT * FROM methods WHERE name = :id";
 
     function __construct(){
+        require(__DIR__."/../config.php");
         try
         {
-            $connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
+            $this->connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
         }
         catch(Exception $e)
         {
@@ -55,9 +54,9 @@ class NotifierMethodDAO {
      * @return false or the id (int) if insert success
      * 
      */
-    protected function createMethod($name,$type,$line){
+    public function createMethod($name,$type,$line){
         try{
-            $request = $connexion->prepare($create_request_pattern);
+            $request = $this->connexion->prepare($this->create_request_pattern);
             $request->execute(array(
                 'name' => $name,
                 'type' => $type,
@@ -68,7 +67,7 @@ class NotifierMethodDAO {
             echo $e;
             return false;
         }
-        return $connexion->lastInsertId();
+        return $this->connexion->lastInsertId();
     }
 
     /**
@@ -81,9 +80,9 @@ class NotifierMethodDAO {
      * @return boolean
      * 
      */
-    protected function updateMethod($id,$newLine,$newName,$newType){
+    public function updateMethod($id,$newLine,$newName,$newType){
         try{
-            $request = $connexion->prepare($update_method_by_id_request);
+            $request = $this->connexion->prepare($this->update_method_by_id_request);
             $request->execute(array(
                 'id'    => $id,
                 'name'  => $newName,
@@ -105,9 +104,9 @@ class NotifierMethodDAO {
      * @return boolean
      * 
      */
-    protected function deleteMethod($id){
+    public function deleteMethod($id){
         try{
-            $request = $connexion->prepare($delete_method_by_id_request);
+            $request = $this->connexion->prepare($this->delete_method_by_id_request);
             $request->execute(array(
                 'id' => $id
             ));
@@ -128,7 +127,7 @@ class NotifierMethodDAO {
     public function selectAllMethods(){
         $result = array();
         try{
-            $request = $connexion->query($select_all_request);
+            $request = $this->connexion->query($this->select_all_request);
             while($row = $request->fetch()){
                 array_push($result, $row);
             } 
@@ -151,7 +150,7 @@ class NotifierMethodDAO {
     public function selectOneMethodByNameAndType($name,$type){
         $result = false;
         try{
-            $request = $connexion->prepare($select_one_by_name_and_type_request);
+            $request = $this->connexion->prepare($this->select_one_by_name_and_type_request);
             $request->execute(array(
                 'name' => $name,
                 'type' => $type
@@ -176,7 +175,7 @@ class NotifierMethodDAO {
     public function selectOneMethodById($id){
         $result = false;
         try{
-            $request = $connexion->prepare($select_one_by_id_request);
+            $request = $this->connexion->prepare($this->select_one_by_id_request);
             $request->execute(array(
                 'id' => $id
             ));

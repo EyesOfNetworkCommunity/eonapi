@@ -1,7 +1,5 @@
 <?php
 
-include("../config.php");
-
 /**
  *  Classe Data Access Object dedicated in timeperiod data recovery 
  *  locate in notifier database. 
@@ -27,19 +25,20 @@ include("../config.php");
  */
 class NotifierTimeperiodDAO {
     
-    private $connexion;
-    private $create_request_pattern               = "INSERT INTO timeperiods(name, daysofweek, timeperiod) VALUES(:name, :daysofweek, :timeperiod)";
-    private $update_timeperiod_by_id_request      = "UPDATE timeperiods SET name = :name, daysofweek =:daysofweek, timeperiod = :timeperiod WHERE id = :id";
-    private $delete_timeperiod_by_id_request      = "DELETE FROM timeperiods WHERE id = :id ";
-    private $select_all_request                   = "SELECT id, name, daysofweek, timeperiod FROM timeperiods";
-    private $select_one_by_name_request           = "SELECT id, name, daysofweek, timeperiod FROM timeperiods WHERE name = :name";
-    private $select_one_by_id_request             = "SELECT id, name, daysofweek, timeperiod FROM timeperiods WHERE id = :id";
+    protected $connexion;
+    protected $create_request_pattern               = "INSERT INTO timeperiods(name, daysofweek, timeperiod) VALUES(:name, :daysofweek, :timeperiod)";
+    protected $update_timeperiod_by_id_request      = "UPDATE timeperiods SET name = :name, daysofweek =:daysofweek, timeperiod = :timeperiod WHERE id = :id";
+    protected $delete_timeperiod_by_id_request      = "DELETE FROM timeperiods WHERE id = :id ";
+    protected $select_all_request                   = "SELECT id, name, daysofweek, timeperiod FROM timeperiods";
+    protected $select_one_by_name_request           = "SELECT id, name, daysofweek, timeperiod FROM timeperiods WHERE name = :name";
+    protected $select_one_by_id_request             = "SELECT id, name, daysofweek, timeperiod FROM timeperiods WHERE id = :id";
 
 
-    public __construct(){
+    public function __construct(){
+        require_once(__DIR__."/../config.php");
         try
         {
-            $connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
+            $this->connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
         }
         catch(Exception $e)
         {
@@ -50,16 +49,16 @@ class NotifierTimeperiodDAO {
     /**
      * This Function insert a new timeperiods in the database.
      * 
-     * @param string $name
-     * @param string $daysofweek
-     * @param string $timeperiod
+     * @param $name
+     * @param $daysofweek
+     * @param $timeperiod
      * 
      * @return false or the id (int) if insert success
      * 
      */
-    protected createTimeperiod($name,$daysofweek="*",$timeperiod="*"){
+    public function createTimeperiod($name,$daysofweek="*",$timeperiod="*"){
         try{
-            $request = $connexion->prepare($create_request_pattern);
+            $request = $this->connexion->prepare($create_request_pattern);
             $request->execute(array(
                 'name'        => $name,
                 'daysofweek'  => $daysofweek,
@@ -70,7 +69,7 @@ class NotifierTimeperiodDAO {
             echo $e;
             return false;
         }
-        return $connexion->lastInsertId();
+        return $this->connexion->lastInsertId();
     }
 
     /**
@@ -84,9 +83,9 @@ class NotifierTimeperiodDAO {
      * @return boolean
      * 
      */
-    protected updateTimeperiod($id,$name,$daysofweek,$timeperiod){
+    public function updateTimeperiod($id,$name,$daysofweek,$timeperiod){
         try{
-            $request = $connexion->prepare($update_timeperiod_by_id_request);
+            $request = $this->connexion->prepare($update_timeperiod_by_id_request);
             $request->execute(array(
                 'id'                    => $id,
                 'name'                  => $name,
@@ -108,9 +107,9 @@ class NotifierTimeperiodDAO {
      * @return boolean
      * 
      */
-    protected deleteTimeperiod($id){
+    public function deleteTimeperiod($id){
         try{
-            $request = $connexion->prepare($delete_timeperiod_by_id_request);
+            $request = $this->connexion->prepare($delete_timeperiod_by_id_request);
             $request->execute(array(
                 'id' => $id
             ));
@@ -128,10 +127,10 @@ class NotifierTimeperiodDAO {
      * @return array result
      * 
      */
-    public selectAllTimeperiod(){
+    public function selectAllTimeperiod(){
         $result = array();
         try{
-            $request = $connexion->query($select_all_request);
+            $request = $this->connexion->query($select_all_request);
             while($row = $request->fetch()){
                 array_push($result, $row);
             } 
@@ -150,10 +149,10 @@ class NotifierTimeperiodDAO {
      * @return row
      * 
      */
-    public selectOneTimeperiodByName($name){
+    public function selectOneTimeperiodByName($name){
         $result = false;
         try{
-            $request = $connexion->prepare($select_one_by_name_request);
+            $request = $this->connexion->prepare($select_one_by_name_request);
             $request->execute(array(
                 'name' => $name
             ));
@@ -174,10 +173,10 @@ class NotifierTimeperiodDAO {
      * @return row
      * 
      */
-    public selectOneTimeperiodByName($id){
+    public function selectOneTimeperiodByName($id){
         $result = false;
         try{
-            $request = $connexion->prepare($select_one_by_id_request);
+            $request = $this->connexion->prepare($select_one_by_id_request);
             $request->execute(array(
                 'id' => $id
             ));

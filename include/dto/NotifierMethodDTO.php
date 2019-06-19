@@ -1,7 +1,6 @@
 <?php
 
-include("../config.php");
-include("../dao/NotifierMethodDAO.php");
+include(__DIR__ . "/../dao/NotifierMethodDAO.php");
 
 /**
  *  Classe Data Transfer Object dedicated in method data treatment. 
@@ -26,7 +25,7 @@ include("../dao/NotifierMethodDAO.php");
  *  
  */
 class NotifierMethodDTO {
-    private $methodDAO = new NotifierMethodDAO();
+    private $methodDAO;
     private $id;
     private $name;
     private $type;
@@ -49,29 +48,38 @@ class NotifierMethodDTO {
      * 
      *      After that if you want you can provide new value for others attributes 
      *      with getter and setter and save() de configuration afterwards.
+     * 
+     *      @return boolean
      */
     function __construct(){
-        $ctp = func_num_args();
+        $this->methodDAO = new NotifierMethodDAO();
+        $ctp  = func_num_args();
         $args = func_get_args();
 
         switch($ctp){
             case 1 :
-                $result = $methodDAO->selectOneMethodById($args[1]);
+                $result = $this->methodDAO->selectOneMethodById($args[0]);
             case 2 : 
-                $result = $methodDAO->selectOneMethodByNameAndType($args[1],$args[2]);
+                $result = $this->methodDAO->selectOneMethodByNameAndType($args[0],$args[1]);
                 $id     = $result["id"];
                 $name   = $result["name"];
                 $type   = $result["type"];
                 $line   = $result["line"];
                 break;
             case 3 :
-                $result = $methodDAO->createMethod($args[1],$args[2],$args[3]);
-                if($result != false){
-                    $id     = $result;
-                    $name   = $args[1];
-                    $type   = $args[2];
-                    $line   = $args[3];
+                if($this->methodDAO->selectOneMethodByNameAndType($args[0],$args[1])){
+                    return false;
+                }else{
+                    $result = $this->methodDAO->createMethod($args[0],$args[1],$args[2]);
+                    if($result != false){
+                        $id     = $result;
+                        $name   = $args[0];
+                        $type   = $args[1];
+                        $line   = $args[2];
+                        return $this;
+                    }
                 }
+                
                 break;
             default:
                 break;

@@ -1,6 +1,6 @@
 <?php
 
-include("../config.php");
+
 include("../dao/NotifierTimeperiodDAO.php");
 
 /**
@@ -28,7 +28,7 @@ include("../dao/NotifierTimeperiodDAO.php");
 class NotifierTimeperiodDTO {
     //private $DAYS_FR = ["LUNDI","MARDI","MERCREDI","JEUDI","VENDREDI","SAMEDI","DIMANCHE"];
     //private $DAYS_EN = ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURSDAY","SUNDAY"];
-    private $timeperiodDAO = new NotifierTimeperiodDAO();
+    private $timeperiodDAO ;
     private $id;
     private $name;
     private $daysOfWeek; // Mon,Tue...
@@ -51,16 +51,17 @@ class NotifierTimeperiodDTO {
      *      After that if you want you can provide new value for others attributes 
      *      with getter and setter and save() de configuration afterwards.
      */
-    public __construct(){
+    public function __construct(){
+        $this->timeperiodDAO = new NotifierTimeperiodDAO();
         $ctp    = func_num_args();
         $args   = func_get_args();
 
         switch($ctp){
             case 1 :
-                if(is_int($args[1])){
-                    $result = $timeperiodDAO->selectOneTimeperiodById($args[1]);
+                if(is_int($args[0])){
+                    $result = $timeperiodDAO->selectOneTimeperiodById($args[0]);
                 }else{
-                    $result = $timeperiodDAO->selectOneTimeperiodByName($args[1]);
+                    $result = $timeperiodDAO->selectOneTimeperiodByName($args[0]);
                 }
                 $id             = $result["id"];
                 $name           = $result["name"];
@@ -68,12 +69,12 @@ class NotifierTimeperiodDTO {
                 $timeperiod     = $result["timeperiod"];
                 break;
             case 3 :
-                $result = $timeperiodDAO->createTimeperiod($args[1],$args[2],$args[3]);
+                $result = $timeperiodDAO->createTimeperiod($args[0],$args[1],$args[2]);
                 if($result != false){
                     $id         = $result;
-                    $name       = $args[1];
-                    $daysOfWeek = $args[2];
-                    $timeperiod = $args[3];
+                    $name       = $args[0];
+                    $daysOfWeek = $args[1];
+                    $timeperiod = $args[2];
                 }
                 break;
             default:
@@ -86,7 +87,7 @@ class NotifierTimeperiodDTO {
      * 
      * @return boolean 
      */
-    public save(){
+    public function save(){
         return $this->timeperiodDAO->updateTimeperiod($this->id,$this->name,$this->daysOfWeek,$this->timeperiod);
     }
 
@@ -96,7 +97,7 @@ class NotifierTimeperiodDTO {
      * @return boolean
      *
      */
-    public deleteTimeperiod(){
+    public function deleteTimeperiod(){
         return $this->timeperiodDAO->deleteTimeperiod($this->id);
     }
 

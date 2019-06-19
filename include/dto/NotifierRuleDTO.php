@@ -1,6 +1,6 @@
 <?php
 
-include("../config.php");
+
 include("../dao/NotifierRuleDAO.php");
 include("./NotifierMethodDTO.php");
 include("./NotifierTimeperiodDTO.php");
@@ -27,7 +27,7 @@ include("./NotifierTimeperiodDTO.php");
  *  
  */
 class NotifierRuleDTO {
-    private $ruleDAO = new NotifierRuleDAO();
+    private $ruleDAO;
     private $id;
     private $name;
     private $type;
@@ -61,12 +61,13 @@ class NotifierRuleDTO {
      * 
      */
     function __construct(){
+        $this->ruleDAO = new NotifierRuleDAO();
         $ctp = func_num_args();
         $args = func_get_args();
 
         switch($ctp){
             case 2 : 
-                $result             = $ruleDAO->selectOneRule($args[1],$args[2]);
+                $result             = $ruleDAO->selectOneRule($args[0],$args[1]);
                 $id                 = $result["id"];
                 $name               = $result["name"];
                 $type               = $result["type"];
@@ -88,14 +89,14 @@ class NotifierRuleDTO {
                 if(is_int($args[3])){
                     $timeperiod_id  = $args[3];
                 }else{
-                    $timeperiod_id = (new NotifierTimeperiodDTO($args[3]))->getId();
+                    $timeperiod_id = (new NotifierTimeperiodDTO($args[2]))->getId();
                 }
 
-                $result = $ruleDAO->createRule($args[1],$args[2],$timeperiod_id);
+                $result = $ruleDAO->createRule($args[0],$args[1],$timeperiod_id);
                 if($result != false){
                     $id             = $result;
-                    $name           = $args[1];
-                    $type           = $args[2];
+                    $name           = $args[0];
+                    $type           = $args[1];
                 }
                 break;
             default:

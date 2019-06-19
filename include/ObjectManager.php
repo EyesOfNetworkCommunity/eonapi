@@ -9,7 +9,7 @@
 # Copyright (c) 2017 AXIANS C&S
 # Author: Adrien van den Haak <adrien.vandenhaak@axians.com>
 #
-# Copyright (c) 2017 AXIANS Cloud Builder
+# Copyright (c) 2019 AXIANS Cloud Builder
 # Contributor: Hoarau Jeremy <jeremy.hoarau@axians.com>
 #
 */
@@ -22,9 +22,9 @@ include("/srv/eyesofnetwork/eonweb/include/function.php");
 include("/srv/eyesofnetwork/eonweb/include/livestatus/Client.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
-include("./dto/NotifierMethodDTO.php");
-include("./dto/NotifierRuleDTO.php");
-include("./dto/NotifierTimeperiodDTO.php");
+include("dto/NotifierMethodDTO.php");
+include("dto/NotifierRuleDTO.php");
+include("dto/NotifierTimeperiodDTO.php");
 
 use Nagios\Livestatus\Client;
 
@@ -39,49 +39,125 @@ class ObjectManager {
 		$this->authUser = $request->get('username');  
 	}
 ######################################### NOTIFIER CONTROLEUR
-	public function addNotifierMethod(){
-
+	
+	/*--------- ADD ---------*/
+	public function addNotifierMethod($method_name, $method_type, $method_line){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$method = new NotifierMethodDTO($method_name,$method_type,$method_line);
+		if($method){
+			$success .= "$method_name created his id is : ".$method->getId();
+		}
+		else{
+			$error .= "$method_name have not been created the cause mmay be that the name is already used.";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
 	public function addNotifierRule(){
-
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
 	public function addNotifierTimeperiod(){
-
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
+	/*--------- DELETE ---------*/
 	public function deleteNotifierMethod(){
-
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
 	public function deleteNotifierRule(){
-
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
 	public function deleteNotifierTemperiod(){
-
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
-
+	
+	/*--------- MODIFY ---------*/
 	public function modifyNotifierRules(){
-
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
 	public function modifyNotifierTemperiod(){
-
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
 	public function modifyNotifierMethod(){
+		$error = "";
+		$success = "";
+		$code=0;
 		
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
 	}
 
-##################################################
+############################################################################
+	
 	/* LILAC - List Hosts */
 	public function listHosts( $hostName = false, $hostTemplate = false ){
 		
 		return true;
 		
 	}
+
 ########################################## GET
 	/* EONAPI - Display results */
     private function getLogs($error, $success){

@@ -28,7 +28,7 @@ $version="5";
 // #######################################
 // # Database config information
 // #######################################
-$database_host="localhost";
+$database_host = "localhost";
 $database_port="3306";
 
 $database_username="eonweb";

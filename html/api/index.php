@@ -56,6 +56,9 @@ addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
+addRoute('post', '/addNotifierMethod', 'addNotifierMethod');
+
+
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addHostGroupToHost', 'addHostGroupToHost');
