@@ -163,6 +163,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `modifyCheckCommandToServiceTemplate` | POST | [**commandName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify Modify the check command associate with the given service template. returnCode=0 for data updated and 1 if it has failed  |
 | `modifyCheckCommandToHostTemplate` | POST | [**commandName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify the check command associate with the given host template. returnCode=0 for data updated and 1 if it has failed  |
 | `modifyNagiosMainConfiguration` | POST | [**requestConf, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify The Nagios global configuration. See bellow the different parameter that you can changed.|
+| `modifyNotifierTimeperiod` | POST | [**timeperiod_name,new_timeperiod_name=NULL, timeperiod_days=NULL, timeperiod_hours_notifications=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify The timeperiod of advanced notification (Notifier module) .|
+| `modifyNotifierMethod` | POST | [**method_name,method_type,new_method_name=NULL, change_type=NULL, method_line=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify a method of advanced notification (Notifier module) .|
 | `deleteContact` | POST | [**contactName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact |
 | `deleteHostDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios host downtime. |
 | `deleteServiceDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios service downtime. |
@@ -352,16 +354,35 @@ To illustrate the EON API features tab, you will find a few implementation examp
 ```json
 {
   "requestConf":{
-    "hostEventHandler":"check_ping",	//optinal
-    "hostEventHandler":"",				//optinal
-    "serviceEventHandler":"",			//optinal
-    "hostPerfdata":"",					//optinal
-    "servicePerfdata":"",				//optinal
-    "hostPerfdataFileProcessing":"",	//optinal
+    "hostEventHandler":"check_ping",	  //optinal
+    "hostEventHandler":"",				      //optinal
+    "serviceEventHandler":"",			      //optinal
+    "hostPerfdata":"",					        //optinal
+    "servicePerfdata":"",				        //optinal
+    "hostPerfdataFileProcessing":"",	  //optinal
     "servicePerfdataFileProcessing":"" 	//optinal
     }
 }
 ```
+
+* /modifyNotifierTimeperiod
+```json
+{
+  "timeperiod_name":"24/7",
+  "new_timeperiod_name":"24/24x7/7",                                                    //optional
+  "timeperiod_days":"mon,tue,fri,wed,sun", //* || ["mon", "wed", ...]                   //optional
+  "timeperiod_hours_notifications":"*" //0000-0100,1030-1230,... || ["0000-0100",...]   //optional
+}
+
+* /modifyNotifierMethod
+```json
+{
+  "method_name":"email_host",
+  "new_method_name":"email_service",  //optional
+  "method_type":"host",
+  "change_type":"service",            //optional
+  "method_line":"send('NOTIF')"       //optional
+}
 
 * /createServiceToHost
 ```json 

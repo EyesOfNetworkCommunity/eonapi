@@ -62,9 +62,11 @@ class ObjectManager {
 				$success .= "$method_name created his id is : ".$method->getId();			
 			}else{
 				$error .= "$method_name failed to be created.";
+				$code =1;
 			}
 		}else{
 			$error .= "$method_name have not been created the cause may be that the name is already used.";
+			$code =1;
 		}
 		
 		$logs = $this->getLogs($error, $success);
@@ -161,7 +163,7 @@ class ObjectManager {
 						}
 					}
 				}
-				var_dump($rule);
+				
 				if($rule->save()){
 					$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
 				}else{
@@ -302,23 +304,78 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	public function modifyNotifierTemperiod(){
+	public function modifyNotifierTemperiod($timeperiod_name, $new_timeperiod_name=NULL, $timeperiod_days=NULL, $timeperiod_hours_notifications=NULL){
 		$error = "";
 		$success = "";
 		$code=0;
 		
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
+		
+		if(!$timeperiod){
+			$error .= "| ERROR : The Timeperiod '$timeperiod_name' already exist.";
+			$code = 1;
+		}else{
+			if(isset($new_timeperiod_name)){
+				$timeperiod->setName($new_timeperiod_name);
+			}
+			
+			if(isset($timeperiod_days)){
+				if(is_array($timeperiod_days)){
+					$timeperiod->setDaysOfWeek(implode(",",$timeperiod_days));
+				}else{
+					$timeperiod->setDaysOfWeek($timeperiod_days);
+				}
+			}
+			
+			if(isset($timeperiod_hours_notifications)){
+				if(is_array($timeperiod_hours_notifications)){
+					$timeperiod->setTimeperiod(implode(",",$timeperiod_hours_notifications));
+				}else $timeperiod->setTimeperiod($timeperiod_hours_notifications);
+			}
+            
+			if(!$timeperiod->save()){
+				$error .= "| ERROR Failed to saved the timeperiod.";
+				$code = 1; 
+			} else $success .= " | SUCCESS : Timeperiod ".$timeperiod->getName()." successfully saved. id: ".$timeperiod->getId();
+		}
 		
 		$logs = $this->getLogs($error, $success);
 		
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	public function modifyNotifierMethod(){
+
+	
+	public function modifyNotifierMethod($method_name, $method_type,$new_method_name=NULL, $change_type=NULL, $method_line=NULL){
 		$error = "";
 		$success = "";
 		$code=0;
 		
-		
+		$methodDto = new NotifierMethodDTO();
+		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
+
+		if(!$method){
+			$error .= "$method_name does not exist in the database.";
+			$code =1;
+		}else{
+			if(isset($new_method_name)){
+				$method->setName($new_method_name);
+			}
+			if(isset($method_line)){
+				$method->setLine($method_line);
+			}
+			if(isset($change_type)){
+				$method->setType($change_type);
+			}
+
+			if($method->save()){
+				$success .= $method->getName()." updated his id is : ".$method->getId();			
+			}else{
+				$error .= $method->getName()." failed to be updated.";
+				$code =1;
+			}
+		}
 		$logs = $this->getLogs($error, $success);
 		
         return array("code"=>$code,"description"=>$logs);

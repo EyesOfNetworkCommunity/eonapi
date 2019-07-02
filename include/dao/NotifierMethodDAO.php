@@ -80,7 +80,7 @@ class NotifierMethodDAO {
      * @return boolean
      * 
      */
-    public function updateMethod($id,$newLine,$newName,$newType){
+    public function updateMethod($id,$newName,$newType,$newLine){
         try{
             $request = $this->connexion->prepare($this->update_method_by_id_request);
             $request->execute(array(
@@ -110,7 +110,7 @@ class NotifierMethodDAO {
             $request->execute(array(
                 'id' => $id
             ));
-            
+
             if($request->rowCount()>0){
                 return true;
             }else return false;

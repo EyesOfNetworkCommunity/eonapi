@@ -64,6 +64,10 @@ addRoute('post', '/deleteNotifierRule', 'deleteNotifierRule');
 addRoute('post', '/deleteNotifierMethod', 'deleteNotifierMethod');
 addRoute('post', '/deleteNotifierTemperiod', 'deleteNotifierTemperiod');
 
+addRoute('post', '/modifyNotifierMethod', 'modifyNotifierMethod');
+addRoute('post', '/modifyNotifierTemperiod', 'modifyNotifierTemperiod');
+
+
 
 
 
