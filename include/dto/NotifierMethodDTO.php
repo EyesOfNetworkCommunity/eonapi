@@ -1,6 +1,7 @@
 <?php
 
-include(__DIR__ . "/../dao/NotifierMethodDAO.php");
+require(__DIR__ . "/../dao/NotifierMethodDAO.php");
+require_once(__DIR__."/NotifierMethod.php");
 
 /**
  *  Classe Data Transfer Object dedicated in method data treatment. 
@@ -20,161 +21,50 @@ include(__DIR__ . "/../dao/NotifierMethodDAO.php");
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the   
- *  GNU General Public License for more details.                   
- *                                                                  
+ *  GNU General Public License for more details.                                        
  *  
  */
 class NotifierMethodDTO {
     private $methodDAO;
-    private $id;
-    private $name;
-    private $type;
-    private $line;
-
-    /**
-     * This is a multiple constructeur.
-     * Tree use case are available :
-     *      First Create a new methods, you must provide 3 parameters
-     *      @param args[1] name
-     *      @param args[2] type
-     *      @param args[3] line
-     * 
-     *      Second recovery an existing method, here you must provide 2 arguments
-     *      @param args[1] name
-     *      @param args[2] type
-     *      
-     *      third recovery an existing method with his id
-     *      @param args[1] id
-     * 
-     *      After that if you want you can provide new value for others attributes 
-     *      with getter and setter and save() de configuration afterwards.
-     * 
-     *      @return boolean
-     */
-    function __construct(){
+    
+    public function __construct(){
         $this->methodDAO = new NotifierMethodDAO();
-        $ctp  = func_num_args();
-        $args = func_get_args();
-
-        switch($ctp){
-            case 1 :
-                $result = $this->methodDAO->selectOneMethodById($args[0]);
-            case 2 : 
-                $result = $this->methodDAO->selectOneMethodByNameAndType($args[0],$args[1]);
-                $id     = $result["id"];
-                $name   = $result["name"];
-                $type   = $result["type"];
-                $line   = $result["line"];
-                break;
-            case 3 :
-                if($this->methodDAO->selectOneMethodByNameAndType($args[0],$args[1])){
-                    return false;
-                }else{
-                    $result = $this->methodDAO->createMethod($args[0],$args[1],$args[2]);
-                    if($result != false){
-                        $id     = $result;
-                        $name   = $args[0];
-                        $type   = $args[1];
-                        $line   = $args[2];
-                        return $this;
-                    }
-                }
-                
-                break;
-            default:
-                break;
-        }
     }
 
     /**
-     * Update the current state of this method in the database
-     * 
-     * @return boolean 
+     * @return instance NotifierMethod or false if does not exist
      */
-    public function save(){
-        return $this->methodDAO->updateMethod($this->id,$this->name,$this->type,$this->line);
+    public function getNotifierMethodByNameAndType($name, $type){
+        $result = $this->methodDAO->selectOneMethodByNameAndType($name,$type);
+        if($result){
+            $method = new NotifierMethod();
+
+            $method->setId($result["id"]);
+            $method->setName($result["name"]);
+            $method->setType($result["type"]);
+            $method->setLine($result["line"]);
+
+            return $method;
+        } else return false;
+        
     }
 
     /**
-     * Delete this method from the database
-     * 
-     * @return boolean
-     *
+     * @return instance NotifierMethod or false if does not exist
      */
-    public function deleteMethod(){
-        return $this->methodDAO->deleteMethod($this->id);
-    }
+    public function getNotifierMethodById($id){
+        $result = $this->methodDAO->selectOneMethodById($id);
+        if($result){
+            $method = new NotifierMethod();
 
+            $method->setId($result["id"]);
+            $method->setName($result["name"]);
+            $method->setType($result["type"]);
+            $method->setLine($result["line"]);
 
-    //================================= AUTOGENERATE GET / SET =====================================
-
-
-    /**
-     * Get the value of line
-     */ 
-    public function getLine()
-    {
-        return $this->line;
-    }
-
-    /**
-     * Set the value of line
-     *
-     * @return  self
-     */ 
-    public function setLine($line)
-    {
-        $this->line = $line;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of type
-     */ 
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    /**
-     * Set the value of type
-     *
-     * @return  self
-     */ 
-    public function setType($type)
-    {
-        $this->type = $type;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of name
-     */ 
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Set the value of name
-     *
-     * @return  self
-     */ 
-    public function setName($name)
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of id
-     */ 
-    public function getId()
-    {
-        return $this->id;
+            return $method;
+        } else return false;
+        
     }
 }
 

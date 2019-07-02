@@ -148,6 +148,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add command parameters in a service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 | `addCustomArgumentsToHostTemplate` | POST | [**templateHostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a host template. returncode=0 or 1 if failed or didn't changed |
 | `addCustomArgumentsToHost` | POST | [**hostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a host. returncode=0 or 1 if failed or didn't changed |
+| `addNotifierMethod` | POST | [**method_name,method_type, method_line**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a Notifier method into the databases |
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
@@ -238,6 +239,15 @@ To illustrate the EON API features tab, you will find a few implementation examp
     "host_notification_options_down": 1,
     "can_submit_commands":1
   }
+}
+```
+
+* /addNotifierMethod
+```json
+{
+  "method_name":"test",
+  "method_type":"host",
+  "method_line":"ll -a"
 }
 ```
 

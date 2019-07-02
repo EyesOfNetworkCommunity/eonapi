@@ -28,7 +28,7 @@ class NotifierMethodDAO {
     private $connexion;
     private $create_request_pattern                 = "INSERT INTO methods VALUES('',:name,:type,:line)";
     private $update_method_by_id_request            = "UPDATE methods SET name = :name, type = :type, line = :line WHERE id = :id";
-    private $delete_method_by_id_request            = "DELETE methods, rule_method FROM methods INNER JOIN methods.id = rule_method.method_id  WHERE id = :id";
+    private $delete_method_by_id_request            = "DELETE FROM methods WHERE id = :id";
     private $select_all_request                     = "SELECT * FROM methods";
     private $select_one_by_name_and_type_request    = "SELECT * FROM methods WHERE name = :name AND type = :type";
     private $select_one_by_id_request               = "SELECT * FROM methods WHERE name = :id";
@@ -110,9 +110,13 @@ class NotifierMethodDAO {
             $request->execute(array(
                 'id' => $id
             ));
+            
+            if($request->rowCount()>0){
+                return true;
+            }else return false;
         }
-        catch (PDOException $e){
-            echo $e;
+        catch (Exception $e){
+            echo $e->getMessage();
             return false;
         }
         return true;
@@ -148,7 +152,7 @@ class NotifierMethodDAO {
      * 
      */
     public function selectOneMethodByNameAndType($name,$type){
-        $result = false;
+        
         try{
             $request = $this->connexion->prepare($this->select_one_by_name_and_type_request);
             $request->execute(array(
@@ -157,12 +161,14 @@ class NotifierMethodDAO {
             ));
 
             $result = $request->fetch();
-        }
-        catch (PDOException $e){
+            if(isset($result["id"])) return $result;
+            return false ;
+            
+        }catch (PDOException $e){
             echo $e;
-            return $result;
+            return false;
         }
-        return $result;
+        
     }
 
     /**
@@ -173,20 +179,21 @@ class NotifierMethodDAO {
      * 
      */
     public function selectOneMethodById($id){
-        $result = false;
         try{
             $request = $this->connexion->prepare($this->select_one_by_id_request);
             $request->execute(array(
                 'id' => $id
             ));
 
-            $result = $request->fetch();
+            $result =$request->fetch();
+            if(isset($result["id"])) return $result;
+            return false ;
+            
         }
         catch (PDOException $e){
             echo $e;
-            return $result;
+            return false;
         }
-        return $result;
     }
 }
 ?>

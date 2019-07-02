@@ -56,7 +56,15 @@ addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
+addRoute('post', '/addNotifierRule', 'addNotifierRule');
 addRoute('post', '/addNotifierMethod', 'addNotifierMethod');
+addRoute('post', '/addNotifierTimeperiod', 'addNotifierTimeperiod');
+
+addRoute('post', '/deleteNotifierRule', 'deleteNotifierRule');
+addRoute('post', '/deleteNotifierMethod', 'deleteNotifierMethod');
+addRoute('post', '/deleteNotifierTemperiod', 'deleteNotifierTemperiod');
+
+
 
 
 addRoute('post', '/addEventBroker', 'addEventBroker');

@@ -1,7 +1,8 @@
 <?php
 
+require(__DIR__."/../dao/NotifierTimeperiodDAO.php");
+require_once(__DIR__."/NotifierTimeperiod.php");
 
-include("../dao/NotifierTimeperiodDAO.php");
 
 /**
  *  Classe Data Transfer Object dedicated in timeperiod data treatment. 
@@ -29,146 +30,37 @@ class NotifierTimeperiodDTO {
     //private $DAYS_FR = ["LUNDI","MARDI","MERCREDI","JEUDI","VENDREDI","SAMEDI","DIMANCHE"];
     //private $DAYS_EN = ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURSDAY","SUNDAY"];
     private $timeperiodDAO ;
-    private $id;
-    private $name;
-    private $daysOfWeek; // Mon,Tue...
-    private $timeperiod;
-
-    /**
-     * This is a multiple constructeur.
-     * Tree use case are available :
-     *      First Create a new timeperiod, you must provide 3 parameters
-     *      @param args[1] name
-     *      @param args[2] daysofweek * is available
-     *      @param args[3] timeperiod * is available
-     * 
-     *      Second recovery an existing timeperiod, here you must provide his name as argument
-     *      @param args[1] name
-     *      
-     *      third recovery an existing timeperiod with his id
-     *      @param args[1] id
-     * 
-     *      After that if you want you can provide new value for others attributes 
-     *      with getter and setter and save() de configuration afterwards.
-     */
+    
     public function __construct(){
         $this->timeperiodDAO = new NotifierTimeperiodDAO();
-        $ctp    = func_num_args();
-        $args   = func_get_args();
-
-        switch($ctp){
-            case 1 :
-                if(is_int($args[0])){
-                    $result = $timeperiodDAO->selectOneTimeperiodById($args[0]);
-                }else{
-                    $result = $timeperiodDAO->selectOneTimeperiodByName($args[0]);
-                }
-                $id             = $result["id"];
-                $name           = $result["name"];
-                $daysOfWeek     = $result["daysofweek"];
-                $timeperiod     = $result["timeperiod"];
-                break;
-            case 3 :
-                $result = $timeperiodDAO->createTimeperiod($args[0],$args[1],$args[2]);
-                if($result != false){
-                    $id         = $result;
-                    $name       = $args[0];
-                    $daysOfWeek = $args[1];
-                    $timeperiod = $args[2];
-                }
-                break;
-            default:
-                break;
-        }
     }
 
-     /**
-     * Update the current state of this Timeperiod in the database
-     * 
-     * @return boolean 
-     */
-    public function save(){
-        return $this->timeperiodDAO->updateTimeperiod($this->id,$this->name,$this->daysOfWeek,$this->timeperiod);
+    public function getNotifierTimeperiodById($id){
+        $result = $this->timeperiodDAO->selectOneTimeperiodById($id);
+        if($result){
+            $timeperiod = new NotifierTimeperiod(); 
+            $timeperiod->setId($result["id"]);
+            $timeperiod->setName($result["name"]);
+            $timeperiod->setDaysOfWeek($result["daysofweek"]);
+            $timeperiod->setTimeperiod($result["timeperiod"]);
+
+            return $timeperiod;
+        }else return false;
     }
 
-    /**
-     * Delete this Timeperiod from the database
-     * 
-     * @return boolean
-     *
-     */
-    public function deleteTimeperiod(){
-        return $this->timeperiodDAO->deleteTimeperiod($this->id);
+    public function getNotifierTimeperiodByName($name){
+        $result = $this->timeperiodDAO->selectOneTimeperiodByName($name);
+        if($result){
+            $timeperiod = new NotifierTimeperiod(); 
+            $timeperiod->setId($result["id"]);
+            $timeperiod->setName($result["name"]);
+            $timeperiod->setDaysOfWeek($result["daysofweek"]);
+            $timeperiod->setTimeperiod($result["timeperiod"]);
+
+            return $timeperiod;
+        }else return false;
     }
 
-
-    //================================= AUTOGENERATE GET / SET =====================================
-
-
-    /**
-     * Get the value of id
-     */ 
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * Get the value of name
-     */ 
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Set the value of name
-     *
-     * @return  self
-     */ 
-    public function setName($name)
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of daysOfWeek
-     */ 
-    public function getDaysOfWeek()
-    {
-        return $this->daysOfWeek;
-    }
-
-    /**
-     * Set the value of daysOfWeek
-     * Format mon,tue,wed,thu,fri,sat,sun | * 
-     * @return  self
-     */ 
-    public function setDaysOfWeek($daysOfWeek)
-    {
-        $this->daysOfWeek = $daysOfWeek;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of timeperiod
-     */ 
-    public function getTimeperiod()
-    {
-        return $this->timeperiod;
-    }
-
-    /**
-     * set value in timeperiod
-     * format 0000-0000,0010-2000,.... | * 
-     * @return  self
-     */ 
-    public function setTimeperiod($timeperiod)
-    {
-        $this->timeperiod = $timeperiod;
-        return $this;
-    }
 }
+
+?>

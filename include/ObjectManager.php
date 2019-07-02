@@ -22,12 +22,16 @@ include("/srv/eyesofnetwork/eonweb/include/function.php");
 include("/srv/eyesofnetwork/eonweb/include/livestatus/Client.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
-include("dto/NotifierMethodDTO.php");
-include("dto/NotifierRuleDTO.php");
-include("dto/NotifierTimeperiodDTO.php");
+
+
+include_once("dto/NotifierMethodDTO.php");
+include_once("dto/NotifierRuleDTO.php");
+include_once("dto/NotifierTimeperiodDTO.php");
+require_once("dto/NotifierTimeperiod.php");
+require_once("dto/NotifierMethod.php");
+require_once("dto/NotifierRule.php");
 
 use Nagios\Livestatus\Client;
-
 # Class with all api functions
 class ObjectManager {
     
@@ -46,12 +50,21 @@ class ObjectManager {
 		$success = "";
 		$code=0;
 		
-		$method = new NotifierMethodDTO($method_name,$method_type,$method_line);
-		if($method){
-			$success .= "$method_name created his id is : ".$method->getId();
-		}
-		else{
-			$error .= "$method_name have not been created the cause mmay be that the name is already used.";
+		$methodDto = new NotifierMethodDTO();
+		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
+
+		if(!$method){
+			$method = new NotifierMethod();
+			$method->setName($method_name);
+			$method->setLine($method_line);
+			$method->setType($method_type);
+			if($method->save()){
+				$success .= "$method_name created his id is : ".$method->getId();			
+			}else{
+				$error .= "$method_name failed to be created.";
+			}
+		}else{
+			$error .= "$method_name have not been created the cause may be that the name is already used.";
 		}
 		
 		$logs = $this->getLogs($error, $success);
@@ -59,22 +72,143 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	public function addNotifierRule(){
+	public function addNotifierRule($rule_name, $rule_type, $rule_timeperiod, $rule_method=NULL, $rule_contact="*", $rule_debug=0, $rule_host="*", $rule_service="*", $rule_state="*", $rule_notificationNumber="*",$rule_tracking=0){
 		$error = "";
 		$success = "";
 		$code=0;
+
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($rule_timeperiod);
+		if(!$timeperiod){
+			$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist.";
+			$code = 1;
+		}
 		
+		if($code == 0 ){
+			$ruledto = new NotifierRuleDTO();
+			$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
+			if(!$rule){
+				$rule = new NotifierRule();
+				$rule->setName($rule_name);
+				$rule->setType($rule_type);
+				$rule->setTimeperiod_id($timeperiod->getId());
+
+				if($rule_contact == "*"){
+					$rule->setContact($rule_contact);
+				}elseif(is_array($rule_contact)){
+					$rule->setContact(implode(",",$rule_contact));
+				}else{
+					$rule->setContact("*");
+				}
+
+				if($rule_host == "*"){
+					$rule->setHost($rule_host);
+				}elseif(is_array($rule_host)){
+					$rule->setHost(implode(",",$rule_host));
+				}else{
+					$rule->setHost("*");
+				}
+
+				$rule->setDebug($rule_debug);
+				$rule->setNotificationnumber($rule_notificationNumber);
+				$rule->setTracking($rule_tracking);
+				
+				if($rule_type == "host"){
+					$rule->setService("-");
+					
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(stroupper($state),$availableStateHost)){
+								array_push($stringState, stroupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+
+				}else{
+					if($rule_service == "*"){
+						$rule->setService($rule_service);
+					}else{
+						$rule->setService(implode(",",$rule_service));
+					}
+
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(stroupper($state),$availableStateService)){
+								array_push($stringState, stroupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+				}
+
+				if($rule_method != NULL ){
+					foreach($rule_method as $method_name){
+						$mdto = new NotifierMethodDTO();
+						$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule_type);
+						if($m){
+							$rule->addMethod($method_name);
+						}else{
+							$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+						}
+					}
+				}
+				var_dump($rule);
+				if($rule->save()){
+					$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+				}else{
+					$error .= "| ERROR : The rules failed to saved the configuration. "; 
+					$code = 1;
+				}
+			}else{
+				$error .= "| ERROR : The rule already exist. "; 
+				$code = 1;
+			}
+		}
 		
 		$logs = $this->getLogs($error, $success);
 		
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	public function addNotifierTimeperiod(){
+	public function addNotifierTimeperiod($timeperiod_name, $timeperiod_days="*", $timeperiod_hours_notifications="*"){
 		$error = "";
 		$success = "";
 		$code=0;
 		
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
+		if(!$timeperiod){
+			$timeperiod = new NotifierTimeperiod();
+			$timeperiod->setName($timeperiod_name);
+			if(is_array($timeperiod_days)){
+				$timeperiod->setDaysOfWeek(implode(",",$timeperiod_days));
+			}else{
+				$timeperiod->setDaysOfWeek($timeperiod_days);
+			}
+
+            if(is_array($timeperiod_hours_notifications)){
+				$timeperiod->setTimeperiod(implode(",",$timeperiod_hours_notifications));
+			}else $timeperiod->setTimeperiod($timeperiod_hours_notifications);
+
+			$id = $timeperiod->save();
+			if(!$id){
+				$error .= "| ERROR Failed to saved the new timeperiod.";
+				$code = 1; 
+			} else $success .= " | SUCCESS : Timeperiod $timeperiod_name successfully saved with id :  $id";
+
+		}else{
+			$error .= "| ERROR : The Timeperiod '$timeperiod_name' already exist.";
+			$code = 1;
+		}
 		
 		$logs = $this->getLogs($error, $success);
 		
@@ -82,33 +216,74 @@ class ObjectManager {
 	}
 
 	/*--------- DELETE ---------*/
-	public function deleteNotifierMethod(){
+	public function deleteNotifierMethod($method_name, $method_type){
 		$error = "";
 		$success = "";
 		$code=0;
 		
+		$methodDTO = new NotifierMethodDTO();
+		$method = $methodDTO->getNotifierMethodByNameAndType($method_name, $method_type);
+		if($method){
+			if($method->deleteMethod()){
+				$success .= "Delete $method_name success.";
+			}else{
+				$error .= "The deletion of $method_name failed. A rules certainly use this methods. ";
+				$code =1;
+			}
+
+		}else {
+			$error .= " ERROR the method $method_name specified have not been found.";
+			$code=1;
+		}
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	public function deleteNotifierRule($rule_name, $rule_type){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$ruleDTO = new NotifierRuleDTO();
+		$rule = $ruleDTO->getNotifierRuleByNameAndType($rule_name, $rule_type);
+		if($rule){
+			if($rule->deleteRule()){
+				$success .= "Delete $rule_name success.";
+			}else{
+				$error .= "The deletion of $rule_name failed. ";
+				$code =1;
+			}
+
+		}else {
+			$error .= " ERROR the rule $rule_name specified have not been found.";
+			$code=1;
+		}
 		
 		$logs = $this->getLogs($error, $success);
 		
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	public function deleteNotifierRule(){
+	public function deleteNotifierTemperiod($timeperiod_name){
 		$error = "";
 		$success = "";
 		$code=0;
 		
-		
-		$logs = $this->getLogs($error, $success);
-		
-        return array("code"=>$code,"description"=>$logs);
-	}
+		$timeperiodDTO = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDTO->getNotifierTimeperiodByName($timeperiod_name);
+		if($timeperiod){
+			if($timeperiod->deleteTimeperiod()){
+				$success .= "Delete $timeperiod_name success.";
+			}else{
+				$error .= "The deletion of $timeperiod_name failed. A rules certainly use this timeperiods. ";
+				$code =1;
+			}
 
-	public function deleteNotifierTemperiod(){
-		$error = "";
-		$success = "";
-		$code=0;
-		
+		}else {
+			$error .= " ERROR the timeperiod $timeperiod_name specified have not been found.";
+			$code=1;
+		}
 		
 		$logs = $this->getLogs($error, $success);
 		

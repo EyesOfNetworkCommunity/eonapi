@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  *  Classe Data Access Object dedicated in method data recovery 
  *  locate in notifier database. 
@@ -27,18 +26,22 @@
 class NotifierRuleDAO {
     
     protected $connexion;
-    protected $create_request_pattern               = "INSERT INTO rules(name, type, debug, contact, host, service ,state, notificationnumber, timeperiod_id, tracking, sort_key) VALUES(:name, :type, :debug, :contact, :host, :service, :state, :notificationnumber, :timeperiod_id, :tracking, :sort_key)";
+    protected $create_request_pattern               = "INSERT INTO rules(name, type, debug, contact, host, service, state, notificationnumber, timeperiod_id, tracking, sort_key) VALUES(:name, :type, :debug, :contact, :host, :service, :state, :notificationnumber, :timeperiod_id, :tracking, :sort_key)";
     protected $update_rule_by_id_request            = "UPDATE rules SET name = :name, type = :type, debug = :debug, contact = :contact, host = :host, service = :service, state = :state, notificationnumber = :notificationnumber, timeperiod_id = :timeperiod_id, tracking = :tracking, sort_key = :sort_key WHERE id = :id";
     protected $add_rule_method_request              = "INSERT INTO rule_method VALUES(:rule_id, :method_id)";
-    protected $delete_rule_method_request           = "DELETE FROM rule_method WHERE rule_id= :rule_id AND method_id= :method_id";
-    protected $delete_rule_by_id_request            = "DELETE rules, rule_method FROM rules INNER JOIN rule_method ON rules.id = rule_method.rule_id WHERE id = :id ";
-    protected $select_all_request                   = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, GROUP_CONCAT(method_id) as methods FROM rules,rule_method";
-    protected $select_one_by_name_and_type_request  = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, GROUP_CONCAT(method_id) as methods FROM rules,rule_method WHERE rules.id = rule_method.rule_id AND name = :name AND type =:type";
+    protected $delete_rule_method_request           = "DELETE FROM rule_method WHERE rule_id = :rule_id AND method_id = :method_id";
+    protected $delete_rule_by_id_request2           = "DELETE FROM rules WHERE id = :id ";
+    protected $delete_rule_by_id_request1           = "DELETE FROM rule_method WHERE rule_id = :id ";
+
+    protected $select_all_request                   = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, sort_key, GROUP_CONCAT(method_id) as methods FROM rules, rule_method";
+    protected $select_one_by_name_and_type_request  = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, sort_key, GROUP_CONCAT(method_id) as methods FROM rules, rule_method WHERE rules.id = rule_method.rule_id AND name = :name AND type = :type";
+    protected $select_one_by_id_request             = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, sort_key, GROUP_CONCAT(method_id) as methods FROM rules, rule_method WHERE rules.id = rule_method.rule_id AND rules.id = :id";
     protected $select_linked_methods_id             = "SELECT method_id FROM rule_method WHERE rule_id = :id";
+    protected $count_type_sort_key                  = "SELECT COUNT(sort_key) as maximum FROM rules WHERE type = :type";
     
 
     function __construct(){
-        require_once("../config.php");
+        require(__DIR__."/../config.php");
         try
         {
             $this->connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
@@ -62,33 +65,58 @@ class NotifierRuleDAO {
      * @param string $notificationnumber
      * @param string $timeperiod_id
      * @param string $tracking
-     * @param string $sort_key
      * 
      * @return false or the id (int) if insert success
      * 
      */
-    public function createRule($name,$type,$debug=0,$contact="*",$host="*",$service="*",$state="*",$notificationnumber="*",$timeperiod_id,$tracking=0,$sort_key=0){
+    public function createRule($name,$type,$timeperiod_id,$debug=0,$contact="*",$host="*",$service="*",$state="*",$notificationnumber="*",$tracking=0,$methods_id_str){
         try{
-            $request = $this->connexion->prepare($create_request_pattern);
-            $request->execute(array(
-                'name'                  => $name,
-                'type'                  => $type,
-                'line'                  => $debug,
-                'contact'               => $contact,
-                'host'                  => $host,
-                'service'               => $service,
-                'state'                 => $state,
-                'notificationnumber'    => $notificationnumber,
-                'timeperiod_id'         => $timeperiod_id,
-                'tracking'              => $tracking,
-                'sort_key'              => $sort_key
-            ));
+            
+            $sort_key = (int)$this->valkey($type);
+
+            $request = $this->connexion->prepare($this->create_request_pattern);
+            $request->bindParam('name'              , $name);
+            $request->bindParam('type'              , $type);
+            $request->bindParam('host'              , $host);
+            $request->bindParam('state'             , $state);
+            $request->bindParam('debug'             , $debug);
+            $request->bindParam('contact'           , $contact);
+            $request->bindParam('service'           , $service);
+            $request->bindParam('sort_key'          , $sort_key);
+            $request->bindParam('tracking'          , $tracking);
+            $request->bindParam('timeperiod_id'     , $timeperiod_id);
+            $request->bindParam('notificationnumber', $notificationnumber);
+            $request->execute();
+            //return $request->errorInfo();
+            $id = $this->connexion->lastInsertId();
+            $request = null;
+            //Add the method that have been linked to rule
+            foreach(split(",",$methods_id_str) as $method_id){
+                $request = $this->connexion->prepare($this->add_rule_method_request);
+                $request->execute(array(
+                    'rule_id'       => $id,
+                    'method_id'     => $method_id
+                ));
+            }
+
+            return $id;
         }
         catch (PDOException $e){
-            echo $e;
+            echo $e->getMessage() . " | ERROR_CODE PDO STATEMENT". $request->errorCode();
             return false;
         }
-        return $this->connexion->lastInsertId();
+    }
+
+    public function valkey($type){
+        $request = $this->connexion->prepare($this->count_type_sort_key);
+
+        $request->execute(array(
+            'type' => $type
+        ));
+        
+        $result = $request->fetch();
+        
+        return $result["maximum"];
     }
 
     /**
@@ -112,28 +140,28 @@ class NotifierRuleDAO {
      */
     public function updateRule($id,$name,$type,$debug,$contact,$host,$service,$state,$notificationnumber,$timeperiod_id,$tracking,$sort_key,$methods_id_str){
         try{
-            $request = $this->connexion->prepare($update_rule_by_id_request);
+            $request = $this->connexion->prepare($this->update_rule_by_id_request);
             $request->execute(array(
                 'id'                    => $id,
                 'name'                  => $name,
                 'type'                  => $type,
-                'line'                  => $debug,
-                'contact'               => $contact,
                 'host'                  => $host,
-                'service'               => $service,
                 'state'                 => $state,
-                'notificationnumber'    => $notificationnumber,
-                'timeperiod_id'         => $timeperiod_id,
+                'debug'                 => $debug,
+                'contact'               => $contact,
+                'service'               => $service,
+                'sort_key'              => $sort_key,
                 'tracking'              => $tracking,
-                'sort_key'              => $sort_key
+                'timeperiod_id'         => $timeperiod_id,
+                'notificationnumber'    => $notificationnumber
             ));
             
             $tab = $this->selectLinkedMethodsId($id);
             
             //Delete the method that have benn unlink from rule
             foreach($tab as $method_id){
-                if(!in_array($method_id,split(",",$methods_id_str)){
-                    $request = $this->connexion->prepare($delete_rule_method_request);
+                if(!in_array($method_id,split(",",$this->methods_id_str))){
+                    $request = $this->connexion->prepare($this->delete_rule_method_request);
                     $request->execute(array(
                         'rule_id'       => $id,
                         'method_id'     => $method_id
@@ -143,8 +171,8 @@ class NotifierRuleDAO {
 
             //Add the method that have been linked to rule
             foreach(split(",",$methods_id_str) as $method_id){
-                if(!in_array($method_id,tab){
-                    $request = $this->connexion->prepare($add_rule_method_request);
+                if(!in_array($method_id,$tab)){
+                    $request = $this->connexion->prepare($this->add_rule_method_request);
                     $request->execute(array(
                         'rule_id'       => $id,
                         'method_id'     => $method_id
@@ -154,7 +182,7 @@ class NotifierRuleDAO {
 
         }
         catch (PDOException $e){
-            echo $e;
+            echo $e->getMessage();
             return false;
         }
         return true;
@@ -170,13 +198,23 @@ class NotifierRuleDAO {
     public function deleteRule($id){
         try{
             //DELETE rule and rule_method where rule_id = id
-            $request = $this->connexion->prepare($delete_rule_by_id_request);
+            $request = $this->connexion->prepare($this->delete_rule_by_id_request1);
             $request->execute(array(
                 'id' => $id
             ));
+            
+            $request = $this->connexion->prepare($this->delete_rule_by_id_request2);
+            $request->execute(array(
+                'id' => $id
+            ));
+            if($request->rowCount()>0){
+                return true;
+            }else return false;
+            
+
         }
         catch (PDOException $e){
-            echo $e;
+            echo $e->getMessage();
             return false;
         }
         return true;
@@ -191,14 +229,14 @@ class NotifierRuleDAO {
     public function selectAllRules(){
         $result = array();
         try{
-            $request = $this->connexion->query($select_all_request);
+            $request = $this->connexion->query($this->select_all_request);
             while($row = $request->fetch()){
                 array_push($result, $row);
             } 
             $request->closeCursor();
         }
         catch (PDOException $e){
-            echo $e;
+            echo $e->getMessage();
         }
         return $result;
     }
@@ -211,22 +249,50 @@ class NotifierRuleDAO {
      * @return row
      * 
      */
-    public function selectOneRule($name,$type){
-        $result = false;
+    public function selectOneRuleByNameAndType($name,$type){
+        
         try{
-            $request = $this->connexion->prepare($select_one_by_name_and_type_request);
+            $request = $this->connexion->prepare($this->select_one_by_name_and_type_request);
             $request->execute(array(
                 'name' => $name,
                 'type' => $type
             ));
 
-            $result = $request->fetch();
+            $result =$request->fetch();
+            if(isset($result["id"])) return $result;
+            return false ;
+            
         }
         catch (PDOException $e){
-            echo $e;
-            return $result;
+            echo $e->getMessage();
+            return false;
         }
-        return $result;
+    }
+
+    /**
+     * This Function return a rule in the database.
+     * 
+     * @param int $id
+     * @return row
+     * 
+     */
+    public function selectOneRuleById($id){
+        
+        try{
+            $request = $this->connexion->prepare($this->select_one_by_id_request);
+            $request->execute(array(
+                'id' => $id
+            ));
+            
+            $result =$request->fetch();
+            if(isset($result["id"])) return $result;
+            return false ;
+            
+        }
+        catch (PDOException $e){
+            echo $e->getMessage();
+            return false;
+        }
     }
 
     /**
@@ -239,7 +305,7 @@ class NotifierRuleDAO {
     public function selectLinkedMethodsId($id){
         $result = array();
         try{
-            $request = $this->connexion->prepare($select_linked_methods_id);
+            $request = $this->connexion->prepare($this->select_linked_methods_id);
             $request->execute(array(
                 'id' => $id
             ));
@@ -250,8 +316,8 @@ class NotifierRuleDAO {
             $request->closeCursor();
         }
         catch (PDOException $e){
-            echo $e;
-            return $result;
+            echo $e->getMessage();
+            return false;
         }
         return $result;
     }

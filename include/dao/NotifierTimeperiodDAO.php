@@ -35,7 +35,7 @@ class NotifierTimeperiodDAO {
 
 
     public function __construct(){
-        require_once(__DIR__."/../config.php");
+        require(__DIR__."/../config.php");
         try
         {
             $this->connexion = new PDO('mysql:host='.$database_host.';dbname='.$database_notifier.';charset=utf8', $database_username, $database_password);
@@ -58,7 +58,7 @@ class NotifierTimeperiodDAO {
      */
     public function createTimeperiod($name,$daysofweek="*",$timeperiod="*"){
         try{
-            $request = $this->connexion->prepare($create_request_pattern);
+            $request = $this->connexion->prepare($this->create_request_pattern);
             $request->execute(array(
                 'name'        => $name,
                 'daysofweek'  => $daysofweek,
@@ -85,7 +85,7 @@ class NotifierTimeperiodDAO {
      */
     public function updateTimeperiod($id,$name,$daysofweek,$timeperiod){
         try{
-            $request = $this->connexion->prepare($update_timeperiod_by_id_request);
+            $request = $this->connexion->prepare($this->update_timeperiod_by_id_request);
             $request->execute(array(
                 'id'                    => $id,
                 'name'                  => $name,
@@ -109,10 +109,12 @@ class NotifierTimeperiodDAO {
      */
     public function deleteTimeperiod($id){
         try{
-            $request = $this->connexion->prepare($delete_timeperiod_by_id_request);
-            $request->execute(array(
-                'id' => $id
-            ));
+            $request = $this->connexion->prepare($this->delete_timeperiod_by_id_request);
+            $request->bindParam('id', $id);
+            $request->execute();
+            if($request->rowCount()>0){
+                return true;
+            }else return false;
         }
         catch (PDOException $e){
             echo $e;
@@ -138,6 +140,7 @@ class NotifierTimeperiodDAO {
         }
         catch (PDOException $e){
             echo $e;
+            return false;
         }
         return $result;
     }
@@ -150,20 +153,22 @@ class NotifierTimeperiodDAO {
      * 
      */
     public function selectOneTimeperiodByName($name){
-        $result = false;
         try{
-            $request = $this->connexion->prepare($select_one_by_name_request);
+            $request = $this->connexion->prepare($this->select_one_by_name_request);
             $request->execute(array(
                 'name' => $name
             ));
 
-            $result = $request->fetch();
+            $result =$request->fetch();
+            if(isset($result["id"])) return $result;
+            return false ;
+            
         }
         catch (PDOException $e){
-            echo $e;
-            return $result;
+            echo $e->getMessage();
+            return false;
         }
-        return $result;
+        
     }
 
     /**
@@ -173,21 +178,21 @@ class NotifierTimeperiodDAO {
      * @return row
      * 
      */
-    public function selectOneTimeperiodByName($id){
+    public function selectOneTimeperiodById($id){
         $result = false;
         try{
-            $request = $this->connexion->prepare($select_one_by_id_request);
-            $request->execute(array(
-                'id' => $id
-            ));
+            $request = $this->connexion->prepare($this->select_one_by_id_request);
+            $request->bindParam('id', $id, PDO::PARAM_INT);
+            $request->execute();
 
-            $result = $request->fetch();
+            $result =$request->fetch();
+            if(isset($result["id"])) return $result;
+            return false ;
         }
         catch (PDOException $e){
             echo $e;
-            return $result;
+            return false;
         }
-        return $result;
     }
 
 }
