@@ -38,7 +38,6 @@ class NotifierMethodDTO {
         $result = $this->methodDAO->selectOneMethodByNameAndType($name,$type);
         if($result){
             $method = new NotifierMethod();
-
             $method->setId($result["id"]);
             $method->setName($result["name"]);
             $method->setType($result["type"]);
@@ -56,7 +55,6 @@ class NotifierMethodDTO {
         $result = $this->methodDAO->selectOneMethodById($id);
         if($result){
             $method = new NotifierMethod();
-
             $method->setId($result["id"]);
             $method->setName($result["name"]);
             $method->setType($result["type"]);

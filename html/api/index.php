@@ -41,6 +41,7 @@ addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
 
+
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
 addRoute('post', '/createCommand', 'createCommand');
@@ -56,19 +57,18 @@ addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
+
 addRoute('post', '/addNotifierRule', 'addNotifierRule');
 addRoute('post', '/addNotifierMethod', 'addNotifierMethod');
 addRoute('post', '/addNotifierTimeperiod', 'addNotifierTimeperiod');
 
 addRoute('post', '/deleteNotifierRule', 'deleteNotifierRule');
 addRoute('post', '/deleteNotifierMethod', 'deleteNotifierMethod');
-addRoute('post', '/deleteNotifierTemperiod', 'deleteNotifierTemperiod');
+addRoute('post', '/deleteNotifierTimeperiod', 'deleteNotifierTimeperiod');
 
+addRoute('post', '/modifyNotifierRule', 'modifyNotifierRule');
 addRoute('post', '/modifyNotifierMethod', 'modifyNotifierMethod');
-addRoute('post', '/modifyNotifierTemperiod', 'modifyNotifierTemperiod');
-
-
-
+addRoute('post', '/modifyNotifierTimeperiod', 'modifyNotifierTimeperiod');
 
 
 addRoute('post', '/addEventBroker', 'addEventBroker');

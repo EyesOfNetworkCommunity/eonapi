@@ -165,6 +165,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `modifyNagiosMainConfiguration` | POST | [**requestConf, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify The Nagios global configuration. See bellow the different parameter that you can changed.|
 | `modifyNotifierTimeperiod` | POST | [**timeperiod_name,new_timeperiod_name=NULL, timeperiod_days=NULL, timeperiod_hours_notifications=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify The timeperiod of advanced notification (Notifier module) .|
 | `modifyNotifierMethod` | POST | [**method_name,method_type,new_method_name=NULL, change_type=NULL, method_line=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify a method of advanced notification (Notifier module) .|
+| `modifyNotifierRule` | POST | [**rule_name, rule_type, new_rule_name=NULL, change_type=NULL, rule_timeperiod=NULL,  add_rule_method=NULL, delete_rule_method=NULL, rule_contact=NULL, rule_debug=NULL, rule_host=NULL, rule_service=NULL, rule_state=NULL, rule_notificationNumber=NULL,rule_tracking=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify a rule of advanced notification menu (Notifier module) .|
 | `deleteContact` | POST | [**contactName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact |
 | `deleteHostDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios host downtime. |
 | `deleteServiceDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios service downtime. |
@@ -383,6 +384,25 @@ To illustrate the EON API features tab, you will find a few implementation examp
   "change_type":"service",            //optional
   "method_line":"send('NOTIF')"       //optional
 }
+
+* /modifyNotifierRule
+```json
+{
+  "rule_name":"test(24x7)", 
+  "rule_type":"service", 
+  "new_rule_name":"regle24/24", 
+  "change_type":"host", 
+  "rule_timeperiod":"48/8", 
+  "add_rule_method":["email-host"], 
+  "rule_contact":"admin", 
+  "rule_debug":0, 
+  "rule_host":"localhost", 
+  "rule_service":"ssh", 
+  "rule_state":["UP"],
+  "rule_notificationNumber":1,
+  "rule_tracking":0
+}
+```
 
 * /createServiceToHost
 ```json 

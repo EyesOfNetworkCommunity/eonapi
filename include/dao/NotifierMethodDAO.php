@@ -31,7 +31,7 @@ class NotifierMethodDAO {
     private $delete_method_by_id_request            = "DELETE FROM methods WHERE id = :id";
     private $select_all_request                     = "SELECT * FROM methods";
     private $select_one_by_name_and_type_request    = "SELECT * FROM methods WHERE name = :name AND type = :type";
-    private $select_one_by_id_request               = "SELECT * FROM methods WHERE name = :id";
+    private $select_one_by_id_request               = "SELECT * FROM methods WHERE id = :id";
 
     function __construct(){
         require(__DIR__."/../config.php");

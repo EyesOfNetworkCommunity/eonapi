@@ -55,12 +55,14 @@ class NotifierRule {
      */
     public function addMethod($method){
         if(is_int($method)){
-            $m =(new NotifierMethodDTO())->getNotifierMethodById($method);
+            $mdto = new NotifierMethodDTO();
+            $m = $mdto->getNotifierMethodById($method);
             if($m){
                 array_push($this->methods, $m );
             }
         }else {
-            $m = (new NotifierMethodDTO())->getNotifierMethodByNameAndType($method,$this->type);
+            $mdto = new NotifierMethodDTO();
+            $m = $mdto->getNotifierMethodByNameAndType($method,$this->type);
             if($m){
                 array_push($this->methods,$m );
             }
@@ -74,7 +76,7 @@ class NotifierRule {
     public function deleteMethod($methodName){
         for($i; $i<sizeof($this->methods);$i++ ){
           if($this->methods[$i]->getName() == $methodName){
-              unset($this->methods[$i]);
+            unset($this->methods[$i]);
           } 
         }
     }

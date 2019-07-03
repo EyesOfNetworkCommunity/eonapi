@@ -32,12 +32,10 @@ class NotifierRuleDAO {
     protected $delete_rule_method_request           = "DELETE FROM rule_method WHERE rule_id = :rule_id AND method_id = :method_id";
     protected $delete_rule_by_id_request2           = "DELETE FROM rules WHERE id = :id ";
     protected $delete_rule_by_id_request1           = "DELETE FROM rule_method WHERE rule_id = :id ";
-
     protected $select_all_request                   = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, sort_key, GROUP_CONCAT(method_id) as methods FROM rules, rule_method";
     protected $select_one_by_name_and_type_request  = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, sort_key, GROUP_CONCAT(method_id) as methods FROM rules, rule_method WHERE rules.id = rule_method.rule_id AND name = :name AND type = :type";
     protected $select_one_by_id_request             = "SELECT id, name, debug, contact, host, type, service, state, notificationnumber, timeperiod_id, tracking, sort_key, GROUP_CONCAT(method_id) as methods FROM rules, rule_method WHERE rules.id = rule_method.rule_id AND rules.id = :id";
     protected $select_linked_methods_id             = "SELECT method_id FROM rule_method WHERE rule_id = :id";
-    protected $count_type_sort_key                  = "SELECT COUNT(sort_key) as maximum FROM rules WHERE type = :type";
     
 
     function __construct(){
@@ -72,7 +70,6 @@ class NotifierRuleDAO {
     public function createRule($name,$type,$timeperiod_id,$debug=0,$contact="*",$host="*",$service="*",$state="*",$notificationnumber="*",$tracking=0,$methods_id_str){
         try{
             
-            $sort_key = (int)$this->valkey($type);
 
             $request = $this->connexion->prepare($this->create_request_pattern);
             $request->bindParam('name'              , $name);
@@ -82,7 +79,7 @@ class NotifierRuleDAO {
             $request->bindParam('debug'             , $debug);
             $request->bindParam('contact'           , $contact);
             $request->bindParam('service'           , $service);
-            $request->bindParam('sort_key'          , $sort_key);
+            $request->bindParam('sort_key'          , 0);
             $request->bindParam('tracking'          , $tracking);
             $request->bindParam('timeperiod_id'     , $timeperiod_id);
             $request->bindParam('notificationnumber', $notificationnumber);
@@ -105,18 +102,6 @@ class NotifierRuleDAO {
             echo $e->getMessage() . " | ERROR_CODE PDO STATEMENT". $request->errorCode();
             return false;
         }
-    }
-
-    public function valkey($type){
-        $request = $this->connexion->prepare($this->count_type_sort_key);
-
-        $request->execute(array(
-            'type' => $type
-        ));
-        
-        $result = $request->fetch();
-        
-        return $result["maximum"];
     }
 
     /**
@@ -160,7 +145,7 @@ class NotifierRuleDAO {
             
             //Delete the method that have benn unlink from rule
             foreach($tab as $method_id){
-                if(!in_array($method_id,split(",",$this->methods_id_str))){
+                if(!in_array($method_id,split(",",$methods_id_str))){
                     $request = $this->connexion->prepare($this->delete_rule_method_request);
                     $request->execute(array(
                         'rule_id'       => $id,

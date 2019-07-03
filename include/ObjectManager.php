@@ -13,9 +13,9 @@
 # Contributor: Hoarau Jeremy <jeremy.hoarau@axians.com>
 #
 */
-
+ini_set('display_errors', 1);
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
- 
+
 include("/srv/eyesofnetwork/eonweb/include/config.php");
 include("/srv/eyesofnetwork/eonweb/include/arrays.php");
 include("/srv/eyesofnetwork/eonweb/include/function.php");
@@ -100,15 +100,13 @@ class ObjectManager {
 				}elseif(is_array($rule_contact)){
 					$rule->setContact(implode(",",$rule_contact));
 				}else{
-					$rule->setContact("*");
+					$rule->setContact($rule_contact);				
 				}
 
-				if($rule_host == "*"){
-					$rule->setHost($rule_host);
-				}elseif(is_array($rule_host)){
+				if(is_array($rule_host)){
 					$rule->setHost(implode(",",$rule_host));
 				}else{
-					$rule->setHost("*");
+					$rule->setHost($rule_host);
 				}
 
 				$rule->setDebug($rule_debug);
@@ -124,8 +122,8 @@ class ObjectManager {
 						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
 						$stringState=array();
 						foreach($rule_state as $state){
-							if(in_array(stroupper($state),$availableStateHost)){
-								array_push($stringState, stroupper($state));
+							if(in_array(strtoupper($state),$availableStateHost)){
+								array_push($stringState, strtoupper($state));
 							}
 						}
 						$rule->setState(implode(",",$stringState));
@@ -144,15 +142,15 @@ class ObjectManager {
 						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
 						$stringState=array();
 						foreach($rule_state as $state){
-							if(in_array(stroupper($state),$availableStateService)){
-								array_push($stringState, stroupper($state));
+							if(in_array(strtoupper($state),$availableStateService)){
+								array_push($stringState, strtoupper($state));
 							}
 						}
 						$rule->setState(implode(",",$stringState));
 					}
 				}
 
-				if($rule_method != NULL ){
+				if(isset($rule_method) and is_array($rule_method)){
 					foreach($rule_method as $method_name){
 						$mdto = new NotifierMethodDTO();
 						$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule_type);
@@ -162,14 +160,25 @@ class ObjectManager {
 							$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
 						}
 					}
-				}
-				
-				if($rule->save()){
-					$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+					if($rule->getMethods() !== NULL){
+						$error .= " | ERROR : No method added.";
+						$code =1;
+					}
 				}else{
-					$error .= "| ERROR : The rules failed to saved the configuration. "; 
+					$error .= " | ERROR : The given method parameter is not an array no method added.";
 					$code = 1;
 				}
+
+
+				if($code != 1){
+					if($rule->save()){
+						$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+					}else{
+						$error .= "| ERROR : The rules failed to saved the configuration. "; 
+						$code = 1;
+					}
+				}
+
 			}else{
 				$error .= "| ERROR : The rule already exist. "; 
 				$code = 1;
@@ -267,7 +276,7 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	public function deleteNotifierTemperiod($timeperiod_name){
+	public function deleteNotifierTimeperiod($timeperiod_name){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -281,7 +290,6 @@ class ObjectManager {
 				$error .= "The deletion of $timeperiod_name failed. A rules certainly use this timeperiods. ";
 				$code =1;
 			}
-
 		}else {
 			$error .= " ERROR the timeperiod $timeperiod_name specified have not been found.";
 			$code=1;
@@ -293,18 +301,147 @@ class ObjectManager {
 	}
 	
 	/*--------- MODIFY ---------*/
-	public function modifyNotifierRules(){
+	public function modifyNotifierRule($rule_name, $rule_type, $new_rule_name=NULL, $change_type=NULL, $rule_timeperiod=NULL,  $add_rule_method=NULL, $delete_rule_method=NULL, $rule_contact=NULL, $rule_debug=NULL, $rule_host=NULL, $rule_service=NULL, $rule_state=NULL, $rule_notificationNumber=NULL, $rule_tracking=NULL){
 		$error = "";
 		$success = "";
 		$code=0;
 		
+		$ruledto = new NotifierRuleDTO();
+		$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
+		if(!$rule){
+			$error .= "| ERROR : The rules $rule_name does not exist yet. "; 
+			$code = 1;
+		}else{
+			if(isset($rule_timeperiod)){
+				$timeperiodDto = new NotifierTimeperiodDTO();
+				$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($rule_timeperiod);
+				if(!$timeperiod){
+					$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist.";
+				}else{
+					$rule->setTimeperiod_id($timeperiod->getId());
+				}
+			}
+
+			if(isset($new_rule_name)){
+				$rule->setName($new_rule_name);
+			}
+			
+			if(isset($change_type)){
+				$rule->setType($change_type);
+				if($change_type == "host"){
+					$rule->setService("-");
+				}elseif(isset($rule_service) ){
+					// @TODO Verification existence du service
+					if(is_array($rule_service)){
+						$rule->setService(implode(",",$rule_service));
+					}else{
+						$rule->setService($rule_service);
+					}
+				}else{
+					$rule->setService("*");
+				}
+			}
+			
+			// @TODO Verification existence contact dans lilac
+			if(isset($rule_contact)){
+				if(is_array($rule_contact)){
+					$rule->setContact(implode(",",$rule_contact));
+				}else{
+					$rule->setContact($rule_contact);
+				}
+			}
+			
+
+			// @TODO Verification existence host lilac
+			if(isset($rule_host)){
+				if(is_array($rule_host)){
+					$rule->setHost(implode(",",$rule_host));
+				}else{
+					$rule->setHost($rule_host);
+				}
+			}
+			
+			if(isset($rule_debug)){
+				$rule->setDebug($rule_debug);
+			}
+			
+			if(isset($rule_notificationNumber)){
+				$rule->setNotificationnumber($rule_notificationNumber);
+			}
+
+			if(isset($rule_tracking)){
+				$rule->setTracking($rule_tracking);
+			}
+
+			if(isset($rule_state)){
+				if($rule->getType()=="host"){
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(strtoupper($state),$availableStateHost)){
+								array_push($stringState, strtoupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+				}else{
+
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(strtoupper($state),$availableStateService)){
+								array_push($stringState, strtoupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+				}
+			}
+
+			if(isset($add_rule_method) ){
+				foreach($add_rule_method as $method_name){
+					$mdto = new NotifierMethodDTO();
+					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
+					if(!$m){
+						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+					}else{
+						$rule->addMethod($method_name);
+					}
+				}
+			}
+
+			if(isset($delete_rule_method)){
+				foreach($delete_rule_method as $method_name){
+					$mdto = new NotifierMethodDTO();
+					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
+					if(!$m){
+						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+					}else{
+						$rule->deleteMethod($method_name);
+					}
+				}
+			}
+			
+			if($rule->save()){
+				$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+			}else{
+				$error .= "| ERROR : The rules failed to saved the configuration. "; 
+				$code = 1;
+			}
+		}
 		
 		$logs = $this->getLogs($error, $success);
 		
         return array("code"=>$code,"description"=>$logs);
 	}
 
-	public function modifyNotifierTemperiod($timeperiod_name, $new_timeperiod_name=NULL, $timeperiod_days=NULL, $timeperiod_hours_notifications=NULL){
+	public function modifyNotifierTimeperiod($timeperiod_name, $new_timeperiod_name=NULL, $timeperiod_days=NULL, $timeperiod_hours_notifications=NULL){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -313,7 +450,7 @@ class ObjectManager {
 		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
 		
 		if(!$timeperiod){
-			$error .= "| ERROR : The Timeperiod '$timeperiod_name' already exist.";
+			$error .= "| ERROR : The Timeperiod '$timeperiod_name' does not exist.";
 			$code = 1;
 		}else{
 			if(isset($new_timeperiod_name)){
@@ -346,7 +483,7 @@ class ObjectManager {
 	}
 
 
-	
+
 	public function modifyNotifierMethod($method_name, $method_type,$new_method_name=NULL, $change_type=NULL, $method_line=NULL){
 		$error = "";
 		$success = "";
