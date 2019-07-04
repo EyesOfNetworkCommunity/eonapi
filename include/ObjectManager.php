@@ -160,12 +160,12 @@ class ObjectManager {
 							$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
 						}
 					}
-					if($rule->getMethods() !== NULL){
+					if($rule->getMethods() == array()){
 						$error .= " | ERROR : No method added.";
 						$code =1;
 					}
 				}else{
-					$error .= " | ERROR : The given method parameter is not an array no method added.";
+					$error .= " | ERROR : The given rule_method parameter is not set or is not an array, no methods added. You must provide methods to create a rule.";
 					$code = 1;
 				}
 
@@ -322,40 +322,96 @@ class ObjectManager {
 				}
 			}
 
-			if(isset($new_rule_name)){
-				$rule->setName($new_rule_name);
-			}
-			
-			if(isset($change_type)){
+			if(isset($change_type) && $change_type == "host"){
 				$rule->setType($change_type);
-				if($change_type == "host"){
-					$rule->setService("-");
-				}elseif(isset($rule_service) ){
-					// @TODO Verification existence du service
+				$rule->setService("-");
+				//the changement of type leads to the deletion of methods that is not suits for this type.
+				$rule->setMethods(array());
+			}elseif(isset($change_type) && $change_type == "service"){
+				$rule->setType($change_type);
+				if(isset($rule_service)){
 					if(is_array($rule_service)){
-						$rule->setService(implode(",",$rule_service));
-					}else{
+						$newservice = array();
+						foreach($rule_service as $service){
+							//Check if the 'service' is an existing lilac command 
+							$commande = NagiosCommandPeer::getByName($service);
+							if($command){
+								array_push($newservice, $service);
+							}
+						}
+						$rule->setService(implode(",",$newservice));
+
+					}elseif(count(explode(",",$rule_service)) > 1 ){
+						$newservice = array();
+						foreach(explode(",",$rule_service) as $service){
+							//Check if the 'service' is an existing lilac command 
+							$commande = NagiosCommandPeer::getByName($service);
+							if($command){
+								array_push($newservice, $service);
+							}
+						}
+						$rule->setService(implode(",",$newservice));
+					}
+					else{
 						$rule->setService($rule_service);
 					}
-				}else{
-					$rule->setService("*");
 				}
 			}
+
+			if(isset($new_rule_name)){
+				if(!$ruledto->getNotifierRuleByNameAndType($new_rule_name,$rule->getType())){
+					$rule->setName($new_rule_name);
+				}else $error .= " | ERROR : The rule name have not been changed due to an existing rule with this name.";
+			}
 			
-			// @TODO Verification existence contact dans lilac
 			if(isset($rule_contact)){
 				if(is_array($rule_contact)){
-					$rule->setContact(implode(",",$rule_contact));
+					$newcontact = array();
+					foreach($rule_contact as $contact){
+						//Check if the 'contact' is an existing lilac contact
+						$cnt = NagiosContactPeer::getByName($contact);
+						if($cnt){
+							array_push($newcontact, $contact);
+						}
+					}
+					$rule->setContact(implode(",",$newcontact));
+				}elseif(count(explode(",",$rule_contact))>1){
+					$newcontact = array();
+					foreach(explode(",",$rule_contact) as $contact){
+						//Check if the 'contact' is an existing lilac contact
+						$cnt = NagiosContactPeer::getByName($contact);
+						if($cnt){
+							array_push($newcontact, $contact);
+						}
+					}
+					$rule->setContact(implode(",",$newcontact));
 				}else{
 					$rule->setContact($rule_contact);
 				}
 			}
 			
-
-			// @TODO Verification existence host lilac
 			if(isset($rule_host)){
 				if(is_array($rule_host)){
-					$rule->setHost(implode(",",$rule_host));
+					$newhost = array();
+					foreach($rule_host as $host){
+						//Check if the 'host' is an existing lilac host
+						$cnt = NagiosHostPeer::getByName($host);
+						if($cnt){
+							array_push($newhost, $host);
+						}
+					}
+					$rule->setHost(implode(",",$newhost));
+
+				}elseif(count(explode(",",$rule_host))>1){
+					$newhost = array();
+					foreach(explode(",",$rule_host) as $host){
+						//Check if the 'host' is an existing lilac host
+						$cnt = NagioshostPeer::getByName($host);
+						if($cnt){
+							array_push($newhost, $host);
+						}
+					}
+					$rule->setHost(implode(",",$newhost));
 				}else{
 					$rule->setHost($rule_host);
 				}
@@ -428,12 +484,18 @@ class ObjectManager {
 				}
 			}
 			
-			if($rule->save()){
-				$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
-			}else{
-				$error .= "| ERROR : The rules failed to saved the configuration. "; 
+			if($rule->getMethods() != array()){
+				if($rule->save()){
+					$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+				}else{
+					$error .= "| ERROR : The rules failed to saved the configuration. "; 
+					$code = 1;
+				}
+			}else {
+				$error .= "| ERROR : The rules failed to saved the configuration no methods are set. "; 
 				$code = 1;
 			}
+			
 		}
 		
 		$logs = $this->getLogs($error, $success);

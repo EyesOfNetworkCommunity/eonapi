@@ -69,8 +69,7 @@ class NotifierRuleDAO {
      */
     public function createRule($name,$type,$timeperiod_id,$debug=0,$contact="*",$host="*",$service="*",$state="*",$notificationnumber="*",$tracking=0,$methods_id_str){
         try{
-            
-
+            $sort_key =0 ;
             $request = $this->connexion->prepare($this->create_request_pattern);
             $request->bindParam('name'              , $name);
             $request->bindParam('type'              , $type);
@@ -79,7 +78,7 @@ class NotifierRuleDAO {
             $request->bindParam('debug'             , $debug);
             $request->bindParam('contact'           , $contact);
             $request->bindParam('service'           , $service);
-            $request->bindParam('sort_key'          , 0);
+            $request->bindParam('sort_key'          , $sort_key);
             $request->bindParam('tracking'          , $tracking);
             $request->bindParam('timeperiod_id'     , $timeperiod_id);
             $request->bindParam('notificationnumber', $notificationnumber);
@@ -88,7 +87,7 @@ class NotifierRuleDAO {
             $id = $this->connexion->lastInsertId();
             $request = null;
             //Add the method that have been linked to rule
-            foreach(split(",",$methods_id_str) as $method_id){
+            foreach(explode(",",$methods_id_str) as $method_id){
                 $request = $this->connexion->prepare($this->add_rule_method_request);
                 $request->execute(array(
                     'rule_id'       => $id,
@@ -222,8 +221,11 @@ class NotifierRuleDAO {
         }
         catch (PDOException $e){
             echo $e->getMessage();
+            return false;
         }
-        return $result;
+        if(!empty($result))
+            return $result;
+        else return false;
     }
 
     /**

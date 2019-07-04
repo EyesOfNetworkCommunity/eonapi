@@ -34,6 +34,11 @@ class NotifierRuleDTO {
         $this->ruleDAO = new NotifierRuleDAO();
     }
 
+    public function getAllNotifierRule(){
+        $result = $this->ruleDAO->selectAllRules();
+        return $result;
+    }
+
     /**
      * 
      */

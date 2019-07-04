@@ -358,6 +358,18 @@ class NotifierRule {
 
         return $this;
     }
+
+    /**
+     * Set the value of methods
+     *
+     * @return  self
+     */ 
+    public function setMethods($methods)
+    {
+        $this->methods = $methods;
+
+        return $this;
+    }
 }
 
 ?>
