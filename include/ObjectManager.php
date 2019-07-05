@@ -13,7 +13,6 @@
 # Contributor: Hoarau Jeremy <jeremy.hoarau@axians.com>
 #
 */
-ini_set('display_errors', 1);
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
 
 include("/srv/eyesofnetwork/eonweb/include/config.php");
@@ -43,6 +42,22 @@ class ObjectManager {
 		$this->authUser = $request->get('username');  
 	}
 ######################################### NOTIFIER CONTROLEUR
+	/*---------EXPORTER------*/
+	public function exporterNotifierConfig(){
+		$error ="";
+		$success = "";
+		$code =0;
+		exec("/usr/bin/php /srv/eyesofnetwork/eonweb/module/admin_notifier/cli/export.php", $result_cmdact);
+		if(count($result_cmdact)>0){
+			$error .= implode("\n",$result_cmdact);
+			$code =1 ;
+		}else{
+			$success .= "Exportation success."
+		}
+
+		$logs = $this->getLogs($error, $success);
+        return array("code"=>$code,"description"=>$logs);
+	}
 	
 	/*--------- ADD ---------*/
 	public function addNotifierMethod($method_name, $method_type, $method_line){
@@ -70,7 +85,6 @@ class ObjectManager {
 		}
 		
 		$logs = $this->getLogs($error, $success);
-		
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -1431,6 +1445,7 @@ class ObjectManager {
         
 		return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - create Command */
     public function createCommand($commandName,$commandLine,$commandDescription=""){
 		$error = "";
@@ -1470,6 +1485,7 @@ class ObjectManager {
 		$result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
+
     /* EONWEB - Create User */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
         //Lower case
@@ -1487,8 +1503,7 @@ class ObjectManager {
         //Admin
         if( $admin == true ){
             //admins group
-            $userGroup = 1;
-            
+            $userGroup = 1;   
             $userDescr = "admin user";
         }
         else{
@@ -1504,7 +1519,6 @@ class ObjectManager {
         } else {
             $error .= "Unable to create user $userName\n";	
         }
-
 
         // EONWEB - XML Filter creation
         $xml_file = "/srv/eyesofnetwork/eonweb/cache/".$userName."-ged.xml";
@@ -1529,8 +1543,6 @@ class ObjectManager {
             $filter->appendChild($dom->createTextNode( $filterValue ));    
         }
         
-        
-        
         $dom->save($xml_file);
         $xml=$dom->saveXML();
 
@@ -1546,17 +1558,20 @@ class ObjectManager {
 
         chown($xml_file,"apache");
         chgrp($xml_file,"apache");
-        
-        
+                
         // Export
         if( $exportConfiguration == TRUE )
             $this->exportConfigurationToNagios($error, $success);
 
-
         $logs = $this->getLogs($error, $success);
         
         return $logs;
-        
+	}
+
+	/* EONWEB - Create Group */
+	public function createGroup($group_name,$group_descr,$group_type,$ldap_group_name){
+		
+		return "in progres";
 	}
 	
 	public function createMutipleHosts($hosts, $exportConfiguration=false){
@@ -1623,6 +1638,7 @@ class ObjectManager {
         
 		return $logs;
 	}
+
 ########################################## ADD
 	/* LILAC - Add Custom Argument to a host */
 	public function addCustomArgumentsToHost($hostName, $customArguments){
@@ -1926,7 +1942,6 @@ class ObjectManager {
 			}
 		}
 		
-		
 		if($changed>0){
 			$success .= "$serviceName has been updated.\n";
 		} else{
@@ -1973,7 +1988,6 @@ class ObjectManager {
 				}
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$serviceName has been updated.\n";
@@ -2023,7 +2037,6 @@ class ObjectManager {
 				}
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$templateHostName has been updated.\n";
@@ -2107,7 +2120,6 @@ class ObjectManager {
 		if(!$template_host) {
 			$error .= "Host Template $templateHostName not found\n";
 		}
-        
         	
         // We need to get the count of templates already inherited
         if( $host ){
@@ -2142,6 +2154,7 @@ class ObjectManager {
         
 		return array("code"=>$code,"description"=>$logs);
 	}
+
     /* LILAC - Add Contact to Host Template */
 	public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
         $error = "";
@@ -2161,8 +2174,7 @@ class ObjectManager {
 		if(!$template_host) {
 			$error .= "Host Template $templateHostName not found\n";
 		}
-
-        
+    
         if( empty($error) ) {
             $c = new Criteria();
             $c->add(NagiosHostContactMemberPeer::TEMPLATE, $template_host->getId());
@@ -2233,10 +2245,10 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
-    }
+	}
+	
 	/* LILAC - create Service to Host template*/
-    public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){
-		
+    public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){		
         $error = "";
 		$success = "";
 		$code=0;
@@ -2297,8 +2309,7 @@ class ObjectManager {
 							$success .= "Command Parameter ".$params." added to $service->name\n";
 						}
 					}
-				}
-			
+				}		
 				
 				// Export
                 if( $exportConfiguration == TRUE )
@@ -2315,9 +2326,9 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
         
 	}
+
 	/* LILAC - create Service to Host*/
-    public function createServiceToHost ($hostName, $service, $exportConfiguration = FALSE ){
-		
+    public function createServiceToHost ($hostName, $service, $exportConfiguration = FALSE ){	
         $error = "";
 		$success = "";
 		$code=0;
@@ -2380,7 +2391,6 @@ class ObjectManager {
 					
 				}
 			
-				
 				// Export
                 if( $exportConfiguration == TRUE )
 				    $this->exportConfigurationToNagios($error, $success);
@@ -2394,12 +2404,10 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
-        
 	}
 
 	/* LILAC - addEventBroker */
 	public function addEventBroker( $broker, $exportConfiguration = FALSE ){
-		
 		global $lilac;
 		$error = "";
 		$success = "";
@@ -2507,7 +2515,6 @@ class ObjectManager {
 		}
         
         if( empty($error) ) {
-			
             if($template_host->addTemplateInheritance($inheritanceTemplateName)) {
 				$success .= "Template Ihneritance ".$inheritanceTemplateName." added to host template ".$templateHostName."\n";
                 if( $exportConfiguration == TRUE )
@@ -2756,8 +2763,7 @@ class ObjectManager {
 						}
 
 						if( $exportConfiguration == TRUE )
-							$this->exportConfigurationToNagios($error, $success);
-						
+							$this->exportConfigurationToNagios($error, $success);	
 					}
 					
 				}else{
@@ -3303,7 +3309,6 @@ class ObjectManager {
 				$error .= $e->getMessage();
 			}
 			
-			
 			if($code==0)
 				$success .= "contact had been modified."; 
 
@@ -3484,14 +3489,14 @@ class ObjectManager {
 				$code=1;
 				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
 			}
-			
 		}
 		
 		$logs = $this->getLogs($error, $success);
-        
         $result=array("code"=>$code,"description"=>$logs,"changes"=>$changed);
         return $result;
 	}
+
+
 	/* LILAC - modify nagiosResources */
 	public function modifyNagiosResources($resources){
 		$error = "";
@@ -3553,7 +3558,6 @@ class ObjectManager {
 						$host->setAddress($hostIp);
 						$changed++;
 					}						
-					
 				}
 				$host->save();
 				if($changed>0){
@@ -3662,7 +3666,6 @@ class ObjectManager {
 		$success = "";
 		$code=0;
 		try{
-			
 			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
 			if(!$targetTemplateHost) {
 				$code=1;
@@ -3689,12 +3692,9 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         $result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
-	
-
 
 	/* LILAC - Modify Nagios global main configuration */  
     public function modifyNagiosMainConfiguration($requestConf=NULL, $exportConfiguration=FALSE){
@@ -3748,7 +3748,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         $result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
@@ -3781,8 +3780,6 @@ class ObjectManager {
 				$code = 1;
 				$error.="An error occurred nothing happen.";
 			}
-			
-
 		}catch(Exception $e) {
 			$code=1;
 			$error .= $e->getMessage();
@@ -3821,15 +3818,12 @@ class ObjectManager {
 				$code = 1;
 				$error.="An error occurred nothing happen.";
 			}
-			
-
 		}catch(Exception $e) {
 			$code=1;
 			$error .= $e->getMessage();
 		}
         
 		$logs = $this->getLogs($error, $success);
-		
 		$result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
@@ -3853,7 +3847,6 @@ class ObjectManager {
 				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
 				$c->add(NagiosHostCustomObjectVarPeer::HOST, $host->getId());
 				$nhcov = NagiosHostCustomObjectVarPeer::doSelectOne($c);
-				
 				if($nhcov){
 					$nhcov->delete();
 					$success .= "$key has been deleted.\n";
@@ -4040,10 +4033,8 @@ class ObjectManager {
 		}
         
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
-
 
 	/* LILAC - Delete contact Group to Service */
 	public function deleteContactGroupToServiceInHost( $contactGroupName, $serviceName, $hostName, $exportConfiguration = FALSE ){
@@ -4080,11 +4071,9 @@ class ObjectManager {
 				$code=1;
 				$error .= "That contact group didn't exist!\n";
 			}
-			
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4127,7 +4116,6 @@ class ObjectManager {
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4154,8 +4142,7 @@ class ObjectManager {
 					}else{
 						$code=1;
 						$error .= "$contactName already bind to the group $contactGroupName ";
-					}
-					
+					}	
 				}else {
 					$code=1;
 					$error .= "$contactGroupName don't exist. ";
@@ -4170,7 +4157,6 @@ class ObjectManager {
 		}
         
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4209,11 +4195,9 @@ class ObjectManager {
 				$code=1;
 				$error .= "That contact didn't exist!\n";
 			}
-			
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4252,11 +4236,9 @@ class ObjectManager {
 				$code=1;
 				$error .= "That contact didn't exist!\n";
 			}
-			
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4303,7 +4285,6 @@ class ObjectManager {
 		if(!empty($error)) $code=1;
 			
 		$logs = $this->getLogs($error, $success);
-		
 		return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4350,7 +4331,6 @@ class ObjectManager {
 		if(!empty($error)) $code=1;
 			
 		$logs = $this->getLogs($error, $success);
-		
 		return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4385,10 +4365,8 @@ class ObjectManager {
 						$changed++;
 					}
 				}
-				
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$templateServiceName has been updated.\n";
@@ -4475,10 +4453,8 @@ class ObjectManager {
 						$changed++;
 					}
 				}
-				
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$templateHostName has been updated.\n";
@@ -4516,6 +4492,7 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete contact Group */
 	public function deleteContactGroup($contactGroupName){
 		$error = "";
@@ -4538,7 +4515,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4564,7 +4540,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4575,15 +4550,12 @@ class ObjectManager {
 		$code=0;
 		try{
 			$nhp = new NagiosHostPeer;
-			
 			$host = $nhp->getByName($hostName);    
 			if(!$host) {
 				$code++;
 				$error .= "Host $hostName doesn't exist\n";
 			}else{
-
 				$service = NagiosServicePeer::getByHostAndDescription($hostName,$serviceName);
-				
 				if(!$service){
 					$error .= "Service didn't exist.";
 					$code++;
@@ -4601,7 +4573,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4612,7 +4583,6 @@ class ObjectManager {
 		$code=0;
 		try{
         	$nhtp = new NagiosHostTemplatePeer;
-		
 			$host = $nhtp->getByName($hostTemplateName);    
 			if(!$host) {
 				$code++;
@@ -4634,7 +4604,6 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 	/* LILAC - delete service template */
@@ -4645,7 +4614,6 @@ class ObjectManager {
 		
 		try{
 			$targetTemplate = NagiosServiceTemplatePeer::getByName($templateServiceName);
-
 			if(!$targetTemplate) {
 				$code=1;
 				$error .= "The template '".$templateServiceName."'does not exist\n";
@@ -4659,9 +4627,9 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        
         return $logs;
 	}
+
 	/* LILAC - delete Command */
     public function deleteCommand($commandName){
 		$error = "";
@@ -4670,7 +4638,6 @@ class ObjectManager {
 		
 		try{
 			$ncp = new NagiosCommandPeer;
-
 			$targetCommand = $ncp->getByName($commandName);
 			if(!$targetCommand) {
 				$code=1;
@@ -4685,19 +4652,17 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete Host */
 	public function deleteHost( $hostName, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
 		$code=0;
-
 		try {
 			$nhp = new NagiosHostPeer;
 			$host = $nhp->getByName($hostName);
-
 			if($host) {
 				$host->delete();
 				$success .= "Host ".$hostName." deleted\n";
@@ -4718,15 +4683,15 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete Templates Hosts */
 	public function deleteHostTemplate($templateHostName){
 		$error = "";
 		$success = "";
 		$code=0;
-		
+	
 		try{
 			$targetTemplate = NagiosHostTemplatePeer::getByName($templateHostName);
-
 			if(!$targetTemplate) {
 				$code=1;
 				$error .= "The template '".$templateHostName."'does not exist\n";
@@ -4742,6 +4707,7 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete HostTemplates to Host */
 	public function deleteHostTemplateToHost($templateHostName, $hostName, $exportConfiguration = FALSE){
 		$error = "";
@@ -4764,17 +4730,14 @@ class ObjectManager {
 				$listAllHostsTemplate = NagiosHostTemplateInheritancePeer::doSelect($c);
 				
 				foreach($listAllHostsTemplate as $template){
-				
 					if($template->getTargetTemplate()==$targetTemplate->getId()){
 						$template->delete();
 						$find=true;
 					}
-				
 				}
 				if(!$find){
 					$error.="This template ". $targetTemplate->getName()." is not find for this host : ".$targetHost->getName()."!";
 				}else{
-
 					$listAllHostsTemplate = NagiosHostTemplateInheritancePeer::doSelect($c);
 					if(sizeof($listAllHostsTemplate)==0){ $this->addHostTemplateToHost("GENERIC_HOST", $hostName);}
 					$success .= "The template '".$templateHostName."' deleted.\n";
@@ -4787,6 +4750,7 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete contact to Hosts */
 	public function deleteContactToHost($contactName, $hostName, $exportConfiguration = FALSE){
 		$error = "";
@@ -4819,9 +4783,9 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete contactGroup to Hosts */
 	public function deleteContactGroupToHost($contactGroupName, $hostName, $exportConfiguration = FALSE){
 		$error = "";
@@ -4854,12 +4818,11 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - delEventBroker */
 	public function delEventBroker( $broker, $exportConfiguration = FALSE ){
-		
 		global $lilac;
 		$error = "";
 		$success = "";
@@ -4886,7 +4849,6 @@ class ObjectManager {
 
 		$logs = $this->getLogs($error, $success);
 		return $logs;
-
 	}
 
 	/* LILAC - Delete Host Group */
@@ -4899,13 +4861,10 @@ class ObjectManager {
         
         // Check for pre-existing contact with same name
 		if($lilac->hostgroup_exists( $hostGroupName )) {
-			
 			// All is well for error checking, add the hostgroup into the db.
 			$hostGroup = NagiosHostgroupPeer::getByName($hostGroupName);
 			$hostGroup->delete();				
-			
 			$success .= "Host group ".$hostGroupName." deleted\n";
-			
 			if( $exportConfiguration == TRUE )
 				$this->exportConfigurationToNagios($error, $success);
 		}
@@ -4913,10 +4872,8 @@ class ObjectManager {
 			$code=1;
 			$error .= "A host group with that name didn't exists!\n";
 		}
-        
-        
-        $logs = $this->getLogs($error, $success);
-        
+
+        $logs = $this->getLogs($error, $success);        
         return array("code"=>$code,"description"=>$logs);
 	}  
 
@@ -4953,7 +4910,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4990,7 +4946,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5026,7 +4981,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5062,7 +5016,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5098,7 +5051,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5134,7 +5086,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5170,7 +5121,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5206,7 +5156,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5242,7 +5191,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5278,7 +5226,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -5333,6 +5280,7 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 ########################################## OTHER
 	/* LILAC - Exporter */
     private function exportConfigurationToNagios(&$error = "", &$success = "", $jobName = "nagios"){
@@ -5354,26 +5302,24 @@ class ObjectManager {
             $exportJob->setStartTime(time());
             $exportJob->setStatus("Starting...");
             $exportJob->save();
-            exec("php /srv/eyesofnetwork/lilac/exporter/export.php " . $exportJob->getId() . " > /dev/null 2>&1", $tempOutput, $retVal);   
-            
+            exec("php /srv/eyesofnetwork/lilac/exporter/export.php " . $exportJob->getId() . " > /dev/null 2>&1", $tempOutput, $retVal);    
             $success .= $jobName." : Nagios configuration exported\n";
         }
         else{
             $error .= "ERROR during nagios configuration export\n";
         }
-            
-    }
+	}
+	
 	/* LILAC - Export Nagios Configuration */
 	public function exportConfiguration($jobName = "nagios"){
         $error = "";
         $success = "";
 		
-		$this->exportConfigurationToNagios($error, $success, $jobName);
-		
+		$this->exportConfigurationToNagios($error, $success, $jobName);	
 		$logs = $this->getLogs($error, $success);
-        
         return $logs;
 	}
+
 	/* LIVESTATUS - checkHost */
 	private function checkHost($type, $address, $port, $path){
 		$host = false;
@@ -5388,18 +5334,16 @@ class ObjectManager {
 	}
 	/* LIVESTATUS - List backends */
 	public function listNagiosBackends() {
-	
 		$backends = getEonConfig("sockets","array");
 		for($i=0;$i<count($backends);$i++) {
 			$backends_json[$i]["id"]=$i;
 			$backends_json[$i]["backend"]=$backends[$i];
 		}
 		return $backends_json;
-		
 	}
+
 	/* LIVESTATUS - List nagios objects */
-	public function listNagiosObjects( $object, $backendid = NULL, $columns = FALSE, $filters = FALSE ) {
-		
+	public function listNagiosObjects( $object, $backendid = NULL, $columns = FALSE, $filters = FALSE ) {	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
 
@@ -5419,7 +5363,6 @@ class ObjectManager {
 				continue;
 			}
 
-			
 			// check if socket is up
 			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
 				if($socket_port == -1){
@@ -5463,14 +5406,12 @@ class ObjectManager {
 		// response for the Ajax call
 		// print_r($result);
 		return $result;
-
 	}
+
 	/* LIVESTATUS - List nagios states */
 	public function listNagiosStates( $backendid = NULL, $filters = FALSE ) {
-	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
-
 		$result = array();
 		$result["hosts"]["pending"] = 0;
 		$result["hosts"]["up"] = 0;

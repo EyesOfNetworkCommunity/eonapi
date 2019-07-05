@@ -70,6 +70,8 @@ addRoute('post', '/modifyNotifierRule', 'modifyNotifierRule');
 addRoute('post', '/modifyNotifierMethod', 'modifyNotifierMethod');
 addRoute('post', '/modifyNotifierTimeperiod', 'modifyNotifierTimeperiod');
 
+addRoute('post','/exporterNotifierConfig', 'exporterNotifierConfig');
+
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
 addRoute('post', '/addContactToHost', 'addContactToHost');
