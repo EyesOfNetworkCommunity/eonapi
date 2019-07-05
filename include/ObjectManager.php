@@ -52,7 +52,7 @@ class ObjectManager {
 			$error .= implode("\n",$result_cmdact);
 			$code =1 ;
 		}else{
-			$success .= "Exportation success."
+			$success .= "Exportation success.";
 		}
 
 		$logs = $this->getLogs($error, $success);
