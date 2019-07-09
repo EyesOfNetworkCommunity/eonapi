@@ -1538,6 +1538,33 @@ class ObjectManager {
         return $result;
 	}
 
+	/* EONWEB - delete Group */
+	public function deleteEonGroup($group_name){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonGroupDto = new EonwebGroupDTO();
+		$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+		
+		if(!$eonGroup){
+			$error .= "| ERROR : This group did not exist in the database";
+			$code=1;
+		}else{
+			if($eonGroup->delete()){
+				$success.= "| SUCCESS : $group_name successfully deleted.";
+			}else{
+				$error .= "| ERROR : $group_name faile to be deleted";
+				$code=1;
+			}
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+
+	}
+
 	/* EONWEB - Modify Group */
 	public function modifyEonGroup($group_name, $new_group_name=NULL, $group_descr=NULL, $is_ldap_group=NULL, $group_right=NULL){
 		$error = "";

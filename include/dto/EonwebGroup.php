@@ -58,7 +58,7 @@ class EonwebGroup {
      * Delete in databases the object
      */
     function delete(){
-        return $this->deleteEonwebGroup($this->group_id);
+        return $this->eonwebGroupDAO->deleteEonwebGroup($this->group_id);
     }
 
 
