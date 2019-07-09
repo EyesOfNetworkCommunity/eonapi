@@ -117,8 +117,12 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `createHostTemplate` | POST | [**templateHostName, templateHostDescription="",exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new nagios host template. |
 | `createHostDowntime`| POST | [**hostName, comment, startTime, endTime, user, fixed=1, duration=1000**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a Host's downtime |
 | `createServicesDowntime`| POST | [**hostName, serviceName, comment, startTime, endTime, user, fixed=1, duration=1000 , childHostAction = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a Service's downtime |
-| `createHostGroup` | POST | [**hostGroupName, &error = "", &success = "", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
+| `createHostGroup` | POST | [**hostGroupName, description="host group", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Host Group |
+| `createServiceGroup` | POST | [**serviceGroupName, description="service group", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Service Group |
+| `createContactGroup` | POST | [**contactGroupName, description="contact group", exportConfiguration = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Create a contact Group |
 | `createServiceTemplate` | POST | [**templateName, templateDescription="", servicesGroup=array(), contacts=array(), contactsGroup=array(), checkCommand, checkCommandParameters=array(), templatesToInherit=array(), exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new Service template, if you didn't give templatesToInherit it will provide "GENERIC_SERVICE" as Inheritance template. The argument witch is by default array take names of objects they are bind. |
+| `createServiceToHost` | POST | [**hostName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a service in the given host. (allow to create a service with optional inherited template, optional command and parameters in a specified host) See example bellow for utilisation |
+| `createServiceToHostTemplate` | POST | [**hostTemplateName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a service in the given host template. (allow to create a service with optional inherited template, optional command and parameters in a specified host template) |
 | `addContactToHost` | POST | [**contactName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
 | `addContactGroupToHost` | POST | [**contactGroupName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
 | `addHostTemplateToHost` | POST | [**templateHostName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a host template to a nagios host. |
@@ -126,7 +130,6 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addContactNotificationCommandToContact` | POST | [**contactName, commandName, type_command, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact notification command to a nagios contact. |
 | `addContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact to a nagios host template. |
 | `addServiceTemplateFromService` | POST | [**serviceTemplateName, serviceName, hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service template in the given service of the specified host. |
-| `addServiceToHost` | POST | [**hostName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a service in the given host. (allow to create a service with optional inherited template, optional command and parameters in a specified host) See example bellow for utilisation |
 | `addContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Add a contact group to a nagios host template. |
 | `addCommand` | POST | [**commandName,commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a command to Nagios.returncode=0 or 1 if failed |
 | `addCheckCommandParameterToServiceTemplate` | POST | [**templateServiceName,parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add command parameter to a service template.returncode=0 or 1 if failed /!\parameters is a list |
@@ -152,7 +155,8 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `listNagiosObjects` | POST | [**object, backendid = NULL, columns = FALSE, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return nagios object like services, hosts, and their respective informations on which you can filter |
 | `listNagiosStates` | POST | [**backendid = NULL, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return states of hosts and services  |
 | `modifyContact` | POST | [**contactName, newContactName="", contactAlias="",contactMail="",contactPager="",contactGroup="",serviceNotificationCommand="",hostNotificationCommand="", $options=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given contact. if contact group is already set the membershib will be deleted, The same happen for contact notification command.  |
-| `modifyService` | POST | [**serviceName, hostName, column=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
+| `modifyServiceFromHostTemplate` | POST | [**hostTemplateName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
+| `modifyServiceFromHost` | POST | [**hostName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
 | `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs","changes":numerOfchanges] | modify a command to Nagios. returncode=0 or 1 if failed or nothing change |
 | `modifyNagiosRessources` | POST | [**ressources**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify ressources represented in nagios by $USERi$, you passed an collection of "Useri":"value" or "" if you want to remove a ressource an example is given bellow |
 | `modifyCheckCommandToServiceTemplate` | POST | [**commandName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify Modify the check command associate with the given service template. returnCode=0 for data updated and 1 if it has failed  |
@@ -162,6 +166,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteServiceDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios service downtime. |
 | `deleteContactGroup` | POST | [**contactGroupName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact Group  |
 | `deleteService` | POST | [**serviceName, hostName**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | delete the given service  |
+| `deleteServiceByHostTemplate` | POST | [**serviceName, hostTemplateName**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | delete the given service  |
 | `deleteServiceTemplate` | POST | [**templateName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete the given Service template |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a command to Nagios. |
 | `deleteHost` | POST | [**hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a nagios host. |
@@ -206,31 +211,7 @@ To illustrate the EON API features tab, you will find a few implementation examp
 }
 ```
 
-* /createService
-```json 
-{
-	"hostName": "HostName",
-	"services": {
-                "Service1": [
-                    "TEMPLATE_SERVICE_1",
-                    "127.0.0.1",
-                    "eth0",
-                    "1000000",
-                    "100",
-                    "110"
-                ],
-                "Service2": [
-                    "TEMPLATE_SERVICE_2",
-                    "3000",
-                    "80",
-                    "5000",
-                    "90"
-                ]
-        },
-	"exportConfiguration": true
-}
 
-```
 
 * /createUser
 ```json 
@@ -343,25 +324,25 @@ To illustrate the EON API features tab, you will find a few implementation examp
 }
 ```
 
-* /modifyService 
+* /modifyServiceFromHost
 ```json 
 {
-	"serviceName": "foe",
 	"hostName":"doe",
-	"columns":{
-		"DisplayName":"erased",
-		"CheckCommand":"check_api_eon",
-		"IsVolatile":"enable"
+	"service":{
+		"name":"Foe",
+	  "inheritance":"EMC", 
+    "command":"check_ftp",
+    "parameters":["toto","titi"] 
   	}
 }
 ```
-* /addServiceToHost
+* /createServiceToHost
 ```json 
 {
   "hostName":"localhost",
   "service": {
     "name":"Foe",
-	"inheritance":"EMC", //optinal and the template have to exist
+	  "inheritance":"EMC", //optinal and the template have to exist
     "command":"check_ftp", //optional and the command have to exist
     "parameters":["toto","titi"] //optional
   }
