@@ -89,6 +89,10 @@ class NotifierMethodDAO {
                 'type'  => $newType,
                 'line'  => $newLine
             ));
+
+            if($request->rowCount()>0){
+                return true;
+            }else return false;
         }
         catch (PDOException $e){
             echo $e;

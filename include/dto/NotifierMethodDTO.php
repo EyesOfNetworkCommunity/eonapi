@@ -42,10 +42,8 @@ class NotifierMethodDTO {
             $method->setName($result["name"]);
             $method->setType($result["type"]);
             $method->setLine($result["line"]);
-
             return $method;
         } else return false;
-        
     }
 
     /**
@@ -59,10 +57,8 @@ class NotifierMethodDTO {
             $method->setName($result["name"]);
             $method->setType($result["type"]);
             $method->setLine($result["line"]);
-
             return $method;
         } else return false;
-        
     }
 }
 

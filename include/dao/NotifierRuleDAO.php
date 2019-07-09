@@ -164,6 +164,10 @@ class NotifierRuleDAO {
                 }
             }
 
+            if($request->rowCount()>0){
+                return true;
+            }else return false;
+
         }
         catch (PDOException $e){
             echo $e->getMessage();

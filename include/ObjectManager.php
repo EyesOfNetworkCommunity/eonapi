@@ -22,7 +22,8 @@ include("/srv/eyesofnetwork/eonweb/include/livestatus/Client.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
 
-
+include_once("dto/EonwebGroupDTO.php");
+include_once("dto/EonwebGroup.php");
 include_once("dto/NotifierMethodDTO.php");
 include_once("dto/NotifierRuleDTO.php");
 include_once("dto/NotifierTimeperiodDTO.php");
@@ -1486,6 +1487,111 @@ class ObjectManager {
         return $result;
 	}
 
+	/* EONWEB - Create Group */
+	public function createEonGroup($group_name,$group_descr="", $is_ldap_group=false, $group_right=array()){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonGroupDto = new EonwebGroupDTO();
+		$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+		
+		if(!$eonGroup){
+			$eonGroup = new EonwebGroup();
+
+			$eonGroup->setGroup_name($group_name);
+			if($group_descr == "") $group_descr = $group_name;
+			$eonGroup->setGroup_description($group_descr);
+			if(!empty($group_right)){
+				$tabright = array();
+				foreach($group_right as $key=>$value){
+					$tabright[$key] = $value;
+				}
+				$eonGroup->setGroup_right($tabright);
+			}
+
+			if($is_ldap_group){
+				$eonGroup->setGroup_type(1);
+				$eonGroup->setGroup_dn($eonGroupDto->getDN($group_name));
+			}else{
+				$eonGroup->setGroup_type(0);
+			}
+			if($eonGroup->save()){
+				$success .= "| SUCCESS : the group $group_name successfuly inserted in the database. ID = ".$eonGroup->getGroup_id();
+				$result = $this->createContactGroup($group_name,$eonGroup->getGroup_description());
+				if($result["code"]==0){
+					$success .= " | SUCCESS : The contact group lilac linked to the eonweb group had been created";
+				}else{
+					$error .= " | WARNING: unable to create th lilac contact group. Forward error :  ".$result["description"];
+				}
+			}else{
+				$error .= "| ERROR : Unable to save $group_name in the database.";
+				$code = 1;
+			}
+		}else{
+			$error .= "| ERROR : This group already exist in the database";
+			$code=1;
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* EONWEB - Modify Group */
+	public function modifyEonGroup($group_name, $new_group_name=NULL, $group_descr=NULL, $is_ldap_group=NULL, $group_right=NULL){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonGroupDto = new EonwebGroupDTO();
+		$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+		
+		if(!$eonGroup){
+			$error .= "| ERROR : This group did not exist yet in the database";
+			$code=1;
+		}else{
+			if(isset($new_group_name)) $eonGroup->setGroup_name($new_group_name);
+			if(isset($group_descr)) $eonGroup->setGroup_description($group_descr);
+
+			if(isset($group_right)){
+				$tabright = array();
+				foreach($group_right as $key=>$value){
+					$tabright[$key] = $value;
+				}
+				$eonGroup->setGroup_right($tabright);
+			}
+
+			if(isset($is_ldap_group)){
+				if($eonGroup->getGroup_type() == 0 and $is_ldap_group){
+					$eonGroup->setGroup_type(1);
+					$eonGroup->setGroup_dn($eonGroupDto->getDN($eonGroup->getGroup_name()));
+				}elseif($eonGroup->getGroup_type() == 1 and !$is_ldap_group){
+					$eonGroup->setGroup_type(0);
+					$eonGroup->setGroup_dn(NULL);
+				}
+			}
+
+			if($eonGroup->save()){
+				$success .= "| SUCCESS : the group '".$eonGroup->getGroup_name()."' successfuly inserted in the database. ID = ".$eonGroup->getGroup_id();
+				$result = $this->modifyContactGroup($group_name,$eonGroup->getGroup_name(),$eonGroup->getGroup_description());
+				if($result["code"]==0){
+					$success .= " | SUCCESS : The contact group lilac linked to the eonweb group had been modify";
+				}else{
+					$error .= " | WARNING: unable to modify th lilac contact group. Forward error :  ".$result["description"];
+				}
+			}else{
+				$error .= "| ERROR : Unable to modify $group_name in the database.";
+				$code = 1;
+			}
+			
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
     /* EONWEB - Create User */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
         //Lower case
@@ -1568,11 +1674,7 @@ class ObjectManager {
         return $logs;
 	}
 
-	/* EONWEB - Create Group */
-	public function createGroup($group_name,$group_descr,$group_type,$ldap_group_name){
-		
-		return "in progres";
-	}
+	
 	
 	public function createMutipleHosts($hosts, $exportConfiguration=false){
 		foreach($hosts as $host){
@@ -3083,6 +3185,47 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 ########################################## MODIFY
+
+	/* LILAC - modify Contact Group */
+    public function modifyContactGroup( $contactGroupName, $newContactGroupName=NULL, $description=NULL, $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        $contactGroup = NULL;
+		
+		$contactGroup = NagiosContactGroupPeer::getByName($contactGroupName);
+        // Check for pre-existing contact with same name
+		if($contactGroup) {
+			if(isset($newContactGroupName)){
+				if($lilac->contactgroup_exists( $newContactGroupName )) {
+					$code = 1;
+					$error .= "A Contact group with that name already exists!\n";
+				}else{
+					$contactGroup->setName( $newContactGroupName );	
+				}
+			}
+
+			if(isset($description))
+				$contactGroup->setAlias( $description );
+			
+			
+			$contactGroup->save();				
+			
+			$success .= "Contact group ".$contactGroupName." modify\n";
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		}
+		else {
+			$code = 1;
+			$error .= "This contact group does not exist yet!\n";
+		}
+        
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	} 
 
 	/* LILAC - modify contact */ 
 	public function modifyContact($contactName,$newContactName="", $contactAlias="", $contactMail="", $contactPager="", $contactGroup="" ,$serviceNotificationCommand="",$hostNotificationCommand="", $options=NULL, $exportConfiguration = FALSE ){
