@@ -22,6 +22,8 @@ include("/srv/eyesofnetwork/eonweb/include/livestatus/Client.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
 
+include_once("dto/EonwebUserDTO.php");
+include_once("dto/EonwebUser.php");
 include_once("dto/EonwebGroupDTO.php");
 include_once("dto/EonwebGroup.php");
 include_once("dto/NotifierMethodDTO.php");
@@ -42,6 +44,7 @@ class ObjectManager {
 		$request = \Slim\Slim::getInstance()->request();
 		$this->authUser = $request->get('username');  
 	}
+
 ######################################### NOTIFIER CONTROLEUR
 	/*---------EXPORTER------*/
 	public function exporterNotifierConfig(){
@@ -1619,7 +1622,77 @@ class ObjectManager {
         return $result;
 	}
 
-    /* EONWEB - Create User */
+	/* EONWEB - Create User */
+	public function createEonUser($user_mail="", $user_name,$user_descr="",$user_group, $user_password, $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonUserDto = new EonwebUserDTO();
+		$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+		
+		if(!$eonUser){
+			$eonUser = new EonwebUser();
+            $eonUser->setUser_name($user_name);
+            $eonUser->setUser_description($user_descr);
+			$eonUser->setUser_password($user_password);
+			
+			if($is_ldap_user){
+				$eonUser->setUser_type(1);
+			}else{
+				$eonUser->setUser_type(0);
+			}
+
+            $eonUser->setUser_location($user_location);
+            $eonUser->setUser_limitation($user_limitation);
+			$eonUser->setUser_language($user_language);
+			$eonGroupDto = new EonwebGroupDTO();
+			$eonGroup = $eonGroupDto->getEonwebGroupByName($user_group);
+			
+			if(!$eonGroup){
+				$error .= " | ERROR : the specified group does not exist.";
+				$code = 1 ;
+			}else{
+				$eonUser->setGroup_id($eonGroup->getGroup_id());
+			}
+
+			$eonUser->setIn_cacti($in_cacti);
+			$eonUser->setIn_nagvis($in_nagvis);
+			
+			if($in_nagvis != false){
+				if(!$eonUserDto->getNagvisGroupIdByName($nagvis_group)){
+					$eonUser->setNagvis_group("Guests");
+				}else{
+					$eonUser->setNagvis_group($nagvis_group);
+				}
+			}
+
+			if($code == 0 ){
+				if($eonUser->save()){
+					$success .= " | SUCCESS : A new user have been successfully inserted into the databases : [ID = ".$eonUser->getUser_id()."]";
+					//Create user in lilac
+					$result = $this->createContact($user_name, $user_descr, $user_mail, "", $user_group);
+					if($result["code"]==0){
+						$success .= "| SUCCESS : lilac contact have been created. ";
+					}else{
+						$error .= " | WARNING : An error occured during lilac contact creation. Forward error : ".$result["description"];
+					}
+				}else{
+					$error .= " | ERROR : an unexpected error occured during the insertion.";
+					$code = 1; 
+				}
+			}
+		}else{
+			$error .= "| ERROR : this user $user_name already exist. ";
+			$code = 1; 
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+    /* EONWEB - Create User @DEPRECATE */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
         //Lower case
         $userName = strtolower($userName);

@@ -112,6 +112,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getContact` | POST | [**contactName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact otherwise it return all the contact|
 | `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
 | `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
+| `createEonUser` | POST | [**user_mail, user_name,user_descr="",user_group, user_password, is_ldap_user=false, user_location="", user_limitation=0, user_language = 0, in_nagvis = false, in_cacti = false, nagvis_group = false**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact, a eon user and possibly cacti and nagvis user if necessary. ie bellow |
 | `createEonGroup` | POST | [**group_name, group_descr="",is_ldap_group=false, group_right=array()**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact group and a eon group. The user could be limited or admin, If you decide to changed rights, you must provide the complete array like in the ie bellow |
 | `modifyEonGroup` | POST | [**group_name,new_group_name=NULL, group_descr=NULL,is_ldap_group=NULL, group_right=NULL**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify a nagios contact group and a eon group. The user could be limited. If you decide to changed rights, you must provide the complete array like in the ie of 'createEonGroup'|
 | `deleteEonGroup` | POST | [**group_name**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a eon group.|
@@ -234,6 +235,21 @@ To illustrate the EON API features tab, you will find a few implementation examp
       "administration":0,
       "help":1
     }
+}
+```
+
+* /createEonUser
+```json 
+{
+  "user_name":"cheften",
+  "user_mail":"cheften@test.com", 
+  "user_group":"admins",          
+  "user_descr":"commande",        //NOT MANDATORY
+  "user_password":"cheften",      //MANDATORY
+  "user_language":"english",      //navigator_language by DEFAULT
+  "in_cacti": true,               //false by DEFAULT
+  "in_nagvis": true,              //false by DEFAULT
+  "nagvis_group":"Administrators" //GUEST BY DEFAULT
 }
 ```
 

@@ -195,7 +195,11 @@ class EonwebGroupDAO {
             ));
 
             $result = $request->fetch();
-            if(isset($result["dn"])) return $result;
+            // ===============================
+            // @TODO require a test
+            // return $result or $result["dn"]
+            // ===============================
+            if(isset($result["dn"])) return $result["dn"];
             return false;
             
         }catch (PDOException $e){

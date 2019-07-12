@@ -153,8 +153,12 @@ addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
 //==============================================================================
 //eonweb
 addRoute('post', '/createEonGroup', 'createEonGroup');
+addRoute('post', '/createEonUser', 'createEonUser');
+
 addRoute('post', '/modifyEonGroup', 'modifyEonGroup');
+
 addRoute('post', '/deleteEonGroup', 'deleteEonGroup');
+
 
 
 //notifier
