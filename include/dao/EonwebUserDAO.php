@@ -42,6 +42,7 @@ class EonwebUserDAO {
     protected $request_delete_usr_nagvis            = "DELETE FROM users WHERE userId = :nagvis_id";
     protected $request_delete_usr_nagvis_right      = "DELETE FROM users2roles WHERE userId = :nagvis_id";
 
+    protected $request_select_one_usr_by_id         = "SELECT user_id, user_name, user_descr, group_id, user_passwd, user_type, user_location, user_limitation, user_language FROM users WHERE user_id = :user_id";
     protected $request_select_one_usr               = "SELECT user_id, user_name, user_descr, group_id, user_passwd, user_type, user_location, user_limitation, user_language FROM users WHERE user_name = :user_name";
     protected $request_select_passwd                = "SELECT user_passwd FROM users WHERE user_id = :user_id";
     protected $request_select_cacti_id              = "SELECT id FROM user_auth WHERE username = :user_name";
@@ -150,7 +151,6 @@ class EonwebUserDAO {
             
             $request = NULL;
             $nagvis_group_id =$this->selectNagvisRoleIdByName($nagvis_group);
-            var_dump($nagvis_group_id);
             $request = $this->connexion_nagvis->prepare($this->request_create_usr_nagvis_right);
             $request->execute(array(
                  'nagvis_id'        => $user_id,
@@ -183,22 +183,26 @@ class EonwebUserDAO {
             $request->execute(array(
                  'nagvis_id'        => $nagvis_id,
                  'user_name'        => $user_name,
-                 'sha_password'     => $sha_password
+                 'password'         => $sha_password
             ));
-            
+            $modification = $request->rowCount();
             $request = NULL;
             $nagvis_group_id =$this->selectNagvisRoleIdByName($nagvis_group);
             $request = $this->connexion_nagvis->prepare($this->request_update_usr_nagvis_right);
             $request->execute(array(
                  'nagvis_id'        => $nagvis_id,
-                 'nagvis_group'     => $nagvis_group_id
+                 'nagvis_role_id'   => $nagvis_group_id
             ));
+            $modification = $modification + $request->rowCount();
+            if($modification>1){
+                return true;
+            }else return false;
         }
         catch (PDOException $e){
             echo $e->getMessage();
             return false;
         }
-        return $user_id;
+        
     }
 
     /**
@@ -324,19 +328,20 @@ class EonwebUserDAO {
      */
     public function updateEonwebUser($user_id,$user_name,$user_descr,$user_group, $user_password, $user_type, $user_location, $user_limitation, $in_nagvis, $in_cacti, $nagvis_group, $user_language){
         try{
+            $old_user = $this->selectOneEonwebUserById($user_id);
             $old_pwd = $this->getUserPasswd($user_id);
             //Verify if password is changed
-            if($old_pwd != false && $user_password != $old_pwd){ 
+            if($old_pwd != false && md5($user_password) != $old_pwd){ 
                 $user_password = md5($user_password);
             }
                 
-            $request = $this->connexion->prepare($this->request_create_usr);
+            $request = $this->connexion->prepare($this->request_update_usr);
             $request->execute(array(
                  'user_id'          => $user_id,
                  'user_name'        => $user_name,
                  'user_descr'       => $user_descr,
                  'user_group'       => $user_group,
-                 'user_password'    => $user_password,
+                 'passwd_temp'      => $user_password,
                  'user_type'        => $user_type,
                  'user_location'    => $user_location,
                  'user_limitation'  => $user_limitation,
@@ -344,41 +349,39 @@ class EonwebUserDAO {
             ));
 
             if($in_cacti){
-                $cacti_id = $this->selectCactiId($user_name);
+                $cacti_id = $this->selectCactiId($old_user["user_name"]);
                 if(!$cacti_id){
                     $result_cacti = $this->createCactiUser($user_name, $user_descr);
                 }else{
-                    $result_cacti = $this->updateCactiUser($cacti_id, $user_name);
+                    $result_cacti = $this->updateCactiUser((int)$cacti_id, $user_name);
                 }
                 
             }else{
-                $cacti_id = $this->selectCactiId($user_name);
+                $cacti_id = $this->selectCactiId($old_user["user_name"]);
                 if($cacti_id){
-                    $result_cacti = $this->deleteCactiUser($cacti_id);
+                    $result_cacti = $this->deleteCactiUser((int)$cacti_id);
                 }
             }
 
             if($in_nagvis){
-                $nagvis_id = $this->selectNagvisId($user_name);
+                $nagvis_id = $this->selectNagvisId($old_user["user_name"]);
                 if(!$nagvis_id){
                     $result_nagvis = $this->createNagvisUser($user_name, $user_password, $nagvis_group);
 
                 }else{
-                    $result_nagvis= $this->updateNagvisUser($nagvis_id, $user_name, $user_password, $nagvis_group);
+                    $result_nagvis= $this->updateNagvisUser((int)$nagvis_id, $user_name, $user_password, $nagvis_group);
                 }
             }else{
-                $nagvis_id = $this->selectNagvisId($user_name);
+                $nagvis_id = $this->selectNagvisId($old_user["user_name"]);
                 if($nagvis_id){
-                    $result_nagvis = $this->deleteNagvisUser($nagvis_id);
+                    $result_nagvis = $this->deleteNagvisUser((int)$nagvis_id);
                 }
             }
-
-            if($request->rowCount()>0){
-                return true;
-            }else return false;
+            if($request->rowCount()>0) return true;
+            else return false;
         }
         catch (PDOException $e){
-            echo $e->getMessage();
+            var_dump($e);
             return false;
         }
     }
@@ -392,7 +395,7 @@ class EonwebUserDAO {
 
             $result = $request->fetch();
             if(isset($result["id"])) return $result["id"];
-            return false;
+            else return false;
             
         }catch (PDOException $e){
             echo $e->getMessage();
@@ -408,8 +411,8 @@ class EonwebUserDAO {
             ));
 
             $result = $request->fetch();
-            if(isset($result["userId"])) return $result["userId"];
-            return false;
+            if(isset($result["userId"])) return (int)$result["userId"];
+            else return false;
             
         }catch (PDOException $e){
             echo $e->getMessage();
@@ -428,7 +431,7 @@ class EonwebUserDAO {
             $request->closeCursor();
 
             if(!empty($result)) return $result;
-            return false;
+            else return false;
             
         }catch (PDOException $e){
             echo $e->getMessage();
@@ -444,8 +447,8 @@ class EonwebUserDAO {
             ));
             
             $result = $request->fetch();
-            if(!empty($result)) return $result;
-            return false;
+            if(isset($result)) return $result;
+            else return false;
             
         }catch (PDOException $e){
             echo $e->getMessage();
@@ -461,9 +464,8 @@ class EonwebUserDAO {
             ));
             
             $result = $request->fetch();
-            var_dump($result);
             if(isset($result)) return $result["roleId"];
-            return false;
+            else return false;
             
         }catch (PDOException $e){
             echo $e->getMessage();
@@ -485,7 +487,7 @@ class EonwebUserDAO {
 
             $result = $request->fetch();
             if(isset($result["user_passwd"])) return $result["user_passwd"];
-            return false;
+            else return false;
             
         }catch (PDOException $e){
             echo $e->getMessage();
@@ -507,7 +509,28 @@ class EonwebUserDAO {
 
             $result = $request->fetch();
             if(isset($result["user_id"])) return $result;
+            else return false;
+        }catch (PDOException $e){
+            echo $e->getMessage();
             return false;
+        }
+    }
+
+    /**
+     * Return Elements of the given user name false otherwise.
+     * 
+     * @return dict
+     */
+    public function selectOneEonwebUserById($id){
+        try{
+            $request = $this->connexion->prepare($this->request_select_one_usr_by_id);
+            $request->execute(array(
+                'user_id' => $id
+            ));
+
+            $result = $request->fetch();
+            if(isset($result["user_id"])) return $result;
+            else return false;
         }catch (PDOException $e){
             echo $e->getMessage();
             return false;

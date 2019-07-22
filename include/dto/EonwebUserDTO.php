@@ -57,13 +57,13 @@ class EonwebUserDTO {
             $eonUser->setUser_location($result["user_location"]);
             $eonUser->setUser_limitation($result["user_limitation"]);
             $eonUser->setUser_language($result["user_language"]);
-            $nagvis_id = $this->eonwebUserDAO->selectNagvisId($user_name);
+            $nagvis_id = $this->eonwebUserDAO->selectNagvisId($result["user_name"]);
             if($nagvis_id){
                 $eonUser->setIn_nagvis(true);
                 $role = $this->eonwebUserDAO->selectNagvisRoleOfOne($nagvis_id);
                 $eonUser->setNagvis_group($role["name"]);
             }
-            $cacti_id = $this->eonwebUserDAO->selectCactiId($user_name);
+            $cacti_id = $this->eonwebUserDAO->selectCactiId($result["user_name"]);
             if($cacti_id){
                 $eonUser->setIn_cacti(true);
             }

@@ -1541,6 +1541,17 @@ class ObjectManager {
         return $result;
 	}
 
+	/* EONWEB - delete user*/
+	public function deleteEonUser($user_name){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
 	/* EONWEB - delete Group */
 	public function deleteEonGroup($group_name){
 		$error = "";
@@ -1659,7 +1670,7 @@ class ObjectManager {
 			$eonUser->setIn_cacti($in_cacti);
 			$eonUser->setIn_nagvis($in_nagvis);
 			
-			if($in_nagvis != false){
+			if($in_nagvis){
 				if(!$eonUserDto->getNagvisGroupIdByName($nagvis_group)){
 					$eonUser->setNagvis_group("Guests");
 				}else{
@@ -1685,6 +1696,97 @@ class ObjectManager {
 		}else{
 			$error .= "| ERROR : this user $user_name already exist. ";
 			$code = 1; 
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* EONWEB - Modify User */
+	public function modifyEonUser($user_name,$new_user_name=NULL,$user_mail="",$user_descr=NULL,$user_group=NULL, $user_password=NULL, $is_ldap_user=NULL, $user_location=NULL, $user_limitation=NULL, $user_language=NULL, $in_nagvis = NULL, $in_cacti = NULL, $nagvis_group =NULL){
+		$error = "";
+		$success = "";
+		$code = 0;
+		$lilac_user_group="";
+		$eonUserDto = new EonwebUserDTO();
+		$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+		
+		if(!$eonUser){
+			$error .= "| ERROR : this user $user_name does not exist yet. ";
+			$code = 1; 
+            
+		}else{
+			if(isset($new_user_name)){
+				if(!$eonUserDto->getEonwebUserByName($new_user_name))
+					$eonUser->setUser_name($new_user_name);
+				else{
+					$error .= "| WARNING : The new name already used. ";
+				}
+			}
+			
+			if(isset($user_descr))
+            	$eonUser->setUser_description($user_descr);
+
+			if(isset($user_password))
+				$eonUser->setUser_password($user_password);
+			
+			if(isset($is_ldap_user)){
+				if($is_ldap_user){
+					$eonUser->setUser_type(1);
+				}else{
+					$eonUser->setUser_type(0);
+				}
+			}
+
+			if(isset($use_location))
+            	$eonUser->setUser_location($user_location);
+
+			if(isset($user_limitation))	
+				$eonUser->setUser_limitation($user_limitation);
+			
+			if(isset($user_language))
+				$eonUser->setUser_language($user_language);
+			
+			if(isset($user_group)){
+				$lilac_user_group=$user_group;
+				$eonGroupDto = new EonwebGroupDTO();
+				$eonGroup = $eonGroupDto->getEonwebGroupByName($user_group);
+				if(!$eonGroup){
+					$error .= " | ERROR : the specified group does not exist.";
+				}else{
+					$eonUser->setGroup_id($eonGroup->getGroup_id());
+				}
+			}
+			
+			if(isset($in_cacti))
+				$eonUser->setIn_cacti($in_cacti);
+			
+			if(isset($in_nagvis)){
+				$eonUser->setIn_nagvis($in_nagvis);
+			}
+
+			if(isset($nagvis_group)){
+				if($eonUserDto->getNagvisGroupIdByName($nagvis_group)){
+					$eonUser->setNagvis_group($nagvis_group);
+				}
+			}
+			if($code == 0 ){
+				if($eonUser->save()){
+					$success .= " | SUCCESS : The user have been successfully modified into the databases : [ID = ".$eonUser->getUser_id()."]";
+					//modify user in lilac
+					$result = $this->modifyContact($user_name,$eonUser->getUser_name(), $eonUser->getUser_description(), $user_mail, "", $lilac_user_group);
+					
+					if($result["code"]==0){
+						$success .= " | SUCCESS : lilac contact have been modified. ";
+					}else{
+						$error .= " | WARNING : An error occured during lilac contact modification. Forward error : ".$result["description"];
+					}
+				}else{
+					$error .= " | ERROR : an unexpected error occured during the update.";
+					$code = 1; 
+				}
+			}
 		}
 
 		$logs = $this->getLogs($error, $success);

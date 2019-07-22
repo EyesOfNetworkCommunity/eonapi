@@ -155,10 +155,11 @@ addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
 addRoute('post', '/createEonGroup', 'createEonGroup');
 addRoute('post', '/createEonUser', 'createEonUser');
 
-addRoute('post', '/modifyEonGroup', 'modifyEonGroup');
+addRoute('post', '/modifyEonGroup', 'modifyEonGroup'); 
+addRoute('post', '/modifyEonUser', 'modifyEonUser');
 
 addRoute('post', '/deleteEonGroup', 'deleteEonGroup');
-
+addRoute('post', '/deleteEonUser', 'deleteEonUser'); 
 
 
 //notifier
