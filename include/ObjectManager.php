@@ -1547,6 +1547,21 @@ class ObjectManager {
 		$success = "";
 		$code = 0;
 
+		$eonUserDto = new EonwebUserDTO();
+		$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+		
+		if(!$eonUser){
+			$error .= "| ERROR : This user did not exist in the database";
+			$code=1;
+		}else{
+			if($eonUser->delete()){
+				$success.= "| SUCCESS : $user_name successfully deleted.";
+			}else{
+				$error .= "| ERROR : $user_name faile to be deleted";
+				$code=1;
+			}
+		}
+
 		$logs = $this->getLogs($error, $success);
 		$result=array("code"=>$code,"description"=>$logs);
         return $result;

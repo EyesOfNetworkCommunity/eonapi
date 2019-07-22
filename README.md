@@ -114,8 +114,10 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
 | `createEonUser` | POST | [**user_mail, user_name,user_descr="",user_group, user_password, is_ldap_user=false, user_location="", user_limitation=0, user_language = 0, in_nagvis = false, in_cacti = false, nagvis_group = false**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact, a eon user and possibly cacti and nagvis user if necessary. ie bellow |
 | `createEonGroup` | POST | [**group_name, group_descr="",is_ldap_group=false, group_right=array()**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact group and a eon group. The user could be limited or admin, If you decide to changed rights, you must provide the complete array like in the ie bellow |
-| `modifyEonGroup` | POST | [**group_name,new_group_name=NULL, group_descr=NULL,is_ldap_group=NULL, group_right=NULL**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify a nagios contact group and a eon group. The user could be limited. If you decide to changed rights, you must provide the complete array like in the ie of 'createEonGroup'|
+| `modifyEonGroup` | POST | [**group_name,new_group_name=NULL, group_descr=NULL,is_ldap_group=NULL, group_right=NULL**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify a nagios contact group and a eon group. The user could be limited.|
+| `modifyEonUser` | POST | [**user_mail=NULL, user_name, new_user_name=NULL,user_descr=NULL,user_group=NULL, user_password=NULL, is_ldap_user=NULL, user_location=NULL, user_limitation=NULL, user_language = NULL, in_nagvis = NULL, in_cacti = NULL, nagvis_group = NULL**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify a nagios contact user, a eon user and possibly cacti and nagvis user if necessary. ie bellow |
 | `deleteEonGroup` | POST | [**group_name**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a eon group.|
+| `deleteEonUser` | POST | [**user_name**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a eon user and the remaining account in cacti, nagvis, and lilac.|
 | `createUser` | POST | [**userName, userMail, admin, filterName, filterValue, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
 | `createContact` | POST | [**contactName, contactMail, contactAlias="description", contactMail, contactPager, contactGroup, options, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact. In the options variables, you can set the same information than those given in the web interface. |
 | `createHostTemplate` | POST | [**templateHostName, templateHostDescription="",exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new nagios host template. |
@@ -250,6 +252,22 @@ To illustrate the EON API features tab, you will find a few implementation examp
   "in_cacti": true,               //false by DEFAULT
   "in_nagvis": true,              //false by DEFAULT
   "nagvis_group":"Administrators" //GUEST BY DEFAULT
+}
+```
+
+* /modifyEonUser
+```json 
+{
+  "user_name":"cheften",
+  "new_user_name":"sous-cheften", //NOT MANDATORY
+  "user_mail":"cheften@test.com", //NOT MANDATORY
+  "user_group":"admins",          //NOT MANDATORY
+  "user_descr":"apply",           //NOT MANDATORY
+  "user_password":"cheften",      //MANDATORY
+  "user_language":"french",       //navigator_language by DEFAULT
+  "in_cacti": true,               //false by DEFAULT
+  "in_nagvis": true,              //false by DEFAULT
+  "nagvis_group":"Guests" //GUEST BY DEFAULT
 }
 ```
 
