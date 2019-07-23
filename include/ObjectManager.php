@@ -2596,9 +2596,11 @@ class ObjectManager {
 		if(empty($error)) {	
 			try {
 				// service interface
-				
 				$tempService = new NagiosService();
 				$tempService->setDescription($service->name);
+				if(isset($service->displayName)){
+					$tempService->setDisplayName($service->displayName);
+				}
 				$tempService->setHostTemplate($template->getId());
 				$tempService->save();
 				$success .= "Service $service->name added\n";
@@ -2678,6 +2680,9 @@ class ObjectManager {
 				// service interface
 				$tempService = new NagiosService();
 				$tempService->setDescription($service->name);
+				if(isset($service->displayName)){
+					$tempService->setDisplayName($service->displayName);
+				}
 				$tempService->setHost($host->getId());
 				$tempService->save();
 				$success .= "Service $service->name added\n";
@@ -3749,6 +3754,10 @@ class ObjectManager {
 					$changed++;
 				}
 			}
+			if(isset($service->displayName)){
+				$nagioService->setDisplayName($service->displayName);
+				$nagioService->save();
+			}
 			if(isset($service->new_name) && $nagioService->getDescription()!==$service->new_name)
 			{
 				$nagioService->setDescription($service->new_name);
@@ -3812,6 +3821,11 @@ class ObjectManager {
 					$changed++;
 				}
 			}
+			if(isset($service->displayName)){
+				$nagioService->setDisplayName($service->displayName);
+				$nagioService->save();
+			}
+
 			if(isset($service->new_name) && $nagioService->getDescription()!==$service->new_name)
 			{
 				$nagioService->setDescription($service->new_name);
