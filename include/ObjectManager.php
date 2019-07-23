@@ -2016,6 +2016,7 @@ class ObjectManager {
 		if( empty($error) ) {
 			//We prepared the list of existing custom arg in the Host
 			foreach($customArguments as $key=>$value){
+				$success .= "[$key => $value] ";
 				$c = new Criteria();
 				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
 				$c->add(NagiosHostCustomObjectVarPeer::HOST_TEMPLATE, $templateHost->getId());
@@ -3402,6 +3403,41 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 ########################################## MODIFY
+
+	/* LILAC - Modify Host Template */
+    public function modifyHostTemplate($templateHostName, $newTemplateHostName = Null, $templateHostDescription=Null, $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        
+        
+        // Check for pre-existing host template with same name        
+        $nhtp = new NagiosHostTemplatePeer;
+		$template_host = $nhtp->getByName($templateHostName);
+		if($template_host) {
+			if(isset($newTemplateHostName)){
+				$template_host->setName( $newTemplateHostName );
+			}
+			if(isset($templateHostDescription)){
+				$template_host->setDescription( $templateHostDescription );
+			}
+            $template_host->save();
+            
+            $success .= "Host template ".$templateHostName." updated\n";
+		}else{
+			$code=1;
+			$error .= "A host template with that name did not exist yet!\n";
+		}
+        
+        // Export
+        if( $exportConfiguration == TRUE )
+            $this->exportConfigurationToNagios($error, $success);
+                
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+    }
 
 	/* LILAC - modify Contact Group */
     public function modifyContactGroup( $contactGroupName, $newContactGroupName=NULL, $description=NULL, $exportConfiguration = FALSE ){
