@@ -1,18 +1,18 @@
 Summary:        API for the EON suite.
 Name:           eonapi
-Version:        1.0
-Release:        3.eon
+Version:        2.0
+Release:        1.eon
 Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/master.tar.gz#/%{name}-%{version}.tar.gz
 Group:          Applications/System
 License:        GPL
 Vendor:         EyesOfNetwork Community
 URL:            https://github.com/EyesOfNetworkCommunity/eonapi
-Requires:	eonweb
+Requires:       eonweb
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 
 %define eondir          /srv/eyesofnetwork
-%define	datadir		%{eondir}/%{name}
+%define datadir         %{eondir}/%{name}
 
 %description
 Eyes Of Network includes a web-based "RESTful" API (Application Programming Interface) called EONAPI that enables external programs to access information from the monitoring database and to manipulate objects inside the databases of EON suite.
@@ -42,6 +42,27 @@ rm -rf %{buildroot}
 %{_sysconfdir}/httpd/conf.d/eonapi.conf
 
 %changelog
+* Thu Jul 24 2019 Sebastien DAVOULT <d@vou.lt> - 2.0-1
+- FIX manage displayName
+- Add "modifyHostTemplate"
+- Add "deleteEonUser"
+- Add "modifyEonUser"
+- Add "createEonUser"
+- Add "{create,modify,delete}EonGroup", add new features to manage eonweb group (create/modify/delete) 
+- Add "exporterNotifierConfig", add function witch manage the exportation of notifier config 
+- Add verification on the function add and modify rules 
+- Add modifyNotifier{Rule,Method,Timeperiod}
+- Add {add,delete}Notifier{Rule,Method,Timeperiod}
+- FIX access class method
+- Backend: creation of foundations of the notifier database management (MVC modele)
+- Add the management of Global Nagios configuration
+- Add "deleteServiceGroup"
+- Add "createServiceGroup"
+- Add "createContactGroup"
+
+* Mon May 06 2019 Jean-Philippe Levy <jeanphilippe.levy@gmail.com> - 2.0-0
+- Update to 2.0
+
 * Thu Jun 14 2018 Jean-Philippe Levy <jeanphilippe.levy@gmail.com> - 1.0-3
 - Add addEventBroker and delEventBroker functions
 
