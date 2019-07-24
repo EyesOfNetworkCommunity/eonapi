@@ -41,6 +41,7 @@ addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
 
+
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
 addRoute('post', '/createCommand', 'createCommand');
@@ -91,11 +92,15 @@ addRoute('post', '/addCheckCommandParameterToServiceInHostTemplate', 'addCheckCo
 addRoute('post', '/modifyHost', 'modifyHost');
 addRoute('post', '/modifyContact', 'modifyContact');
 addRoute('post', '/modifyCommand', 'modifyCommand');
+addRoute('post', '/modifyHostTemplate', 'modifyHostTemplate');
+addRoute('post', '/modifyContactGroup', 'modifyContactGroup');
 addRoute('post', '/modifyServicefromHost', 'modifyServicefromHost');
 addRoute('post', '/modifyNagiosResources', 'modifyNagiosResources');
+addRoute('post', '/modifyNagiosMainConfiguration', 'modifyNagiosMainConfiguration');
 addRoute('post', '/modifyServicefromHostTemplate', 'modifyServicefromHostTemplate');
 addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
+
 
 addRoute('post', '/deleteHost', 'deleteHost');
 addRoute('post', '/deleteContact', 'deleteContact');
@@ -147,7 +152,34 @@ addRoute('post', '/listNagiosStates', 'listNagiosStates', 'readonly');
 addRoute('post', '/listNagiosObjects', 'listNagiosObjects', 'readonly');
 addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
 
- 
+//==============================================================================
+//eonweb
+addRoute('post', '/createEonGroup', 'createEonGroup');
+addRoute('post', '/createEonUser', 'createEonUser');
+
+addRoute('post', '/modifyEonGroup', 'modifyEonGroup'); 
+addRoute('post', '/modifyEonUser', 'modifyEonUser');
+
+addRoute('post', '/deleteEonGroup', 'deleteEonGroup');
+addRoute('post', '/deleteEonUser', 'deleteEonUser'); 
+
+
+//notifier
+addRoute('post', '/addNotifierRule', 'addNotifierRule');
+addRoute('post', '/addNotifierMethod', 'addNotifierMethod');
+addRoute('post', '/addNotifierTimeperiod', 'addNotifierTimeperiod');
+
+addRoute('post', '/deleteNotifierRule', 'deleteNotifierRule');
+addRoute('post', '/deleteNotifierMethod', 'deleteNotifierMethod');
+addRoute('post', '/deleteNotifierTimeperiod', 'deleteNotifierTimeperiod');
+
+addRoute('post', '/modifyNotifierRule', 'modifyNotifierRule');
+addRoute('post', '/modifyNotifierMethod', 'modifyNotifierMethod');
+addRoute('post', '/modifyNotifierTimeperiod', 'modifyNotifierTimeperiod');
+
+addRoute('post','/exporterNotifierConfig', 'exporterNotifierConfig');
+//==============================================================================
+
 /* Kind of framework to add routes very easily */
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
 	

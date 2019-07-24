@@ -9,13 +9,12 @@
 # Copyright (c) 2017 AXIANS C&S
 # Author: Adrien van den Haak <adrien.vandenhaak@axians.com>
 #
-# Copyright (c) 2017 AXIANS Cloud Builder
+# Copyright (c) 2019 AXIANS Cloud Builder
 # Contributor: Hoarau Jeremy <jeremy.hoarau@axians.com>
 #
 */
-
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
- 
+
 include("/srv/eyesofnetwork/eonweb/include/config.php");
 include("/srv/eyesofnetwork/eonweb/include/arrays.php");
 include("/srv/eyesofnetwork/eonweb/include/function.php");
@@ -23,8 +22,18 @@ include("/srv/eyesofnetwork/eonweb/include/livestatus/Client.php");
 include("/srv/eyesofnetwork/eonweb/module/monitoring_ged/ged_functions.php");
 include("/srv/eyesofnetwork/lilac/includes/config.inc");
 
-use Nagios\Livestatus\Client;
+include_once("dto/EonwebUserDTO.php");
+include_once("dto/EonwebUser.php");
+include_once("dto/EonwebGroupDTO.php");
+include_once("dto/EonwebGroup.php");
+include_once("dto/NotifierMethodDTO.php");
+include_once("dto/NotifierRuleDTO.php");
+include_once("dto/NotifierTimeperiodDTO.php");
+require_once("dto/NotifierTimeperiod.php");
+require_once("dto/NotifierMethod.php");
+require_once("dto/NotifierRule.php");
 
+use Nagios\Livestatus\Client;
 # Class with all api functions
 class ObjectManager {
     
@@ -35,6 +44,561 @@ class ObjectManager {
 		$request = \Slim\Slim::getInstance()->request();
 		$this->authUser = $request->get('username');  
 	}
+
+######################################### NOTIFIER CONTROLEUR
+	/*---------EXPORTER------*/
+	public function exporterNotifierConfig(){
+		$error ="";
+		$success = "";
+		$code =0;
+		exec("/usr/bin/php /srv/eyesofnetwork/eonweb/module/admin_notifier/cli/export.php", $result_cmdact);
+		if(count($result_cmdact)>0){
+			$error .= implode("\n",$result_cmdact);
+			$code =1 ;
+		}else{
+			$success .= "Exportation success.";
+		}
+
+		$logs = $this->getLogs($error, $success);
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/*--------- ADD ---------*/
+	public function addNotifierMethod($method_name, $method_type, $method_line){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$methodDto = new NotifierMethodDTO();
+		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
+
+		if(!$method){
+			$method = new NotifierMethod();
+			$method->setName($method_name);
+			$method->setLine($method_line);
+			$method->setType($method_type);
+			if($method->save()){
+				$success .= "$method_name created his id is : ".$method->getId();			
+			}else{
+				$error .= "$method_name failed to be created.";
+				$code =1;
+			}
+		}else{
+			$error .= "$method_name have not been created the cause may be that the name is already used.";
+			$code =1;
+		}
+		
+		$logs = $this->getLogs($error, $success);
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	public function addNotifierRule($rule_name, $rule_type, $rule_timeperiod, $rule_method=NULL, $rule_contact="*", $rule_debug=0, $rule_host="*", $rule_service="*", $rule_state="*", $rule_notificationNumber="*",$rule_tracking=0){
+		$error = "";
+		$success = "";
+		$code=0;
+
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($rule_timeperiod);
+		if(!$timeperiod){
+			$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist.";
+			$code = 1;
+		}
+		
+		if($code == 0 ){
+			$ruledto = new NotifierRuleDTO();
+			$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
+			if(!$rule){
+				$rule = new NotifierRule();
+				$rule->setName($rule_name);
+				$rule->setType($rule_type);
+				$rule->setTimeperiod_id($timeperiod->getId());
+
+				if($rule_contact == "*"){
+					$rule->setContact($rule_contact);
+				}elseif(is_array($rule_contact)){
+					$rule->setContact(implode(",",$rule_contact));
+				}else{
+					$rule->setContact($rule_contact);				
+				}
+
+				if(is_array($rule_host)){
+					$rule->setHost(implode(",",$rule_host));
+				}else{
+					$rule->setHost($rule_host);
+				}
+
+				$rule->setDebug($rule_debug);
+				$rule->setNotificationnumber($rule_notificationNumber);
+				$rule->setTracking($rule_tracking);
+				
+				if($rule_type == "host"){
+					$rule->setService("-");
+					
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(strtoupper($state),$availableStateHost)){
+								array_push($stringState, strtoupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+
+				}else{
+					if($rule_service == "*"){
+						$rule->setService($rule_service);
+					}else{
+						$rule->setService(implode(",",$rule_service));
+					}
+
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(strtoupper($state),$availableStateService)){
+								array_push($stringState, strtoupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+				}
+
+				if(isset($rule_method) and is_array($rule_method)){
+					foreach($rule_method as $method_name){
+						$mdto = new NotifierMethodDTO();
+						$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule_type);
+						if($m){
+							$rule->addMethod($method_name);
+						}else{
+							$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+						}
+					}
+					if($rule->getMethods() == array()){
+						$error .= " | ERROR : No method added.";
+						$code =1;
+					}
+				}else{
+					$error .= " | ERROR : The given rule_method parameter is not set or is not an array, no methods added. You must provide methods to create a rule.";
+					$code = 1;
+				}
+
+
+				if($code != 1){
+					if($rule->save()){
+						$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+					}else{
+						$error .= "| ERROR : The rules failed to saved the configuration. "; 
+						$code = 1;
+					}
+				}
+
+			}else{
+				$error .= "| ERROR : The rule already exist. "; 
+				$code = 1;
+			}
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	public function addNotifierTimeperiod($timeperiod_name, $timeperiod_days="*", $timeperiod_hours_notifications="*"){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
+		if(!$timeperiod){
+			$timeperiod = new NotifierTimeperiod();
+			$timeperiod->setName($timeperiod_name);
+			if(is_array($timeperiod_days)){
+				$timeperiod->setDaysOfWeek(implode(",",$timeperiod_days));
+			}else{
+				$timeperiod->setDaysOfWeek($timeperiod_days);
+			}
+
+            if(is_array($timeperiod_hours_notifications)){
+				$timeperiod->setTimeperiod(implode(",",$timeperiod_hours_notifications));
+			}else $timeperiod->setTimeperiod($timeperiod_hours_notifications);
+
+			$id = $timeperiod->save();
+			if(!$id){
+				$error .= "| ERROR Failed to saved the new timeperiod.";
+				$code = 1; 
+			} else $success .= " | SUCCESS : Timeperiod $timeperiod_name successfully saved with id :  $id";
+
+		}else{
+			$error .= "| ERROR : The Timeperiod '$timeperiod_name' already exist.";
+			$code = 1;
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	/*--------- DELETE ---------*/
+	public function deleteNotifierMethod($method_name, $method_type){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$methodDTO = new NotifierMethodDTO();
+		$method = $methodDTO->getNotifierMethodByNameAndType($method_name, $method_type);
+		if($method){
+			if($method->deleteMethod()){
+				$success .= "Delete $method_name success.";
+			}else{
+				$error .= "The deletion of $method_name failed. A rules certainly use this methods. ";
+				$code =1;
+			}
+
+		}else {
+			$error .= " ERROR the method $method_name specified have not been found.";
+			$code=1;
+		}
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	public function deleteNotifierRule($rule_name, $rule_type){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$ruleDTO = new NotifierRuleDTO();
+		$rule = $ruleDTO->getNotifierRuleByNameAndType($rule_name, $rule_type);
+		if($rule){
+			if($rule->deleteRule()){
+				$success .= "Delete $rule_name success.";
+			}else{
+				$error .= "The deletion of $rule_name failed. ";
+				$code =1;
+			}
+
+		}else {
+			$error .= " ERROR the rule $rule_name specified have not been found.";
+			$code=1;
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	public function deleteNotifierTimeperiod($timeperiod_name){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$timeperiodDTO = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDTO->getNotifierTimeperiodByName($timeperiod_name);
+		if($timeperiod){
+			if($timeperiod->deleteTimeperiod()){
+				$success .= "Delete $timeperiod_name success.";
+			}else{
+				$error .= "The deletion of $timeperiod_name failed. A rules certainly use this timeperiods. ";
+				$code =1;
+			}
+		}else {
+			$error .= " ERROR the timeperiod $timeperiod_name specified have not been found.";
+			$code=1;
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/*--------- MODIFY ---------*/
+	public function modifyNotifierRule($rule_name, $rule_type, $new_rule_name=NULL, $change_type=NULL, $rule_timeperiod=NULL,  $add_rule_method=NULL, $delete_rule_method=NULL, $rule_contact=NULL, $rule_debug=NULL, $rule_host=NULL, $rule_service=NULL, $rule_state=NULL, $rule_notificationNumber=NULL, $rule_tracking=NULL){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$ruledto = new NotifierRuleDTO();
+		$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
+		if(!$rule){
+			$error .= "| ERROR : The rules $rule_name does not exist yet. "; 
+			$code = 1;
+		}else{
+			if(isset($rule_timeperiod)){
+				$timeperiodDto = new NotifierTimeperiodDTO();
+				$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($rule_timeperiod);
+				if(!$timeperiod){
+					$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist.";
+				}else{
+					$rule->setTimeperiod_id($timeperiod->getId());
+				}
+			}
+
+			if(isset($change_type) && $change_type == "host"){
+				$rule->setType($change_type);
+				$rule->setService("-");
+				//the changement of type leads to the deletion of methods that is not suits for this type.
+				$rule->setMethods(array());
+			}elseif(isset($change_type) && $change_type == "service"){
+				$rule->setType($change_type);
+				if(isset($rule_service)){
+					if(is_array($rule_service)){
+						$newservice = array();
+						foreach($rule_service as $service){
+							//Check if the 'service' is an existing lilac command 
+							$commande = NagiosCommandPeer::getByName($service);
+							if($command){
+								array_push($newservice, $service);
+							}
+						}
+						$rule->setService(implode(",",$newservice));
+
+					}elseif(count(explode(",",$rule_service)) > 1 ){
+						$newservice = array();
+						foreach(explode(",",$rule_service) as $service){
+							//Check if the 'service' is an existing lilac command 
+							$commande = NagiosCommandPeer::getByName($service);
+							if($command){
+								array_push($newservice, $service);
+							}
+						}
+						$rule->setService(implode(",",$newservice));
+					}
+					else{
+						$rule->setService($rule_service);
+					}
+				}
+			}
+
+			if(isset($new_rule_name)){
+				if(!$ruledto->getNotifierRuleByNameAndType($new_rule_name,$rule->getType())){
+					$rule->setName($new_rule_name);
+				}else $error .= " | ERROR : The rule name have not been changed due to an existing rule with this name.";
+			}
+			
+			if(isset($rule_contact)){
+				if(is_array($rule_contact)){
+					$newcontact = array();
+					foreach($rule_contact as $contact){
+						//Check if the 'contact' is an existing lilac contact
+						$cnt = NagiosContactPeer::getByName($contact);
+						if($cnt){
+							array_push($newcontact, $contact);
+						}
+					}
+					$rule->setContact(implode(",",$newcontact));
+				}elseif(count(explode(",",$rule_contact))>1){
+					$newcontact = array();
+					foreach(explode(",",$rule_contact) as $contact){
+						//Check if the 'contact' is an existing lilac contact
+						$cnt = NagiosContactPeer::getByName($contact);
+						if($cnt){
+							array_push($newcontact, $contact);
+						}
+					}
+					$rule->setContact(implode(",",$newcontact));
+				}else{
+					$rule->setContact($rule_contact);
+				}
+			}
+			
+			if(isset($rule_host)){
+				if(is_array($rule_host)){
+					$newhost = array();
+					foreach($rule_host as $host){
+						//Check if the 'host' is an existing lilac host
+						$cnt = NagiosHostPeer::getByName($host);
+						if($cnt){
+							array_push($newhost, $host);
+						}
+					}
+					$rule->setHost(implode(",",$newhost));
+
+				}elseif(count(explode(",",$rule_host))>1){
+					$newhost = array();
+					foreach(explode(",",$rule_host) as $host){
+						//Check if the 'host' is an existing lilac host
+						$cnt = NagioshostPeer::getByName($host);
+						if($cnt){
+							array_push($newhost, $host);
+						}
+					}
+					$rule->setHost(implode(",",$newhost));
+				}else{
+					$rule->setHost($rule_host);
+				}
+			}
+			
+			if(isset($rule_debug)){
+				$rule->setDebug($rule_debug);
+			}
+			
+			if(isset($rule_notificationNumber)){
+				$rule->setNotificationnumber($rule_notificationNumber);
+			}
+
+			if(isset($rule_tracking)){
+				$rule->setTracking($rule_tracking);
+			}
+
+			if(isset($rule_state)){
+				if($rule->getType()=="host"){
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(strtoupper($state),$availableStateHost)){
+								array_push($stringState, strtoupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+				}else{
+
+					if($rule_state == "*"){
+						$rule->setState($rule_state);
+					}else{
+						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
+						$stringState=array();
+						foreach($rule_state as $state){
+							if(in_array(strtoupper($state),$availableStateService)){
+								array_push($stringState, strtoupper($state));
+							}
+						}
+						$rule->setState(implode(",",$stringState));
+					}
+				}
+			}
+
+			if(isset($add_rule_method) ){
+				foreach($add_rule_method as $method_name){
+					$mdto = new NotifierMethodDTO();
+					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
+					if(!$m){
+						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+					}else{
+						$rule->addMethod($method_name);
+					}
+				}
+			}
+
+			if(isset($delete_rule_method)){
+				foreach($delete_rule_method as $method_name){
+					$mdto = new NotifierMethodDTO();
+					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
+					if(!$m){
+						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+					}else{
+						$rule->deleteMethod($method_name);
+					}
+				}
+			}
+			
+			if($rule->getMethods() != array()){
+				if($rule->save()){
+					$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+				}else{
+					$error .= "| ERROR : The rules failed to saved the configuration. "; 
+					$code = 1;
+				}
+			}else {
+				$error .= "| ERROR : The rules failed to saved the configuration no methods are set. "; 
+				$code = 1;
+			}
+			
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+	public function modifyNotifierTimeperiod($timeperiod_name, $new_timeperiod_name=NULL, $timeperiod_days=NULL, $timeperiod_hours_notifications=NULL){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
+		
+		if(!$timeperiod){
+			$error .= "| ERROR : The Timeperiod '$timeperiod_name' does not exist.";
+			$code = 1;
+		}else{
+			if(isset($new_timeperiod_name)){
+				$timeperiod->setName($new_timeperiod_name);
+			}
+			
+			if(isset($timeperiod_days)){
+				if(is_array($timeperiod_days)){
+					$timeperiod->setDaysOfWeek(implode(",",$timeperiod_days));
+				}else{
+					$timeperiod->setDaysOfWeek($timeperiod_days);
+				}
+			}
+			
+			if(isset($timeperiod_hours_notifications)){
+				if(is_array($timeperiod_hours_notifications)){
+					$timeperiod->setTimeperiod(implode(",",$timeperiod_hours_notifications));
+				}else $timeperiod->setTimeperiod($timeperiod_hours_notifications);
+			}
+            
+			if(!$timeperiod->save()){
+				$error .= "| ERROR Failed to saved the timeperiod.";
+				$code = 1; 
+			} else $success .= " | SUCCESS : Timeperiod ".$timeperiod->getName()." successfully saved. id: ".$timeperiod->getId();
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+
+
+	public function modifyNotifierMethod($method_name, $method_type,$new_method_name=NULL, $change_type=NULL, $method_line=NULL){
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		$methodDto = new NotifierMethodDTO();
+		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
+
+		if(!$method){
+			$error .= "$method_name does not exist in the database.";
+			$code =1;
+		}else{
+			if(isset($new_method_name)){
+				$method->setName($new_method_name);
+			}
+			if(isset($method_line)){
+				$method->setLine($method_line);
+			}
+			if(isset($change_type)){
+				$method->setType($change_type);
+			}
+
+			if($method->save()){
+				$success .= $method->getName()." updated his id is : ".$method->getId();			
+			}else{
+				$error .= $method->getName()." failed to be updated.";
+				$code =1;
+			}
+		}
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+############################################################################
 	
 	/* LILAC - List Hosts */
 	public function listHosts( $hostName = false, $hostTemplate = false ){
@@ -42,6 +606,7 @@ class ObjectManager {
 		return true;
 		
 	}
+
 ########################################## GET
 	/* EONAPI - Display results */
     private function getLogs($error, $success){
@@ -884,6 +1449,7 @@ class ObjectManager {
         
 		return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - create Command */
     public function createCommand($commandName,$commandLine,$commandDescription=""){
 		$error = "";
@@ -923,7 +1489,327 @@ class ObjectManager {
 		$result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
-    /* EONWEB - Create User */
+
+	/* EONWEB - Create Group */
+	public function createEonGroup($group_name,$group_descr="", $is_ldap_group=false, $group_right=array()){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonGroupDto = new EonwebGroupDTO();
+		$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+		
+		if(!$eonGroup){
+			$eonGroup = new EonwebGroup();
+
+			$eonGroup->setGroup_name($group_name);
+			if($group_descr == "") $group_descr = $group_name;
+			$eonGroup->setGroup_description($group_descr);
+			if(!empty($group_right)){
+				$tabright = array();
+				foreach($group_right as $key=>$value){
+					$tabright[$key] = $value;
+				}
+				$eonGroup->setGroup_right($tabright);
+			}
+
+			if($is_ldap_group){
+				$eonGroup->setGroup_type(1);
+				$eonGroup->setGroup_dn($eonGroupDto->getDN($group_name));
+			}else{
+				$eonGroup->setGroup_type(0);
+			}
+			if($eonGroup->save()){
+				$success .= "| SUCCESS : the group $group_name successfuly inserted in the database. ID = ".$eonGroup->getGroup_id();
+				$result = $this->createContactGroup($group_name,$eonGroup->getGroup_description());
+				if($result["code"]==0){
+					$success .= " | SUCCESS : The contact group lilac linked to the eonweb group had been created";
+				}else{
+					$error .= " | WARNING: unable to create th lilac contact group. Forward error :  ".$result["description"];
+				}
+			}else{
+				$error .= "| ERROR : Unable to save $group_name in the database.";
+				$code = 1;
+			}
+		}else{
+			$error .= "| ERROR : This group already exist in the database";
+			$code=1;
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* EONWEB - delete user*/
+	public function deleteEonUser($user_name){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonUserDto = new EonwebUserDTO();
+		$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+		
+		if(!$eonUser){
+			$error .= "| ERROR : This user did not exist in the database";
+			$code=1;
+		}else{
+			if($eonUser->delete()){
+				$success.= "| SUCCESS : $user_name successfully deleted.";
+			}else{
+				$error .= "| ERROR : $user_name faile to be deleted";
+				$code=1;
+			}
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* EONWEB - delete Group */
+	public function deleteEonGroup($group_name){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonGroupDto = new EonwebGroupDTO();
+		$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+		
+		if(!$eonGroup){
+			$error .= "| ERROR : This group did not exist in the database";
+			$code=1;
+		}else{
+			if($eonGroup->delete()){
+				$success.= "| SUCCESS : $group_name successfully deleted.";
+			}else{
+				$error .= "| ERROR : $group_name faile to be deleted";
+				$code=1;
+			}
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+
+	}
+
+	/* EONWEB - Modify Group */
+	public function modifyEonGroup($group_name, $new_group_name=NULL, $group_descr=NULL, $is_ldap_group=NULL, $group_right=NULL){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonGroupDto = new EonwebGroupDTO();
+		$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+		
+		if(!$eonGroup){
+			$error .= "| ERROR : This group did not exist yet in the database";
+			$code=1;
+		}else{
+			if(isset($new_group_name)) $eonGroup->setGroup_name($new_group_name);
+			if(isset($group_descr)) $eonGroup->setGroup_description($group_descr);
+
+			if(isset($group_right)){
+				$tabright = array();
+				foreach($group_right as $key=>$value){
+					$tabright[$key] = $value;
+				}
+				$eonGroup->setGroup_right($tabright);
+			}
+
+			if(isset($is_ldap_group)){
+				if($eonGroup->getGroup_type() == 0 and $is_ldap_group){
+					$eonGroup->setGroup_type(1);
+					$eonGroup->setGroup_dn($eonGroupDto->getDN($eonGroup->getGroup_name()));
+				}elseif($eonGroup->getGroup_type() == 1 and !$is_ldap_group){
+					$eonGroup->setGroup_type(0);
+					$eonGroup->setGroup_dn(NULL);
+				}
+			}
+
+			if($eonGroup->save()){
+				$success .= "| SUCCESS : the group '".$eonGroup->getGroup_name()."' successfuly inserted in the database. ID = ".$eonGroup->getGroup_id();
+				$result = $this->modifyContactGroup($group_name,$eonGroup->getGroup_name(),$eonGroup->getGroup_description());
+				if($result["code"]==0){
+					$success .= " | SUCCESS : The contact group lilac linked to the eonweb group had been modify";
+				}else{
+					$error .= " | WARNING: unable to modify th lilac contact group. Forward error :  ".$result["description"];
+				}
+			}else{
+				$error .= "| ERROR : Unable to modify $group_name in the database.";
+				$code = 1;
+			}
+			
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* EONWEB - Create User */
+	public function createEonUser($user_mail="", $user_name,$user_descr="",$user_group, $user_password, $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
+		$error = "";
+		$success = "";
+		$code = 0;
+
+		$eonUserDto = new EonwebUserDTO();
+		$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+		
+		if(!$eonUser){
+			$eonUser = new EonwebUser();
+            $eonUser->setUser_name($user_name);
+            $eonUser->setUser_description($user_descr);
+			$eonUser->setUser_password($user_password);
+			
+			if($is_ldap_user){
+				$eonUser->setUser_type(1);
+			}else{
+				$eonUser->setUser_type(0);
+			}
+
+            $eonUser->setUser_location($user_location);
+            $eonUser->setUser_limitation($user_limitation);
+			$eonUser->setUser_language($user_language);
+			$eonGroupDto = new EonwebGroupDTO();
+			$eonGroup = $eonGroupDto->getEonwebGroupByName($user_group);
+			
+			if(!$eonGroup){
+				$error .= " | ERROR : the specified group does not exist.";
+				$code = 1 ;
+			}else{
+				$eonUser->setGroup_id($eonGroup->getGroup_id());
+			}
+
+			$eonUser->setIn_cacti($in_cacti);
+			$eonUser->setIn_nagvis($in_nagvis);
+			
+			if($in_nagvis){
+				if(!$eonUserDto->getNagvisGroupIdByName($nagvis_group)){
+					$eonUser->setNagvis_group("Guests");
+				}else{
+					$eonUser->setNagvis_group($nagvis_group);
+				}
+			}
+
+			if($code == 0 ){
+				if($eonUser->save()){
+					$success .= " | SUCCESS : A new user have been successfully inserted into the databases : [ID = ".$eonUser->getUser_id()."]";
+					//Create user in lilac
+					$result = $this->createContact($user_name, $user_descr, $user_mail, "", $user_group);
+					if($result["code"]==0){
+						$success .= "| SUCCESS : lilac contact have been created. ";
+					}else{
+						$error .= " | WARNING : An error occured during lilac contact creation. Forward error : ".$result["description"];
+					}
+				}else{
+					$error .= " | ERROR : an unexpected error occured during the insertion.";
+					$code = 1; 
+				}
+			}
+		}else{
+			$error .= "| ERROR : this user $user_name already exist. ";
+			$code = 1; 
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* EONWEB - Modify User */
+	public function modifyEonUser($user_name,$new_user_name=NULL,$user_mail="",$user_descr=NULL,$user_group=NULL, $user_password=NULL, $is_ldap_user=NULL, $user_location=NULL, $user_limitation=NULL, $user_language=NULL, $in_nagvis = NULL, $in_cacti = NULL, $nagvis_group =NULL){
+		$error = "";
+		$success = "";
+		$code = 0;
+		$lilac_user_group="";
+		$eonUserDto = new EonwebUserDTO();
+		$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+		
+		if(!$eonUser){
+			$error .= "| ERROR : this user $user_name does not exist yet. ";
+			$code = 1; 
+            
+		}else{
+			if(isset($new_user_name)){
+				if(!$eonUserDto->getEonwebUserByName($new_user_name))
+					$eonUser->setUser_name($new_user_name);
+				else{
+					$error .= "| WARNING : The new name already used. ";
+				}
+			}
+			
+			if(isset($user_descr))
+            	$eonUser->setUser_description($user_descr);
+
+			if(isset($user_password))
+				$eonUser->setUser_password($user_password);
+			
+			if(isset($is_ldap_user)){
+				if($is_ldap_user){
+					$eonUser->setUser_type(1);
+				}else{
+					$eonUser->setUser_type(0);
+				}
+			}
+
+			if(isset($use_location))
+            	$eonUser->setUser_location($user_location);
+
+			if(isset($user_limitation))	
+				$eonUser->setUser_limitation($user_limitation);
+			
+			if(isset($user_language))
+				$eonUser->setUser_language($user_language);
+			
+			if(isset($user_group)){
+				$lilac_user_group=$user_group;
+				$eonGroupDto = new EonwebGroupDTO();
+				$eonGroup = $eonGroupDto->getEonwebGroupByName($user_group);
+				if(!$eonGroup){
+					$error .= " | ERROR : the specified group does not exist.";
+				}else{
+					$eonUser->setGroup_id($eonGroup->getGroup_id());
+				}
+			}
+			
+			if(isset($in_cacti))
+				$eonUser->setIn_cacti($in_cacti);
+			
+			if(isset($in_nagvis)){
+				$eonUser->setIn_nagvis($in_nagvis);
+			}
+
+			if(isset($nagvis_group)){
+				if($eonUserDto->getNagvisGroupIdByName($nagvis_group)){
+					$eonUser->setNagvis_group($nagvis_group);
+				}
+			}
+			if($code == 0 ){
+				if($eonUser->save()){
+					$success .= " | SUCCESS : The user have been successfully modified into the databases : [ID = ".$eonUser->getUser_id()."]";
+					//modify user in lilac
+					$result = $this->modifyContact($user_name,$eonUser->getUser_name(), $eonUser->getUser_description(), $user_mail, "", $lilac_user_group);
+					
+					if($result["code"]==0){
+						$success .= " | SUCCESS : lilac contact have been modified. ";
+					}else{
+						$error .= " | WARNING : An error occured during lilac contact modification. Forward error : ".$result["description"];
+					}
+				}else{
+					$error .= " | ERROR : an unexpected error occured during the update.";
+					$code = 1; 
+				}
+			}
+		}
+
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+    /* EONWEB - Create User @DEPRECATE */
     public function createUser($userName, $userMail, $admin = false, $filterName = "", $filterValue = "", $exportConfiguration = FALSE){
         //Lower case
         $userName = strtolower($userName);
@@ -940,8 +1826,7 @@ class ObjectManager {
         //Admin
         if( $admin == true ){
             //admins group
-            $userGroup = 1;
-            
+            $userGroup = 1;   
             $userDescr = "admin user";
         }
         else{
@@ -957,7 +1842,6 @@ class ObjectManager {
         } else {
             $error .= "Unable to create user $userName\n";	
         }
-
 
         // EONWEB - XML Filter creation
         $xml_file = "/srv/eyesofnetwork/eonweb/cache/".$userName."-ged.xml";
@@ -982,8 +1866,6 @@ class ObjectManager {
             $filter->appendChild($dom->createTextNode( $filterValue ));    
         }
         
-        
-        
         $dom->save($xml_file);
         $xml=$dom->saveXML();
 
@@ -999,18 +1881,17 @@ class ObjectManager {
 
         chown($xml_file,"apache");
         chgrp($xml_file,"apache");
-        
-        
+                
         // Export
         if( $exportConfiguration == TRUE )
             $this->exportConfigurationToNagios($error, $success);
 
-
         $logs = $this->getLogs($error, $success);
         
         return $logs;
-        
 	}
+
+	
 	
 	public function createMutipleHosts($hosts, $exportConfiguration=false){
 		foreach($hosts as $host){
@@ -1076,6 +1957,7 @@ class ObjectManager {
         
 		return $logs;
 	}
+
 ########################################## ADD
 	/* LILAC - Add Custom Argument to a host */
 	public function addCustomArgumentsToHost($hostName, $customArguments){
@@ -1134,6 +2016,7 @@ class ObjectManager {
 		if( empty($error) ) {
 			//We prepared the list of existing custom arg in the Host
 			foreach($customArguments as $key=>$value){
+				$success .= "[$key => $value] ";
 				$c = new Criteria();
 				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
 				$c->add(NagiosHostCustomObjectVarPeer::HOST_TEMPLATE, $templateHost->getId());
@@ -1379,7 +2262,6 @@ class ObjectManager {
 			}
 		}
 		
-		
 		if($changed>0){
 			$success .= "$serviceName has been updated.\n";
 		} else{
@@ -1426,7 +2308,6 @@ class ObjectManager {
 				}
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$serviceName has been updated.\n";
@@ -1476,7 +2357,6 @@ class ObjectManager {
 				}
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$templateHostName has been updated.\n";
@@ -1560,7 +2440,6 @@ class ObjectManager {
 		if(!$template_host) {
 			$error .= "Host Template $templateHostName not found\n";
 		}
-        
         	
         // We need to get the count of templates already inherited
         if( $host ){
@@ -1595,6 +2474,7 @@ class ObjectManager {
         
 		return array("code"=>$code,"description"=>$logs);
 	}
+
     /* LILAC - Add Contact to Host Template */
 	public function addContactToHostTemplate( $contactName, $templateHostName, $exportConfiguration = FALSE ){
         $error = "";
@@ -1614,8 +2494,7 @@ class ObjectManager {
 		if(!$template_host) {
 			$error .= "Host Template $templateHostName not found\n";
 		}
-
-        
+    
         if( empty($error) ) {
             $c = new Criteria();
             $c->add(NagiosHostContactMemberPeer::TEMPLATE, $template_host->getId());
@@ -1686,10 +2565,10 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
-    }
+	}
+	
 	/* LILAC - create Service to Host template*/
-    public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){
-		
+    public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){		
         $error = "";
 		$success = "";
 		$code=0;
@@ -1717,9 +2596,11 @@ class ObjectManager {
 		if(empty($error)) {	
 			try {
 				// service interface
-				
 				$tempService = new NagiosService();
 				$tempService->setDescription($service->name);
+				if(isset($service->displayName)){
+					$tempService->setDisplayName($service->displayName);
+				}
 				$tempService->setHostTemplate($template->getId());
 				$tempService->save();
 				$success .= "Service $service->name added\n";
@@ -1750,8 +2631,7 @@ class ObjectManager {
 							$success .= "Command Parameter ".$params." added to $service->name\n";
 						}
 					}
-				}
-			
+				}		
 				
 				// Export
                 if( $exportConfiguration == TRUE )
@@ -1768,9 +2648,9 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
         
 	}
+
 	/* LILAC - create Service to Host*/
-    public function createServiceToHost ($hostName, $service, $exportConfiguration = FALSE ){
-		
+    public function createServiceToHost ($hostName, $service, $exportConfiguration = FALSE ){	
         $error = "";
 		$success = "";
 		$code=0;
@@ -1800,6 +2680,9 @@ class ObjectManager {
 				// service interface
 				$tempService = new NagiosService();
 				$tempService->setDescription($service->name);
+				if(isset($service->displayName)){
+					$tempService->setDisplayName($service->displayName);
+				}
 				$tempService->setHost($host->getId());
 				$tempService->save();
 				$success .= "Service $service->name added\n";
@@ -1833,7 +2716,6 @@ class ObjectManager {
 					
 				}
 			
-				
 				// Export
                 if( $exportConfiguration == TRUE )
 				    $this->exportConfigurationToNagios($error, $success);
@@ -1847,12 +2729,10 @@ class ObjectManager {
         $logs = $this->getLogs($error, $success);
         
         return array("code"=>$code,"description"=>$logs);
-        
 	}
 
 	/* LILAC - addEventBroker */
 	public function addEventBroker( $broker, $exportConfiguration = FALSE ){
-		
 		global $lilac;
 		$error = "";
 		$success = "";
@@ -1960,7 +2840,6 @@ class ObjectManager {
 		}
         
         if( empty($error) ) {
-			
             if($template_host->addTemplateInheritance($inheritanceTemplateName)) {
 				$success .= "Template Ihneritance ".$inheritanceTemplateName." added to host template ".$templateHostName."\n";
                 if( $exportConfiguration == TRUE )
@@ -2209,8 +3088,7 @@ class ObjectManager {
 						}
 
 						if( $exportConfiguration == TRUE )
-							$this->exportConfigurationToNagios($error, $success);
-						
+							$this->exportConfigurationToNagios($error, $success);	
 					}
 					
 				}else{
@@ -2531,6 +3409,82 @@ class ObjectManager {
 	}
 ########################################## MODIFY
 
+	/* LILAC - Modify Host Template */
+    public function modifyHostTemplate($templateHostName, $newTemplateHostName = Null, $templateHostDescription=Null, $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        
+        
+        // Check for pre-existing host template with same name        
+        $nhtp = new NagiosHostTemplatePeer;
+		$template_host = $nhtp->getByName($templateHostName);
+		if($template_host) {
+			if(isset($newTemplateHostName)){
+				$template_host->setName( $newTemplateHostName );
+			}
+			if(isset($templateHostDescription)){
+				$template_host->setDescription( $templateHostDescription );
+			}
+            $template_host->save();
+            
+            $success .= "Host template ".$templateHostName." updated\n";
+		}else{
+			$code=1;
+			$error .= "A host template with that name did not exist yet!\n";
+		}
+        
+        // Export
+        if( $exportConfiguration == TRUE )
+            $this->exportConfigurationToNagios($error, $success);
+                
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+    }
+
+	/* LILAC - modify Contact Group */
+    public function modifyContactGroup( $contactGroupName, $newContactGroupName=NULL, $description=NULL, $exportConfiguration = FALSE ){
+        global $lilac;
+        $error = "";
+		$success = "";
+		$code =0;
+        $contactGroup = NULL;
+		
+		$contactGroup = NagiosContactGroupPeer::getByName($contactGroupName);
+        // Check for pre-existing contact with same name
+		if($contactGroup) {
+			if(isset($newContactGroupName)){
+				if($lilac->contactgroup_exists( $newContactGroupName )) {
+					$code = 1;
+					$error .= "A Contact group with that name already exists!\n";
+				}else{
+					$contactGroup->setName( $newContactGroupName );	
+				}
+			}
+
+			if(isset($description))
+				$contactGroup->setAlias( $description );
+			
+			
+			$contactGroup->save();				
+			
+			$success .= "Contact group ".$contactGroupName." modify\n";
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		}
+		else {
+			$code = 1;
+			$error .= "This contact group does not exist yet!\n";
+		}
+        
+        
+        $logs = $this->getLogs($error, $success);
+        
+        return array("code"=>$code,"description"=>$logs);
+	} 
+
 	/* LILAC - modify contact */ 
 	public function modifyContact($contactName,$newContactName="", $contactAlias="", $contactMail="", $contactPager="", $contactGroup="" ,$serviceNotificationCommand="",$hostNotificationCommand="", $options=NULL, $exportConfiguration = FALSE ){
 		$error = "";
@@ -2756,7 +3710,6 @@ class ObjectManager {
 				$error .= $e->getMessage();
 			}
 			
-			
 			if($code==0)
 				$success .= "contact had been modified."; 
 
@@ -2800,6 +3753,10 @@ class ObjectManager {
 					$nagioService->save();
 					$changed++;
 				}
+			}
+			if(isset($service->displayName)){
+				$nagioService->setDisplayName($service->displayName);
+				$nagioService->save();
 			}
 			if(isset($service->new_name) && $nagioService->getDescription()!==$service->new_name)
 			{
@@ -2864,6 +3821,11 @@ class ObjectManager {
 					$changed++;
 				}
 			}
+			if(isset($service->displayName)){
+				$nagioService->setDisplayName($service->displayName);
+				$nagioService->save();
+			}
+
 			if(isset($service->new_name) && $nagioService->getDescription()!==$service->new_name)
 			{
 				$nagioService->setDescription($service->new_name);
@@ -2937,14 +3899,14 @@ class ObjectManager {
 				$code=1;
 				$error .= "The command '".$targetCommand->getName()."' failed to update\n";
 			}
-			
 		}
 		
 		$logs = $this->getLogs($error, $success);
-        
         $result=array("code"=>$code,"description"=>$logs,"changes"=>$changed);
         return $result;
 	}
+
+
 	/* LILAC - modify nagiosResources */
 	public function modifyNagiosResources($resources){
 		$error = "";
@@ -3006,7 +3968,6 @@ class ObjectManager {
 						$host->setAddress($hostIp);
 						$changed++;
 					}						
-					
 				}
 				$host->save();
 				if($changed>0){
@@ -3115,7 +4076,6 @@ class ObjectManager {
 		$success = "";
 		$code=0;
 		try{
-			
 			$targetTemplateHost = NagiosHostTemplatePeer::getByName($templateHostName);
 			if(!$targetTemplateHost) {
 				$code=1;
@@ -3142,11 +4102,65 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         $result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
-	
+
+	/* LILAC - Modify Nagios global main configuration */  
+    public function modifyNagiosMainConfiguration($requestConf=NULL, $exportConfiguration=FALSE){
+		$error = "";
+		$success = "";
+		$code=1;
+
+		$configurationFunctions = array("hostEventHandler"  			=> "setGlobalHostEventHandler",
+										"serviceEventHandler"			=> "setGlobalServiceEventHandler",
+										"hostPerfdata" 					=> "setHostPerfdataCommand",
+										"servicePerfdata" 				=> "setServicePerfdataCommand",
+										"hostPerfdataFileProcessing"	=> "setHostPerfdataFileProcessingCommand",
+										"servicePerfdataFileProcessing"	=> "setServicePerfdataFileProcessingCommand");
+
+		try{
+			$config = NagiosMainConfigurationPeer::doSelectOne(new Criteria());
+			if(!$config) {
+				// We need to create the config object on the fly
+				$config = new NagiosMainConfiguration();
+				$config->save();
+			}
+
+			if($requestConf){
+				foreach($requestConf as $key => $val){
+					if(!array_key_exists($key,$configurationFunctions)){
+						$error .= "$key is not a valid parameter. | ";
+					}else{
+						$handler = array($config,$configurationFunctions[$key]);
+						$command = NagiosCommandPeer::getByName($val);
+						if($command) {
+							if(is_callable($handler)){
+								//$config->setGlobalHostEventHandlerByName($val);
+								call_user_func_array($handler,array($command->getId()));
+								$success .= "$key update. | ";
+								$code=0;
+								$config->save();
+							}else {
+								$error.="An unexpected error occured.";
+							}
+						}else{
+							$error .= "Command name $val not found. | ";
+						}
+						
+					}
+				}
+			}						
+			
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+
+		$logs = $this->getLogs($error, $success);
+        $result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
 ########################################## DELETE
 
 	/* LILAC - delete host Downtimes */
@@ -3176,8 +4190,6 @@ class ObjectManager {
 				$code = 1;
 				$error.="An error occurred nothing happen.";
 			}
-			
-
 		}catch(Exception $e) {
 			$code=1;
 			$error .= $e->getMessage();
@@ -3216,15 +4228,12 @@ class ObjectManager {
 				$code = 1;
 				$error.="An error occurred nothing happen.";
 			}
-			
-
 		}catch(Exception $e) {
 			$code=1;
 			$error .= $e->getMessage();
 		}
         
 		$logs = $this->getLogs($error, $success);
-		
 		$result=array("code"=>$code,"description"=>$logs);
         return $result;
 	}
@@ -3248,7 +4257,6 @@ class ObjectManager {
 				$c->add(NagiosHostCustomObjectVarPeer::VAR_NAME, $key);
 				$c->add(NagiosHostCustomObjectVarPeer::HOST, $host->getId());
 				$nhcov = NagiosHostCustomObjectVarPeer::doSelectOne($c);
-				
 				if($nhcov){
 					$nhcov->delete();
 					$success .= "$key has been deleted.\n";
@@ -3435,10 +4443,8 @@ class ObjectManager {
 		}
         
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
-
 
 	/* LILAC - Delete contact Group to Service */
 	public function deleteContactGroupToServiceInHost( $contactGroupName, $serviceName, $hostName, $exportConfiguration = FALSE ){
@@ -3475,11 +4481,9 @@ class ObjectManager {
 				$code=1;
 				$error .= "That contact group didn't exist!\n";
 			}
-			
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3522,7 +4526,6 @@ class ObjectManager {
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3549,8 +4552,7 @@ class ObjectManager {
 					}else{
 						$code=1;
 						$error .= "$contactName already bind to the group $contactGroupName ";
-					}
-					
+					}	
 				}else {
 					$code=1;
 					$error .= "$contactGroupName don't exist. ";
@@ -3565,7 +4567,6 @@ class ObjectManager {
 		}
         
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3604,11 +4605,9 @@ class ObjectManager {
 				$code=1;
 				$error .= "That contact didn't exist!\n";
 			}
-			
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3647,11 +4646,9 @@ class ObjectManager {
 				$code=1;
 				$error .= "That contact didn't exist!\n";
 			}
-			
 		}
 
         $logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3698,7 +4695,6 @@ class ObjectManager {
 		if(!empty($error)) $code=1;
 			
 		$logs = $this->getLogs($error, $success);
-		
 		return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3745,7 +4741,6 @@ class ObjectManager {
 		if(!empty($error)) $code=1;
 			
 		$logs = $this->getLogs($error, $success);
-		
 		return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3780,10 +4775,8 @@ class ObjectManager {
 						$changed++;
 					}
 				}
-				
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$templateServiceName has been updated.\n";
@@ -3870,10 +4863,8 @@ class ObjectManager {
 						$changed++;
 					}
 				}
-				
 			}
 		}
-		
 		
 		if($changed>0){
 			$success .= "$templateHostName has been updated.\n";
@@ -3911,6 +4902,7 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete contact Group */
 	public function deleteContactGroup($contactGroupName){
 		$error = "";
@@ -3933,7 +4925,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3959,7 +4950,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -3970,15 +4960,12 @@ class ObjectManager {
 		$code=0;
 		try{
 			$nhp = new NagiosHostPeer;
-			
 			$host = $nhp->getByName($hostName);    
 			if(!$host) {
 				$code++;
 				$error .= "Host $hostName doesn't exist\n";
 			}else{
-
 				$service = NagiosServicePeer::getByHostAndDescription($hostName,$serviceName);
-				
 				if(!$service){
 					$error .= "Service didn't exist.";
 					$code++;
@@ -3996,7 +4983,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4007,7 +4993,6 @@ class ObjectManager {
 		$code=0;
 		try{
         	$nhtp = new NagiosHostTemplatePeer;
-		
 			$host = $nhtp->getByName($hostTemplateName);    
 			if(!$host) {
 				$code++;
@@ -4029,7 +5014,6 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 	/* LILAC - delete service template */
@@ -4040,7 +5024,6 @@ class ObjectManager {
 		
 		try{
 			$targetTemplate = NagiosServiceTemplatePeer::getByName($templateServiceName);
-
 			if(!$targetTemplate) {
 				$code=1;
 				$error .= "The template '".$templateServiceName."'does not exist\n";
@@ -4054,9 +5037,9 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        
         return $logs;
 	}
+
 	/* LILAC - delete Command */
     public function deleteCommand($commandName){
 		$error = "";
@@ -4065,7 +5048,6 @@ class ObjectManager {
 		
 		try{
 			$ncp = new NagiosCommandPeer;
-
 			$targetCommand = $ncp->getByName($commandName);
 			if(!$targetCommand) {
 				$code=1;
@@ -4080,19 +5062,17 @@ class ObjectManager {
 			$error .= $e->getMessage()."\n";
 		}
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete Host */
 	public function deleteHost( $hostName, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
 		$code=0;
-
 		try {
 			$nhp = new NagiosHostPeer;
 			$host = $nhp->getByName($hostName);
-
 			if($host) {
 				$host->delete();
 				$success .= "Host ".$hostName." deleted\n";
@@ -4113,15 +5093,15 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete Templates Hosts */
 	public function deleteHostTemplate($templateHostName){
 		$error = "";
 		$success = "";
 		$code=0;
-		
+	
 		try{
 			$targetTemplate = NagiosHostTemplatePeer::getByName($templateHostName);
-
 			if(!$targetTemplate) {
 				$code=1;
 				$error .= "The template '".$templateHostName."'does not exist\n";
@@ -4137,6 +5117,7 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete HostTemplates to Host */
 	public function deleteHostTemplateToHost($templateHostName, $hostName, $exportConfiguration = FALSE){
 		$error = "";
@@ -4159,17 +5140,14 @@ class ObjectManager {
 				$listAllHostsTemplate = NagiosHostTemplateInheritancePeer::doSelect($c);
 				
 				foreach($listAllHostsTemplate as $template){
-				
 					if($template->getTargetTemplate()==$targetTemplate->getId()){
 						$template->delete();
 						$find=true;
 					}
-				
 				}
 				if(!$find){
 					$error.="This template ". $targetTemplate->getName()." is not find for this host : ".$targetHost->getName()."!";
 				}else{
-
 					$listAllHostsTemplate = NagiosHostTemplateInheritancePeer::doSelect($c);
 					if(sizeof($listAllHostsTemplate)==0){ $this->addHostTemplateToHost("GENERIC_HOST", $hostName);}
 					$success .= "The template '".$templateHostName."' deleted.\n";
@@ -4182,6 +5160,7 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete contact to Hosts */
 	public function deleteContactToHost($contactName, $hostName, $exportConfiguration = FALSE){
 		$error = "";
@@ -4214,9 +5193,9 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - Delete contactGroup to Hosts */
 	public function deleteContactGroupToHost($contactGroupName, $hostName, $exportConfiguration = FALSE){
 		$error = "";
@@ -4249,12 +5228,11 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
+
 	/* LILAC - delEventBroker */
 	public function delEventBroker( $broker, $exportConfiguration = FALSE ){
-		
 		global $lilac;
 		$error = "";
 		$success = "";
@@ -4281,7 +5259,6 @@ class ObjectManager {
 
 		$logs = $this->getLogs($error, $success);
 		return $logs;
-
 	}
 
 	/* LILAC - Delete Host Group */
@@ -4294,13 +5271,10 @@ class ObjectManager {
         
         // Check for pre-existing contact with same name
 		if($lilac->hostgroup_exists( $hostGroupName )) {
-			
 			// All is well for error checking, add the hostgroup into the db.
 			$hostGroup = NagiosHostgroupPeer::getByName($hostGroupName);
 			$hostGroup->delete();				
-			
 			$success .= "Host group ".$hostGroupName." deleted\n";
-			
 			if( $exportConfiguration == TRUE )
 				$this->exportConfigurationToNagios($error, $success);
 		}
@@ -4308,10 +5282,8 @@ class ObjectManager {
 			$code=1;
 			$error .= "A host group with that name didn't exists!\n";
 		}
-        
-        
-        $logs = $this->getLogs($error, $success);
-        
+
+        $logs = $this->getLogs($error, $success);        
         return array("code"=>$code,"description"=>$logs);
 	}  
 
@@ -4348,7 +5320,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4385,7 +5356,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4421,7 +5391,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4457,7 +5426,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4493,7 +5461,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4529,7 +5496,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4565,7 +5531,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4601,7 +5566,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4637,7 +5601,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4673,7 +5636,6 @@ class ObjectManager {
 		}
 
 		$logs = $this->getLogs($error, $success);
-        
         return array("code"=>$code,"description"=>$logs);
 	}
 
@@ -4728,6 +5690,7 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+
 ########################################## OTHER
 	/* LILAC - Exporter */
     private function exportConfigurationToNagios(&$error = "", &$success = "", $jobName = "nagios"){
@@ -4749,26 +5712,24 @@ class ObjectManager {
             $exportJob->setStartTime(time());
             $exportJob->setStatus("Starting...");
             $exportJob->save();
-            exec("php /srv/eyesofnetwork/lilac/exporter/export.php " . $exportJob->getId() . " > /dev/null 2>&1", $tempOutput, $retVal);   
-            
+            exec("php /srv/eyesofnetwork/lilac/exporter/export.php " . $exportJob->getId() . " > /dev/null 2>&1", $tempOutput, $retVal);    
             $success .= $jobName." : Nagios configuration exported\n";
         }
         else{
             $error .= "ERROR during nagios configuration export\n";
         }
-            
-    }
+	}
+	
 	/* LILAC - Export Nagios Configuration */
 	public function exportConfiguration($jobName = "nagios"){
         $error = "";
         $success = "";
 		
-		$this->exportConfigurationToNagios($error, $success, $jobName);
-		
+		$this->exportConfigurationToNagios($error, $success, $jobName);	
 		$logs = $this->getLogs($error, $success);
-        
         return $logs;
 	}
+
 	/* LIVESTATUS - checkHost */
 	private function checkHost($type, $address, $port, $path){
 		$host = false;
@@ -4783,18 +5744,16 @@ class ObjectManager {
 	}
 	/* LIVESTATUS - List backends */
 	public function listNagiosBackends() {
-	
 		$backends = getEonConfig("sockets","array");
 		for($i=0;$i<count($backends);$i++) {
 			$backends_json[$i]["id"]=$i;
 			$backends_json[$i]["backend"]=$backends[$i];
 		}
 		return $backends_json;
-		
 	}
+
 	/* LIVESTATUS - List nagios objects */
-	public function listNagiosObjects( $object, $backendid = NULL, $columns = FALSE, $filters = FALSE ) {
-		
+	public function listNagiosObjects( $object, $backendid = NULL, $columns = FALSE, $filters = FALSE ) {	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
 
@@ -4814,7 +5773,6 @@ class ObjectManager {
 				continue;
 			}
 
-			
 			// check if socket is up
 			if( $this->checkHost($socket_type,$socket_address,$socket_port,$socket_path) ){
 				if($socket_port == -1){
@@ -4858,14 +5816,12 @@ class ObjectManager {
 		// response for the Ajax call
 		// print_r($result);
 		return $result;
-
 	}
+
 	/* LIVESTATUS - List nagios states */
 	public function listNagiosStates( $backendid = NULL, $filters = FALSE ) {
-	
 		// loop on each socket
 		$sockets = getEonConfig("sockets","array");
-
 		$result = array();
 		$result["hosts"]["pending"] = 0;
 		$result["hosts"]["up"] = 0;

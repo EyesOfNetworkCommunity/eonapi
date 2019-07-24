@@ -112,6 +112,12 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getContact` | POST | [**contactName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact otherwise it return all the contact|
 | `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
 | `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
+| `createEonUser` | POST | [**user_mail, user_name,user_descr="",user_group, user_password, is_ldap_user=false, user_location="", user_limitation=0, user_language = 0, in_nagvis = false, in_cacti = false, nagvis_group = false**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact, a eon user and possibly cacti and nagvis user if necessary. ie bellow |
+| `createEonGroup` | POST | [**group_name, group_descr="",is_ldap_group=false, group_right=array()**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact group and a eon group. The user could be limited or admin, If you decide to changed rights, you must provide the complete array like in the ie bellow |
+| `modifyEonGroup` | POST | [**group_name,new_group_name=NULL, group_descr=NULL,is_ldap_group=NULL, group_right=NULL**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify a nagios contact group and a eon group. The user could be limited.|
+| `modifyEonUser` | POST | [**user_mail=NULL, user_name, new_user_name=NULL,user_descr=NULL,user_group=NULL, user_password=NULL, is_ldap_user=NULL, user_location=NULL, user_limitation=NULL, user_language = NULL, in_nagvis = NULL, in_cacti = NULL, nagvis_group = NULL**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify a nagios contact user, a eon user and possibly cacti and nagvis user if necessary. ie bellow |
+| `deleteEonGroup` | POST | [**group_name**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a eon group.|
+| `deleteEonUser` | POST | [**user_name**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a eon user and the remaining account in cacti, nagvis, and lilac.|
 | `createUser` | POST | [**userName, userMail, admin, filterName, filterValue, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Create a nagios contact and a eon user. The user could be limited or admin (depends on the parameter "admin"). Limited user: admin=false / admin user: admin=true. For a limited user, the GED xml file is created in /srv/eyesofnetwork/eonweb/cache/ with the filters specified in parameters. |
 | `createContact` | POST | [**contactName, contactMail, contactAlias="description", contactMail, contactPager, contactGroup, options, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact. In the options variables, you can set the same information than those given in the web interface. |
 | `createHostTemplate` | POST | [**templateHostName, templateHostDescription="",exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new nagios host template. |
@@ -148,6 +154,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `addCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add command parameters in a service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 | `addCustomArgumentsToHostTemplate` | POST | [**templateHostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a host template. returncode=0 or 1 if failed or didn't changed |
 | `addCustomArgumentsToHost` | POST | [**hostName,customArguments, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add customs arguments to a host. returncode=0 or 1 if failed or didn't changed |
+| `addNotifierMethod` | POST | [**method_name,method_type, method_line**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a Notifier method into the databases |
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
@@ -155,12 +162,17 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `listNagiosObjects` | POST | [**object, backendid = NULL, columns = FALSE, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return nagios object like services, hosts, and their respective informations on which you can filter |
 | `listNagiosStates` | POST | [**backendid = NULL, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return states of hosts and services  |
 | `modifyContact` | POST | [**contactName, newContactName="", contactAlias="",contactMail="",contactPager="",contactGroup="",serviceNotificationCommand="",hostNotificationCommand="", $options=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given contact. if contact group is already set the membershib will be deleted, The same happen for contact notification command.  |
+| `modifyContactGroup` | POST | [**contactGroupName, newContactGroupName=NULL, description, exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given contact group |
 | `modifyServiceFromHostTemplate` | POST | [**hostTemplateName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
 | `modifyServiceFromHost` | POST | [**hostName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
 | `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs","changes":numerOfchanges] | modify a command to Nagios. returncode=0 or 1 if failed or nothing change |
 | `modifyNagiosRessources` | POST | [**ressources**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify ressources represented in nagios by $USERi$, you passed an collection of "Useri":"value" or "" if you want to remove a ressource an example is given bellow |
 | `modifyCheckCommandToServiceTemplate` | POST | [**commandName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify Modify the check command associate with the given service template. returnCode=0 for data updated and 1 if it has failed  |
 | `modifyCheckCommandToHostTemplate` | POST | [**commandName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify the check command associate with the given host template. returnCode=0 for data updated and 1 if it has failed  |
+| `modifyNagiosMainConfiguration` | POST | [**requestConf, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify The Nagios global configuration. See bellow the different parameter that you can changed.|
+| `modifyNotifierTimeperiod` | POST | [**timeperiod_name,new_timeperiod_name=NULL, timeperiod_days=NULL, timeperiod_hours_notifications=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify The timeperiod of advanced notification (Notifier module) .|
+| `modifyNotifierMethod` | POST | [**method_name,method_type,new_method_name=NULL, change_type=NULL, method_line=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify a method of advanced notification (Notifier module) .|
+| `modifyNotifierRule` | POST | [**rule_name, rule_type, new_rule_name=NULL, change_type=NULL, rule_timeperiod=NULL,  add_rule_method=NULL, delete_rule_method=NULL, rule_contact=NULL, rule_debug=NULL, rule_host=NULL, rule_service=NULL, rule_state=NULL, rule_notificationNumber=NULL,rule_tracking=NULL**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | Modify a rule of advanced notification menu (Notifier module) .|
 | `deleteContact` | POST | [**contactName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete the given contact |
 | `deleteHostDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios host downtime. |
 | `deleteServiceDowntime` | POST | [**idDowntime**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete nagios service downtime. |
@@ -191,7 +203,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`deleteCheckCommandParameterToServiceTemplate` | POST | [**templateServiceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to a Service template. returncode=0 or 1 if failed or didn't changed /!\parameters is a list|
 |`deleteCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to a Service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`deleteCheckCommandParameterToHostTemplate` | POST | [**templateHostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to host template. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
-
+|`exporterNotifierConfig` | POST | [****] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Write configuration in the nagios file. It export the configuration of advance notification.|
 
 
 
@@ -211,7 +223,53 @@ To illustrate the EON API features tab, you will find a few implementation examp
 }
 ```
 
+* /createEonGroup
+```json 
+{
+  "group_name":"sous-chef",
+  "group_descr":"lieutenant",
+  "group_right": {
+      "dashboard":1,
+      "disponibility":1,
+      "capacity":1,
+      "production":1,
+      "reports":1,
+      "administration":0,
+      "help":1
+    }
+}
+```
 
+* /createEonUser
+```json 
+{
+  "user_name":"cheften",
+  "user_mail":"cheften@test.com", 
+  "user_group":"admins",          
+  "user_descr":"commande",        //NOT MANDATORY
+  "user_password":"cheften",      //MANDATORY
+  "user_language":"english",      //navigator_language by DEFAULT
+  "in_cacti": true,               //false by DEFAULT
+  "in_nagvis": true,              //false by DEFAULT
+  "nagvis_group":"Administrators" //GUEST BY DEFAULT
+}
+```
+
+* /modifyEonUser
+```json 
+{
+  "user_name":"cheften",
+  "new_user_name":"sous-cheften", //NOT MANDATORY
+  "user_mail":"cheften@test.com", //NOT MANDATORY
+  "user_group":"admins",          //NOT MANDATORY
+  "user_descr":"apply",           //NOT MANDATORY
+  "user_password":"cheften",      //MANDATORY
+  "user_language":"french",       //navigator_language by DEFAULT
+  "in_cacti": true,               //false by DEFAULT
+  "in_nagvis": true,              //false by DEFAULT
+  "nagvis_group":"Guests" //GUEST BY DEFAULT
+}
+```
 
 * /createUser
 ```json 
@@ -237,6 +295,15 @@ To illustrate the EON API features tab, you will find a few implementation examp
     "host_notification_options_down": 1,
     "can_submit_commands":1
   }
+}
+```
+
+* /addNotifierMethod
+```json
+{
+  "method_name":"test",
+  "method_type":"host",
+  "method_line":"ll -a"
 }
 ```
 
@@ -336,6 +403,60 @@ To illustrate the EON API features tab, you will find a few implementation examp
   	}
 }
 ```
+
+* /modifyNagiosMainConfiguration
+```json
+{
+  "requestConf":{
+    "hostEventHandler":"check_ping",	  //optinal
+    "hostEventHandler":"",				      //optinal
+    "serviceEventHandler":"",			      //optinal
+    "hostPerfdata":"",					        //optinal
+    "servicePerfdata":"",				        //optinal
+    "hostPerfdataFileProcessing":"",	  //optinal
+    "servicePerfdataFileProcessing":"" 	//optinal
+    }
+}
+```
+
+* /modifyNotifierTimeperiod
+```json
+{
+  "timeperiod_name":"24/7",
+  "new_timeperiod_name":"24/24x7/7",                                                    //optional
+  "timeperiod_days":"mon,tue,fri,wed,sun", //* || ["mon", "wed", ...]                   //optional
+  "timeperiod_hours_notifications":"*" //0000-0100,1030-1230,... || ["0000-0100",...]   //optional
+}
+
+* /modifyNotifierMethod
+```json
+{
+  "method_name":"email_host",
+  "new_method_name":"email_service",  //optional
+  "method_type":"host",
+  "change_type":"service",            //optional
+  "method_line":"send('NOTIF')"       //optional
+}
+
+* /modifyNotifierRule
+```json
+{
+  "rule_name":"test(24x7)", 
+  "rule_type":"service", 
+  "new_rule_name":"regle24/24", 
+  "change_type":"host", 
+  "rule_timeperiod":"48/8", 
+  "add_rule_method":["email-host"], 
+  "rule_contact":"admin", 
+  "rule_debug":0, 
+  "rule_host":"localhost", 
+  "rule_service":"ssh", 
+  "rule_state":["UP"],
+  "rule_notificationNumber":1,
+  "rule_tracking":0
+}
+```
+
 * /createServiceToHost
 ```json 
 {
