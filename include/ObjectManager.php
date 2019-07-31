@@ -4145,7 +4145,15 @@ class ObjectManager {
 								$error.="An unexpected error occured.";
 							}
 						}else{
-							$error .= "Command name $val not found. | ";
+							if(is_callable($handler)){
+								call_user_func_array($handler,array(null));
+								//$config->setGlobalHostEventHandler(null);
+								$success .= "$key update. | ";
+								$code=0;
+								$config->save();
+							}else {
+								$error.="An unexpected error occured.";
+							}
 						}
 						
 					}
