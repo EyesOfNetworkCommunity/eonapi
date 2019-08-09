@@ -953,20 +953,18 @@ class ObjectManager {
 			$eonUser = $eonUserDto->getEonwebUserByName($user_name);
 			
 			if(!$eonUser){
-				$code=1;
 				$error .= "$user_name does not exist.";
 			}else{
 				return $eonUser->toArray();
 			}
 
 		}catch (Exception $e){
-			$code=1;
 			$error .= "An exception occured : $e";
 		}
 
 		$logs = $this->getLogs($error, $success);
 
-		return array("code"=>$code,"description"=>$logs);
+		return $logs;
 	}
 
 	/* EonWeb - get group */
@@ -979,20 +977,18 @@ class ObjectManager {
 			$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
 			
 			if(!$eonGroup){
-				$code=1;
 				$error .= "$group_name does not exist.";
 			}else{
 				return $eonGroup->toArray();
 			}
 
 		}catch (Exception $e){
-			$code=1;
 			$error .= "An exception occured : $e";
 		}
 
 		$logs = $this->getLogs($error, $success);
 
-		return array("code"=>$code,"description"=>$logs);
+		return $logs;
 	}
 
 ########################################## CREATE
