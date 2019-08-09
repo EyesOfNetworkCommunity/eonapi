@@ -38,6 +38,17 @@ class NotifierMethod {
     function __construct(){
         $this->methodDAO = new NotifierMethodDAO();
     }
+    /**
+     * Return a dictionnary of the object
+     */
+    function toArray(){
+        $array = [];
+        $array["id"] = $this->id;
+        $array["name"] = $this->name;
+        $array["type"] = $this->type;
+        $array["line"] = $this->line;
+        return $array;
+    }
 
     /**
      * Update the current state of this method in the database

@@ -100,6 +100,29 @@ class NotifierRule {
     }
 
     /**
+     * Return a dictionnary of the object
+     */
+    function toArray(){
+        $array = [];
+        $array["id"] = $this->user_id;
+        $array["name"] = $this->group_id;
+        $array["type"] = $this->user_name;
+        $array["debug"] = $this->debug;
+        $array["contact"] = $this->contact;
+        $array["host"] = $this->host;
+        $array["service"] = $this->service;
+        $array["state"] = $this->state;
+        $array["notificationnumber"] = $this->notificationnumber;
+    
+        //other databases components
+        $array["timeperiod_id"] = $this->timeperiod_id;
+        $array["tracking"] = $this->tracking;
+        $array["sort_key"] = $this->sort_key;
+        $array["methods"] = $this->methods;
+        return $array;
+    }
+
+    /**
      * Delete this rule from the database
      * 
      * @return boolean

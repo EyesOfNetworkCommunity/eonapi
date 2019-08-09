@@ -67,6 +67,29 @@ class EonwebUser {
         return $this->eonwebUserDAO->deleteEonwebUser($this->user_id, $this->user_name);
     }
 
+    /**
+     * Return a dictionnary of the object
+     */
+    function toArray(){
+        $array = [];
+        $array["user_id"] = $this->user_id;
+        $array["group_id"] = $this->group_id;
+        $array["user_name"] = $this->user_name;
+        $array["user_password"] = $this->user_password;
+        $array["user_description"] = $this->user_description;
+        $array["user_type"] = $this->user_type;
+        $array["user_location"] = $this->user_location;
+        $array["user_limitation"] = $this->user_limitation;
+        $array["user_language"] = $this->user_language;
+    
+        //other databases components
+        $array["in_nagvis"] = $this->in_nagvis;
+        $array["nagvis_group"] = $this->nagvis_group;
+        $array["in_cacti"] = $this->in_cacti;
+
+        return $array;
+    }
+
     /*============= GETTER AND SETTER =============*/
 
     /**

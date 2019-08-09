@@ -943,6 +943,58 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 
+	/* EonWeb - get user */
+	public function getEonUser($user_name){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$eonUserDto = new EonwebUserDTO();
+			$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+			
+			if(!$eonUser){
+				$code=1;
+				$error .= "$user_name does not exist.";
+			}else{
+				return $eonUser->toArray();
+			}
+
+		}catch (Exception $e){
+			$code=1;
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* EonWeb - get group */
+	public function getEonGroup($group_name){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$eonGroupDto = new EonwebGroupDTO();
+			$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+			
+			if(!$eonGroup){
+				$code=1;
+				$error .= "$group_name does not exist.";
+			}else{
+				return $eonGroup->toArray();
+			}
+
+		}catch (Exception $e){
+			$code=1;
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return array("code"=>$code,"description"=>$logs);
+	}
+
 ########################################## CREATE
 	/* LILAC - create contact */ 
 	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){

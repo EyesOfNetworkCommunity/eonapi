@@ -31,6 +31,8 @@ addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
+addRoute('post', '/getEonUser', 'getEonUser', 'operator');
+addRoute('post', '/getEonGroup', 'getEonGroup', 'operator');
 addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');
 addRoute('post', '/getServiceGroup', 'getServiceGroup', 'operator');
 addRoute('post', '/getHostTemplate', 'getHostTemplate', 'operator');
