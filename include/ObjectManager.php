@@ -62,7 +62,39 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
-	
+	/*--------- GET ---------*/
+	public function getNotifierRule($rule_name,$rule_type){
+		$ruledto = new NotifierRuleDTO();
+		$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
+		
+		if($rule){
+			return $rule->toArray();
+		}else{
+			return "Rule named ".$rule_name." doesn't exist."; 
+		}
+	}
+
+	public function getNotifierMethod($method_name,$method_type){
+		$methodDto = new NotifierMethodDTO();
+		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
+
+		if($method){
+			return $method->toArray();
+		}else{
+			return "Method named ".$method_name." doesn't exist."; 
+		}
+	}
+
+	public function getNotifierTimeperiod($timeperiod_name){
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
+		
+		if($timeperiod){
+			return $timeperiod->toArray();
+		}else{
+			return "Timeperiod named ".$timeperiod_name." doesn't exist."; 
+		}
+	}
 	/*--------- ADD ---------*/
 	public function addNotifierMethod($method_name, $method_type, $method_line){
 		$error = "";

@@ -34,14 +34,19 @@ addRoute('post', '/getCommand', 'getCommand', 'operator');
 addRoute('post', '/getEonUser', 'getEonUser', 'operator');
 addRoute('post', '/getEonGroup', 'getEonGroup', 'operator');
 addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');
+addRoute('post', '/getNotifierRule', 'getNotifierRule', 'operator');
 addRoute('post', '/getServiceGroup', 'getServiceGroup', 'operator');
 addRoute('post', '/getHostTemplate', 'getHostTemplate', 'operator');
 addRoute('post', '/getContactGroups', 'getContactGroups', 'operator');
+addRoute('post', '/getNotifierMethod', 'getNotifierMethod', 'operator');
 addRoute('post', '/getServicesByHost', 'getServicesByHost', 'operator');
 addRoute('post', '/getServiceTemplate', 'getServiceTemplate', 'operator');
 addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
+addRoute('post', '/getNotifierTimeperiod', 'getNotifierTimeperiod', 'operator');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
+
+
 
 
 addRoute('post', '/createUser', 'createUser');

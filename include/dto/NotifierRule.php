@@ -104,9 +104,9 @@ class NotifierRule {
      */
     function toArray(){
         $array = [];
-        $array["id"] = $this->user_id;
-        $array["name"] = $this->group_id;
-        $array["type"] = $this->user_name;
+        $array["id"] = $this->id;
+        $array["name"] = $this->name;
+        $array["type"] = $this->type;
         $array["debug"] = $this->debug;
         $array["contact"] = $this->contact;
         $array["host"] = $this->host;
