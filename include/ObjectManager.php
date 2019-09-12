@@ -145,19 +145,35 @@ class ObjectManager {
 				$rule->setType($rule_type);
 				$rule->setTimeperiod_id($timeperiod->getId());
 
-				if($rule_contact == "*"){
-					$rule->setContact($rule_contact);
-				}elseif(is_array($rule_contact)){
-					$rule->setContact(implode(",",$rule_contact));
-				}else{
-					$rule->setContact($rule_contact);				
+				//============== Contact ================
+				if(is_array($rule_contact)){
+					$rule_contact = implode(",",$rule_contact);
 				}
 
-				if(is_array($rule_host)){
-					$rule->setHost(implode(",",$rule_host));
-				}else{
-					$rule->setHost($rule_host);
+				foreach(explode(",",$rule_contact) as $contact_name){
+					$ncp = new NagiosContactPeer;
+					$contact = $ncp->getByName( $contact_name );
+					if($contact_name != "*" && !$contact){
+						$error .= " | ERROR: ".$contact_name." does not exist.";
+						$code = 1; 
+					}
 				}
+				$rule->setContact($rule_contact);
+				
+				//============== Host ================
+				if(is_array($rule_host)){
+					$rule_host = implode(",",$rule_host);
+				}
+				foreach(explode(",",$rule_host) as $host_name){
+					$nhp = new NagiosHostPeer;
+					$host = $nhp->getByName( $host_name );
+					if($host_name!= "*" && !$host){
+						$error .= " | ERROR: ".$host_name." does not exist.";
+						$code = 1; 
+					}
+				}
+				$rule->setHost($rule_host);
+				
 
 				$rule->setDebug($rule_debug);
 				$rule->setNotificationnumber($rule_notificationNumber);
@@ -180,11 +196,19 @@ class ObjectManager {
 					}
 
 				}else{
-					if($rule_service == "*"){
-						$rule->setService($rule_service);
-					}else{
-						$rule->setService(implode(",",$rule_service));
+					if(is_array($rule_service)){
+						$rule_service = implode(",",$rule_service);
 					}
+					foreach(explode(",",$rule_service) as $service_name){
+						$c = new Criteria();
+						$c->add(NagiosServicePeer::DESCRIPTION, $service_name);
+						$service = NagiosServicePeer::doSelectOne($c);
+						if($service_name!= "*" && !$service){
+							$error .= " | ERROR: ".$service_name." does not exist.";
+							$code = 1; 
+						}
+					}
+					$rule->setService($rule_service);
 
 					if($rule_state == "*"){
 						$rule->setState($rule_state);
@@ -200,7 +224,7 @@ class ObjectManager {
 					}
 				}
 
-				if(isset($rule_method) and is_array($rule_method)){
+				if(isset($rule_method) && is_array($rule_method)){
 					foreach($rule_method as $method_name){
 						$mdto = new NotifierMethodDTO();
 						$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule_type);
