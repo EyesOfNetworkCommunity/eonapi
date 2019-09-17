@@ -634,7 +634,6 @@ class ObjectManager {
 	/* LILAC - Get All Hosts by Element */
 	public function getAllHostsByElement($element){
 		$element = trim($element);
-		$nhp = new NagiosHostPeer();
 		$c = new Criteria();
 		$c1 = $c->getNewCriterion(NagiosHostPeer::NAME, "%" . $element . "%", Criteria::LIKE); //search by name
         	$c2 = $c->getNewCriterion(NagiosHostPeer::ALIAS, "%" . $element . "%", Criteria::LIKE); //search by alias
