@@ -29,6 +29,7 @@ addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
 
 
 addRoute('post', '/getHost', 'getHost', 'operator');
+addRoute('post', '/getAllHostsByElement', 'getAllHostsByElement', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
 addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');

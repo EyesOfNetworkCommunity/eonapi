@@ -631,6 +631,31 @@ class ObjectManager {
 			return "Host named ".$hostName." doesn't exist."; 
 		}
 	}
+	/* LILAC - Get All Hosts by Element */
+	public function getAllHostsByElement($element){
+		$element = trim($element);
+		$nhp = new NagiosHostPeer();
+		$c = new Criteria();
+		$c1 = $c->getNewCriterion(NagiosHostPeer::NAME, "%" . $element . "%", Criteria::LIKE); //search by name
+        	$c2 = $c->getNewCriterion(NagiosHostPeer::ALIAS, "%" . $element . "%", Criteria::LIKE); //search by alias
+        	$c3 = $c->getNewCriterion(NagiosHostPeer::ADDRESS, "%" . $element . "%", Criteria::LIKE); //search by ip address
+        	$c2->addOr($c3);
+        	$c1->addOr($c2);
+        	$c->add($c1);
+        	$c->setIgnoreCase(true);
+		$c->addAscendingOrderByColumn(NagiosHostPeer::NAME);
+		$hosts = NagiosHostPeer::doSelect($c); #select all hosts if exist
+		$result = array();
+		foreach($hosts as $host) {
+			$answer = $host->toArray();
+			array_push($result,$answer);
+			}
+		if (!$result){
+			return "No host with this element: $element.\n";
+		}else{
+			return $result;
+		}
+	}
 	/* LILAC - Get Hosts by template name */
 	public function getHostsBytemplate( $templateHostName){
         $nhtp = new NagiosHostTemplatePeer;
