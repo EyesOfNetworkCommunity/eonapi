@@ -644,14 +644,14 @@ class ObjectManager {
         	$c->add($c1);
         	$c->setIgnoreCase(true);
 		$c->addAscendingOrderByColumn(NagiosHostPeer::NAME);
-		$hosts = NagiosHostPeer::doSelect($c); #select all hosts if exist
+		$hosts = NagiosHostPeer::doSelect($c); //select all hosts if exist
 		$result = array();
 		foreach($hosts as $host) {
 			$answer = $host->toArray();
 			array_push($result,$answer);
 			}
 		if (!$result){
-			return "No host with this element: $element.\n";
+			return "No host with this element: $element.";
 		}else{
 			return $result;
 		}
