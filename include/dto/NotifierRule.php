@@ -177,7 +177,7 @@ class NotifierRule {
      */ 
     public function setType($type)
     {
-        $this->type = $type;
+        $this->type = strtolower($type);
 
         return $this;
     }

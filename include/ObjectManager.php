@@ -142,7 +142,7 @@ class ObjectManager {
 			if(!$rule){
 				$rule = new NotifierRule();
 				$rule->setName($rule_name);
-				$rule->setType($rule_type);
+				$rule->setType(strtolower($rule_type));
 				$rule->setTimeperiod_id($timeperiod->getId());
 
 				//============== Contact ================
@@ -179,21 +179,23 @@ class ObjectManager {
 				$rule->setNotificationnumber($rule_notificationNumber);
 				$rule->setTracking($rule_tracking);
 				
-				if($rule_type == "host"){
+				if(strtolower($rule_type) == "host"){
 					$rule->setService("-");
 					
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
-						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
-						$stringState=array();
-						foreach($rule_state as $state){
-							if(in_array(strtoupper($state),$availableStateHost)){
-								array_push($stringState, strtoupper($state));
-							}
-						}
-						$rule->setState(implode(",",$stringState));
+
+					$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
+
+					if(is_array($rule_state)){
+						$rule_state = implode(",",$rule_state);
 					}
+
+					$stringState=array();
+					foreach(explode(",",$rule_state) as $state){
+						if(in_array(strtoupper($state),$availableStateHost)){
+							array_push($stringState, strtoupper($state));
+						}
+					}
+					$rule->setState(implode(",",$stringState));
 
 				}else{
 					if(is_array($rule_service)){
@@ -210,18 +212,18 @@ class ObjectManager {
 					}
 					$rule->setService($rule_service);
 
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
-						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
-						$stringState=array();
-						foreach($rule_state as $state){
-							if(in_array(strtoupper($state),$availableStateService)){
-								array_push($stringState, strtoupper($state));
-							}
-						}
-						$rule->setState(implode(",",$stringState));
+					$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
+					if(is_array($rule_state)){
+						$rule_state = implode(",",$rule_state);
 					}
+
+					$stringState=array();
+					foreach(explode(",",$rule_state) as $state){
+						if(in_array(strtoupper($state),$availableStateService)){
+							array_push($stringState, strtoupper($state));
+						}
+					}
+					$rule->setState(implode(",",$stringState));
 				}
 
 				if(isset($rule_method) && is_array($rule_method)){
@@ -926,6 +928,53 @@ class ObjectManager {
 			array_push($HostsDown,$ta);
 		}
 		return($HostsDown);
+	}
+
+	/* EONWEB-LIVESTATUS - Get Services Status*/	
+	public function getServicesStatus(){
+		
+
+		$ServiceDown=array();
+		$tabColumns=array("id","host_name","host_address","display_name","state","acknowledged","acknowledged_type","comment","comments_with_info","last_state_change");
+		$tabFilters=array();
+		$tabDate=array("last_state_change");
+		$tabConcat=array("comments_with_info");
+
+		$dateT=array();
+		foreach($this->listNagiosObjects("services",NULL,$tabColumns,$tabFilters)["default"] as $sd ){
+			foreach($sd as $k=>$sdown){
+					if(in_array($k,$tabDate)){
+						$ta["human_".$k]=gmdate("Y-m-d\TH:i:s\Z",$sdown);
+						$dateT=($k=="last_state_change"?array("last_state_change"=>$sdown):NULL);
+					}elseif(in_array($k,$tabConcat)){
+						$concat="";
+						if(sizeof($sd[$k])>0){
+							for($i=0;$i<=sizeof($sd[$k])-1;$i++){
+								if(sizeof($sd[$k][$i])>0){
+								for($j=0;$j<=sizeof($sd[$k][$i])-1;$j++){
+									$concat.=$sd[$k][$i][$j]." | ";
+								}
+							}
+								$concat.=(sizeof($sd[$k][$i])>1? NULL: "|");
+							}
+						}
+						$ta["human_".$k]=$concat;
+						$ta["date"]=time();
+						$ta["human_date"]=gmdate("Y-m-d\TH:i:s\Z",$ta["date"]);
+						if(isset($dateT["last_state_change"])){
+							$date1=new DateTime();
+							$date2=new DateTime();
+							$date2->setTimestamp($dateT["last_state_change"]);
+							$interval=$date2->diff($date1);
+							$ta["human_duration"]=$interval->format('%ad %hh %im %ss ');
+						}
+					}
+					$ta[$k]=$sdown;
+				}
+			array_push($ServiceDown,$ta);
+		}
+		
+		return $ServiceDown;
 	}
 
 	/* EONWEB-LIVESTATUS - Get Services Down*/	

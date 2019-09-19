@@ -26,6 +26,9 @@ addRoute('get', '/getDowntimes', 'getDowntimes', 'operator');
 addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
 addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
+addRoute('get', '/getServicesStatus', 'getServicesStatus', 'operator');
+
+
 
 
 addRoute('post', '/getHost', 'getHost', 'operator');
