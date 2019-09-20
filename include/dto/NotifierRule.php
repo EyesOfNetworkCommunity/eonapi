@@ -64,7 +64,7 @@ class NotifierRule {
             $mdto = new NotifierMethodDTO();
             $m = $mdto->getNotifierMethodByNameAndType($method,$this->type);
             if($m){
-                array_push($this->methods,$m );
+                array_push($this->methods, $m );
             }
         }
     }
@@ -74,9 +74,9 @@ class NotifierRule {
      * @param $methodName
      */
     public function deleteMethod($methodName){
-        for($i; $i<sizeof($this->methods);$i++ ){
+        for($i=0; $i<sizeof($this->methods);$i++ ){
           if($this->methods[$i]->getName() == $methodName){
-            unset($this->methods[$i]);
+            array_splice($this->methods, $i, 1);
           } 
         }
     }
@@ -118,7 +118,10 @@ class NotifierRule {
         $array["timeperiod_id"] = $this->timeperiod_id;
         $array["tracking"] = $this->tracking;
         $array["sort_key"] = $this->sort_key;
-        $array["methods"] = $this->methods;
+        $array["methods"] = array();
+        foreach($this->methods as $method){
+            array_push($method->toArray());
+        }        
         return $array;
     }
 
