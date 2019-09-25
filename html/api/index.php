@@ -28,9 +28,6 @@ addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
 addRoute('get', '/getServicesStatus', 'getServicesStatus', 'operator');
 
-
-
-
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
@@ -48,9 +45,6 @@ addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
 addRoute('post', '/getNotifierTimeperiod', 'getNotifierTimeperiod', 'operator');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
-
-
-
 
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
