@@ -631,6 +631,127 @@ class ObjectManager {
 			return "Host named ".$hostName." doesn't exist."; 
 		}
 	}
+	/* LILAC - Get Event by idEvent */
+
+	public function getDetails($idEvent,$typeEvent){
+
+		global $database_ged;
+		/* find event */
+		$sql = "SELECT * FROM nagios_queue_".$typeEvent ." WHERE id =".$idEvent;
+		
+		$result = sqlrequest($database_ged, $sql);
+		$event = mysqli_fetch_assoc($result);
+
+		if ($event){
+			return $event;
+		}
+		else{
+			return "Service with id ".$idEvent." doesn't exist."; 
+		}	
+		
+	}
+
+		/* LILAC - modify event by idEvent */
+
+		public function modifyEvent($comment,$idEvent){
+
+			global $database_ged;			
+			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+			$res = sqlrequest($database_ged, $sql);
+			$verif = mysqli_fetch_assoc($res);
+			/* modify comment */
+			If($verif["id"] == $idEvent){
+				$sql = "UPDATE  nagios_queue_active SET comments= \"".$comment."\" WHERE id = ".$idEvent;
+				 sqlrequest($database_ged, $sql);
+				return "Modification du commentaire effectuée.";
+			}
+			
+			else{
+				return "Event with id ".$idEvent." doesn't exist.";
+			}
+		
+			
+		}
+
+
+	/* LILAC - own event  */
+	public function ownEvent($idEvent,$owner=""){
+
+		global $database_ged;			
+		$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+		$res = sqlrequest($database_ged, $sql);
+		$verif = mysqli_fetch_assoc($res);
+		/* modify comment */
+		If($verif["id"] == $idEvent){
+			$sql = "UPDATE  nagios_queue_active SET nagios_queue_active.owner = \"".$owner."\" WHERE id = ".$idEvent;
+			 sqlrequest($database_ged, $sql);
+			return "Modification du propriétaire effectuée.";
+		}
+		
+		else{
+			return "Event with id ".$idEvent." doesn't exist.";
+		}
+	
+		
+	}
+
+	/* LILAC - delete an Event (history) */
+	public function deleteEvent($idEvent){
+
+		global $database_ged;			
+		$sql = "SELECT * from nagios_queue_history   WHERE id = ".$idEvent;
+		$res = sqlrequest($database_ged, $sql);
+		$verif = mysqli_fetch_assoc($res);
+		If($verif["id"] == $idEvent && $verif["queue"]=="h"){
+
+			$sql = "DELETE FROM  nagios_queue_history WHERE id = ".$idEvent;
+			sqlrequest($database_ged, $sql);
+			return "Event deleted.";
+		}
+		
+		else{
+			return "Event with id ".$idEvent." doesn't exist.";
+		}
+
+		
+	}
+
+
+		/* LILAC - acknowledge an Event (active) */
+		public function acknowledgeEvent($idEvent){
+
+			global $database_ged;			
+			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+			$res = sqlrequest($database_ged, $sql);
+			$verif = mysqli_fetch_assoc($res);
+			/*  if the event exist */
+			If($verif["id"] == $idEvent){
+
+				/*  copy the event from nagios_queue_active to nagios_queue_history */
+				$sql = "INSERT INTO nagios_queue_history  SELECT * FROM nagios_queue_active where nagios_queue_active.id =".$idEvent." 
+				ON DUPLICATE KEY UPDATE id = (select max(id)+1 from nagios_queue_history)";
+
+				$sql2 = "UPDATE nagios_queue_history SET nagios_queue_history.queue='h' where id = ".$idEvent;
+ 
+
+
+				sqlrequest($database_ged, $sql);
+				sqlrequest($database_ged, $sql2);
+
+				/* delete from nagios_queue_active */
+				$sql = "DELETE FROM nagios_queue_active WHERE id=".$idEvent;
+				sqlrequest($database_ged, $sql);
+				return "Event acknowlegded.";
+			}
+			
+			else{
+				return "Event with id ".$idEvent." doesn't exist.";
+			}
+	
+			
+		}
+	
+
 	/* LILAC - Get Hosts by template name */
 	public function getHostsBytemplate( $templateHostName){
         $nhtp = new NagiosHostTemplatePeer;
