@@ -495,7 +495,13 @@ To illustrate the EON API features tab, you will find a few implementation examp
   "parameters": ["titi","toto"]
 }
 ```
-
+* /ownDisownEvent
+```json 
+{
+	"idEvent": 5,
+	"owner" : "Admin"
+}
+```
 **NB:** You should notice the optional parameter `exportConfiguration` (boolean true or false) that allows the nagios configuration export. An API call doesn't need systematically a nagios configuration reload. That's why you should set this parameter depending your needs.
 
 ## Add EONAPI features: How to do this?
