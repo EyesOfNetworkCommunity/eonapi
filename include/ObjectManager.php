@@ -631,95 +631,130 @@ class ObjectManager {
 			return "Host named ".$hostName." doesn't exist."; 
 		}
 	}
-	/* LILAC - Get Event by idEvent */
+	/* GED - Get Event details by idEvent */
 
-	public function getDetails($idEvent,$typeEvent){
+	public function getDetailsEvent($idEvent,$queue){  //queue : active or history
+		$error = "";
+        $success = "";
+		$code=0;
 
 		global $database_ged;
 		/* find event */
-		$sql = "SELECT * FROM nagios_queue_".$typeEvent ." WHERE id =".$idEvent;
+		$sql = "SELECT * FROM nagios_queue_".$queue ." WHERE id =".$idEvent;
 		
 		$result = sqlrequest($database_ged, $sql);
 		$event = mysqli_fetch_assoc($result);
 
 		if ($event){
+			
 			return $event;
 		}
 		else{
-			return "Service with id ".$idEvent." doesn't exist."; 
-		}	
+			$code = 1;
+			$error= "Event with id ".$idEvent." doesn't exist."; 
+		}
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);	
+
+		return $result;
 		
 	}
 
-		/* LILAC - modify event by idEvent */
+		/* GED - modify an active event by idEvent */
 
-		public function modifyEvent($comment,$idEvent){
-
+		public function modifyEvent($comments,$idEvent){
+			$error = "";
+			$success = "";
+			$code=0;
 			global $database_ged;			
 			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
 			$res = sqlrequest($database_ged, $sql);
 			$verif = mysqli_fetch_assoc($res);
 			/* modify comment */
 			If($verif["id"] == $idEvent){
-				$sql = "UPDATE  nagios_queue_active SET comments= \"".$comment."\" WHERE id = ".$idEvent;
+				$sql = "UPDATE  nagios_queue_active SET comments= \"".$comments."\" WHERE id = ".$idEvent;
 				 sqlrequest($database_ged, $sql);
-				return "Modification du commentaire effectuée.";
+				$success =  "Comments modified.";
+				
 			}
 			
 			else{
-				return "Event with id ".$idEvent." doesn't exist.";
+				$error =  "Event with id ".$idEvent." doesn't exist.";
+				$code = 1;
 			}
 		
-			
+			$logs = $this->getLogs($error, $success);
+		
+			$result=array("code"=>$code,"description"=>$logs);	
+
+			return $result;
 		}
 
 
-	/* LILAC - own event  */
-	public function ownEvent($idEvent,$owner=""){
-
+	/* GED - own event  */
+	public function ownDisownEvent($idEvent,$owner=""){
+		$error = "";
+		$success = "";
+		$code=0;
 		global $database_ged;			
 		$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
 		$res = sqlrequest($database_ged, $sql);
 		$verif = mysqli_fetch_assoc($res);
-		/* modify comment */
+
 		If($verif["id"] == $idEvent){
 			$sql = "UPDATE  nagios_queue_active SET nagios_queue_active.owner = \"".$owner."\" WHERE id = ".$idEvent;
 			 sqlrequest($database_ged, $sql);
-			return "Modification du propriétaire effectuée.";
+			$success= "Event owned.";
 		}
 		
 		else{
-			return "Event with id ".$idEvent." doesn't exist.";
+			$error= "Event with id ".$idEvent." doesn't exist.";
+			$code = 1;
 		}
 	
+		$logs = $this->getLogs($error, $success);
 		
+		$result=array("code"=>$code,"description"=>$logs);	
+
+		return $result;
 	}
 
-	/* LILAC - delete an Event (history) */
+	/* GED - delete an Event (history) */
 	public function deleteEvent($idEvent){
-
+		$error = "";
+		$success = "";
+		$code=0;
 		global $database_ged;			
 		$sql = "SELECT * from nagios_queue_history   WHERE id = ".$idEvent;
 		$res = sqlrequest($database_ged, $sql);
 		$verif = mysqli_fetch_assoc($res);
+
 		If($verif["id"] == $idEvent && $verif["queue"]=="h"){
 
 			$sql = "DELETE FROM  nagios_queue_history WHERE id = ".$idEvent;
 			sqlrequest($database_ged, $sql);
-			return "Event deleted.";
+			$success = "Event deleted.";
 		}
 		
 		else{
-			return "Event with id ".$idEvent." doesn't exist.";
+			$error =  "Event with id ".$idEvent." doesn't exist.";
+			$code = 1;
 		}
 
+		$logs = $this->getLogs($error, $success);
 		
+		$result=array("code"=>$code,"description"=>$logs);	
+
+		return $result;
 	}
 
 
-		/* LILAC - acknowledge an Event (active) */
+		/* GED - acknowledge an Event (active) */
 		public function acknowledgeEvent($idEvent){
-
+			$error = "";
+			$success = "";
+			$code=0;
 			global $database_ged;			
 			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
 			$res = sqlrequest($database_ged, $sql);
@@ -741,14 +776,19 @@ class ObjectManager {
 				/* delete from nagios_queue_active */
 				$sql = "DELETE FROM nagios_queue_active WHERE id=".$idEvent;
 				sqlrequest($database_ged, $sql);
-				return "Event acknowlegded.";
+				$success =  "Event acknowlegded.";
 			}
 			
 			else{
-				return "Event with id ".$idEvent." doesn't exist.";
+				$error =  "Event with id ".$idEvent." doesn't exist.";
+				$code = 1;
 			}
 	
-			
+			$logs = $this->getLogs($error, $success);
+		
+			$result=array("code"=>$code,"description"=>$logs);	
+
+			return $result;
 		}
 	
 

@@ -204,6 +204,12 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`deleteCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to a Service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`deleteCheckCommandParameterToHostTemplate` | POST | [**templateHostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to host template. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`exporterNotifierConfig` | POST | [****] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Write configuration in the nagios file. It export the configuration of advance notification.|
+|`getDetailsEvent` | POST | [**idEvent, queue**] | "http_code": "200 OK", "result": [with the executed actions] | Get event details.|
+|`modifyEvent` | POST | [**comments, idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify comments from an active event.|
+|`deleteEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Delete a resolved event.|
+|`acknowledgeEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge an event.|
+|`ownDisownEvent` | POST | [**idEvent, owner =""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Own or Disown an event.|
+
 
 
 

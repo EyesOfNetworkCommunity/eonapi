@@ -28,10 +28,11 @@ addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
 
 
-addRoute('post', '/getDetails', 'getDetails', 'operator');
+addRoute('post', '/getDetailsEvent', 'getDetailsEvent', 'operator');
 addRoute('post', '/modifyEvent', 'modifyEvent');
 addRoute('post', '/deleteEvent', 'deleteEvent');
 addRoute('post', '/acknowledgeEvent', 'acknowledgeEvent');
+addRoute('post', '/ownDisownEvent', 'ownDisownEvent');
 
 
 addRoute('post', '/getHost', 'getHost', 'operator');
