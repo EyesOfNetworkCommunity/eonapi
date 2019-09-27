@@ -26,7 +26,7 @@ addRoute('get', '/getDowntimes', 'getDowntimes', 'operator');
 addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
 addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
-
+addRoute('get', '/getServiceAcknowledges', 'getServiceAcknowledges', 'operator');
 
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
@@ -55,6 +55,8 @@ addRoute('post', '/createServiceToHost', 'createServiceToHost');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
+addRoute('post', '/createServiceAcknowledge', 'createServiceAcknowledge');
+
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
@@ -116,6 +118,7 @@ addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
 addRoute('post', '/deleteServiceDowntime', 'deleteServiceDowntime');
+addRoute('post', '/deleteServiceAcknowledge', 'deleteServiceAcknowledge');
 addRoute('post', '/deleteContactGroupToHost', 'deleteContactGroupToHost');
 addRoute('post', '/deleteHostTemplateToHosts', 'deleteHostTemplateToHosts');
 addRoute('post', '/deleteServiceByHostTemplate', 'deleteServiceByHostTemplate');

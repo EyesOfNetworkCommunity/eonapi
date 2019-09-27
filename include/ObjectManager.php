@@ -12,7 +12,9 @@
 # Copyright (c) 2019 AXIANS Cloud Builder
 # Contributor: Hoarau Jeremy <jeremy.hoarau@axians.com>
 #
-*/
+*/ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
 
 include("/srv/eyesofnetwork/eonweb/include/config.php");
@@ -1146,7 +1148,7 @@ class ObjectManager {
 				while($x < count($downtimesList) && !$verify){
 					if(strval($timestamp) == strval($downtimesList[$x]["entry_time"])){
 						$verify=True;
-						$success .= "Schedule host downtimes succesfully save. ref: $timestamp";
+						$success .= "Schedule service downtimes succesfully save. ref: $timestamp";
 					}
 					$x++;
 				}
@@ -6040,6 +6042,91 @@ class ObjectManager {
 		return $result;
 
 	}*/
+	/* NAGIOS - create service Acknowledge */
+	public function createServiceAcknowledge($hostName,$serviceName,$sticky,$notify,$persistent,$comment,$user){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] ACKNOWLEDGE_SVC_PROBLEM;'.$hostName.';'.$serviceName.';'.$sticky.';'.$notify.';'.$persistent.';'.$user.';'.$comment.''.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				
+				$AcknowledgeList = $this->getServiceAcknowledges();
+				$verify = False;
+				if(strval($timestamp) == strval($AcknowledgeList[$hostName][$serviceName]["entry_time"])){
+					$verify=True;
+					$success .= "Acknowledge succesfully save. ref: $timestamp";
+				}
+				
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+		return $result;
+	}
+
+	/* NAGIOS - Get Service Acknowledge */	
+	public function getServiceAcknowledges(){
+		$acknowledge=array();
+		$tab=array("host_name","service_description","host_address","service_acknowledged","entry_time","service_acknowledgement_type","service_state","service_last_state_change","service_last_time_ok","service_last_time_warning","service_last_time_critical","service_last_time_unknown","service_comments_with_info","service_contacts","service_notifications_enabled");
+		foreach($this->listNagiosObjects("comments",NULL,$tab)["default"] as $key=>$value){
+			$acknowledge[$value["host_name"]][$value["service_description"]] = $value;
+
+		}
+		return $acknowledge;
+	}
+
+
+	/* NAGIOS - delete host Downtimes */
+    public function deleteServiceAcknowledge($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			$cmdline = '['.$timestamp.'] REMOVE_SVC_ACKNOWLEDGEMENT;'.$hostName.';'.$serviceName.' '.PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$AcknowledgeList = $this->getServiceAcknowledges();
+			$verify = True;
+				if($AcknowledgeList[$hostName][$serviceName]["service_acknowledged"] != 1){
+					$verify=False;
+					$success .= "Schedule host downtimes succesfully deleted.";
+				}
+			if($verify){
+				$code = 1;
+				$error.="An error occurred nothing happen.";
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
 }
 
 ?>
