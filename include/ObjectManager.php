@@ -634,9 +634,6 @@ class ObjectManager {
 	/* GED - Get Event details by idEvent */
 
 	public function getDetailsEvent($idEvent,$queue){  //queue : active or history
-		$error = "";
-        $success = "";
-		$code=0;
 
 		global $database_ged;
 		/* find event */
@@ -650,14 +647,9 @@ class ObjectManager {
 			return $event;
 		}
 		else{
-			$code = 1;
-			$error= "Event with id ".$idEvent." doesn't exist."; 
+			
+			return "Event with id ".$idEvent." doesn't exist."; 
 		}
-		$logs = $this->getLogs($error, $success);
-		
-		$result=array("code"=>$code,"description"=>$logs);	
-
-		return $result;
 		
 	}
 
@@ -790,7 +782,73 @@ class ObjectManager {
 
 			return $result;
 		}
-	
+	/* Get process by id */
+	public function getPIDProcess($process){
+
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+
+		
+		$processTab = $this->getNameProcess();
+
+		if(in_array($process,$processTab)){
+		
+			$cmd = $array_serv_system[$process]["status"];
+			$PID = exec($cmd,$result);
+			if($PID!=null){
+				$result_process["status"]="UP";
+				$result_process["PID"]= $PID;
+			}
+			else {
+				$result_process["status"]= "DOWN";
+				$result_process["PID"] = "";
+			}
+			return $result_process;
+		}
+		else {
+			
+			return "Process named ".$process." doesn't exist.";
+		 	
+		}
+				
+	} 
+
+	/* Do actions on process | Stop - Restart - Reload - Check */
+
+/*	public function actionProcess($process,$action){
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+
+		
+		$processTab = $this->getNameProcess();
+
+		if(in_array($process,$processTab)){
+		
+			$cmd = $array_serv_system[$process]["status"];
+			$PID = exec($cmd,$result);
+			if($PID!=null){
+				$result_process["status"]="UP";
+				$result_process["PID"]= $PID;
+			}
+			else {
+				$result_process["status"]= "DOWN";
+				$result_process["PID"] = "";
+			}
+	}
+*/
+
+	/* Get all process */
+	public function getNameProcess(){
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+
+		$process = array_keys($array_serv_system);
+		return $process;
+	}
+
 
 	/* LILAC - Get Hosts by template name */
 	public function getHostsBytemplate( $templateHostName){
