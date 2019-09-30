@@ -208,7 +208,10 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`modifyEvent` | POST | [**comments, idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify comments from an active event.returncode==0 or 1 if the idEvent given doesn't exist|
 |`deleteEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Delete a resolved event.returncode==0 or 1 if the idEvent given doesn't exist|
 |`acknowledgeEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge an event. returncode==0 or 1 if the idEvent given doesn't exist.|
-|`ownDisownEvent` | POST | [**idEvent, owner =""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Own or Disown an event.returncode==0 or 1 if the idEvent given doesn't exist||`getNameProcess` | GET | [****] | "http_code": "200 OK", "result": [with the executed actions] | Get process name used by EON.||`getPIDProcess` | POST | [**process**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Get PID and status process.returncode==0 or 1 if the process given doesn't exist (check getNameProcess).||`actionProcess` | POST | [**process,action**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] |Do actions on proceess (start,stop,restart,reload,verify).returncode==0 or 1 if the process/action given doesn't exist.|
+|`ownDisownEvent` | POST | [**idEvent, owner =""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Own or Disown an event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`getNameProcess` | GET | [****] | "http_code": "200 OK", "result": [with the executed actions] | Get process name used by EON.|
+|`getPIDProcess` | POST | [**process**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Get PID and status process.returncode==0 or 1 if the process given doesn't exist (check getNameProcess).|
+|`actionProcess` | POST | [**process,action**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] |Do actions on proceess (start,stop,restart,reload,verify).returncode==0 or 1 if the process/action given doesn't exist.|
 
 
 
