@@ -6062,9 +6062,9 @@ class ObjectManager {
 				
 				$AcknowledgeList = $this->getServiceAcknowledges();
 				$verify = False;
-				if(strval($timestamp) == strval($AcknowledgeList[$hostName][$serviceName]["entry_time"])){
+				if($AcknowledgeList[$hostName][$serviceName]["acknowledged"] == 1){
 					$verify=True;
-					$success .= "Acknowledge succesfully save. ref: $timestamp";
+					$success .= "Acknowledge succesfully save.";
 				}
 				
 
@@ -6087,16 +6087,15 @@ class ObjectManager {
 	/* NAGIOS - Get Service Acknowledge */	
 	public function getServiceAcknowledges(){
 		$acknowledge=array();
-		$tab=array("host_name","service_description","host_address","service_acknowledged","entry_time","service_acknowledgement_type","service_state","service_last_state_change","service_last_time_ok","service_last_time_warning","service_last_time_critical","service_last_time_unknown","service_comments_with_info","service_contacts","service_notifications_enabled");
-		foreach($this->listNagiosObjects("comments",NULL,$tab)["default"] as $key=>$value){
-			$acknowledge[$value["host_name"]][$value["service_description"]] = $value;
+		$tab=array("host_name","description","host_address","acknowledged","acknowledgement_type","state","last_state_change","last_time_ok","last_time_warning","last_time_critical","last_time_unknown","comments_with_info","contacts","notifications_enabled");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$acknowledge[$value["host_name"]][$value["description"]] = $value;
 
 		}
 		return $acknowledge;
 	}
 
-
-	/* NAGIOS - delete host Downtimes */
+	/* NAGIOS - delete service acknowledge */
     public function deleteServiceAcknowledge($hostName,$serviceName){
 		$error = "";
 		$success = "";
@@ -6111,12 +6110,471 @@ class ObjectManager {
 			$verify = True;
 				if($AcknowledgeList[$hostName][$serviceName]["service_acknowledged"] != 1){
 					$verify=False;
-					$success .= "Schedule host downtimes succesfully deleted.";
+					$success .= "Acknowledge succesfully deleted.";
 				}
 			if($verify){
 				$code = 1;
 				$error.="An error occurred nothing happen.";
 			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - create service Comment */
+	public function createServiceComment($hostName,$serviceName,$persistent,$user,$comment){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] ADD_SVC_COMMENT;'.$hostName.';'.$serviceName.';'.$persistent.';'.$user.';'.$comment.''.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				
+				$CommentList = $this->getServiceComments();
+				$verify = False;
+				if(strval($timestamp) == strval($CommentList[$hostName][$serviceName]["entry_time"])){
+					$verify=True;
+					$success .= "Comment succesfully save. ref: $timestamp";
+				}
+				
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+		return $result;
+	}
+
+	/* NAGIOS - Get Service Comments */	
+	public function getServiceComments(){
+		$comment=array();
+		$tab=array("host_name","service_description","host_address","service_acknowledged","entry_time","service_acknowledgement_type","service_state","service_last_state_change","service_last_time_ok","service_last_time_warning","service_last_time_critical","service_last_time_unknown","service_comments_with_info","service_contacts","service_notifications_enabled");
+		foreach($this->listNagiosObjects("comments",NULL,$tab)["default"] as $key=>$value){
+			$comment[$value["host_name"]][$value["service_description"]] = $value;
+		}
+		return $comment;
+	}
+
+	public function deleteServiceComment($hostName,$serviceName,$idComment){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DEL_SVC_COMMENT;'.$idComment.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CommentList = $this->getServiceComments();
+			$verify = True;
+			$x = 0;
+			while($x < count($CommentList) && $verify){
+				if($CommentList[$hostName][$serviceName]["service_comments_with_info"][$x]["0"] == $idComment){
+					$verify=False;
+					$error .= "An error occurred nothing happen.";
+				}
+				$x++;
+			}
+				
+			if($verify){
+				$code = 1;
+				$success .="Comment succesfully deleted. ";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function deleteAllServiceComments($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DEL_ALL_SVC_COMMENTS;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CommentList = $this->getServiceComments();
+			$verify = True;
+			$x = 0;
+			while($x < count($CommentList) && $verify){
+				if(isset($CommentList[$hostName][$serviceName])){
+					$verify=False;
+					$error .= "An error occurred nothing happen.";
+				}
+				$x++;
+			} 
+				
+			if($verify){
+				$code = 1;
+				$success .="Comments succesfully deleted.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function enableServiceCheck($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_SVC_CHECK;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getServiceChecks();
+			$verify = True;
+			$x = 0;
+			while($x < count($CheckList) && $verify){
+				if($CheckList[$hostName][$serviceName]["active_checks_enabled"] == 1 ){
+					$verify=False;
+					$success .= "Active check succesfully enabled.";
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function disableServiceCheck($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_SVC_CHECK;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getServiceChecks();
+			$verify = True;
+			$x = 0;
+			while($x < count($CheckList) && $verify){
+				if($CheckList[$hostName][$serviceName]["active_checks_enabled"] == 0 ){
+					$verify=False;
+					$success .= "Active check succesfully disabled.";
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function getServiceChecks(){
+		$check=array();
+		$tab=array("host_name","description","host_address","active_checks_enabled","acknowledged","state");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]][$value["description"]] = $value;
+		}
+		return $check;
+	}
+
+	public function enableServiceNotification($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_SVC_NOTIFICATIONS;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$NotificationList = $this->getServiceNotifications();
+			$verify = True;
+			$x = 0;
+			while($x < count($NotificationList) && $verify){
+				if($NotificationList[$hostName][$serviceName]["notifications_enabled"] == 1 ){
+					$verify=False;
+					$success .= "Notification succesfully enabled.";
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function disableServiceNotification($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_SVC_NOTIFICATIONS;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$NotificationList = $this->getServiceNotifications();
+			$verify = True;
+			$x = 0;
+			while($x < count($NotificationList) && $verify){
+				if($NotificationList[$hostName][$serviceName]["notifications_enabled"] == 0 ){
+					$verify=False;
+					$success .= "Notification succesfully disabled.";
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function getServiceNotifications(){
+		$check=array();
+		$tab=array("host_name","description","host_address","notifications_enabled","current_notification_number","last_notification","state");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]][$value["description"]] = $value;
+		}
+		return $check;
+	}
+
+	public function enableServiceEventHandler($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_SVC_EVENT_HANDLER;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$EventHandlerList = $this->getServiceEventHandler();
+			$verify = True;
+			$x = 0;
+			while($x < count($EventHandlerList) && $verify){
+				if($EventHandlerList[$hostName][$serviceName]["event_handler_enabled"] == 1 ){
+					$verify=False;
+					$success .= "Notification succesfully enabled.";
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function disableServiceEventHandler($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_SVC_EVENT_HANDLER;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$EventHandlerList = $this->getServiceEventHandler();
+			$verify = True;
+			$x = 0;
+			while($x < count($EventHandlerList) && $verify){
+				if($EventHandlerList[$hostName][$serviceName]["event_handler_enabled"] == 0 ){
+					$verify=False;
+					$success .= "Notification succesfully disabled.";
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function getServiceEventHandler(){
+		$check=array();
+		$tab=array("host_name","description","host_address","event_handler_enabled","state");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]][$value["description"]] = $value;
+		}
+		return $check;
+	}
+
+	public function submitPassiveCheckResult($hostName,$serviceName,$returnCode,$outPut){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] PROCESS_SERVICE_CHECK_RESULT;'.$hostName.';'.$serviceName.';'.$returnCode.';'.$outPut.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$StateList = $this->getServiceEventHandler();
+			$verify = True;
+			$x = 0;
+			while($x < count($StateList) && $verify){
+				if($StateList[$hostName][$serviceName]["state"] == $returnCode){
+					$verify=False;
+					$success .= "Passive check result succesfully send. returnCode = ".$returnCode;
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= var_dump($StateList);
+			}
+		}
 		}catch(Exception $e) {
 			$code=1;
 			$error .= $e->getMessage();

@@ -26,21 +26,32 @@ addRoute('get', '/getDowntimes', 'getDowntimes', 'operator');
 addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
 addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
+addRoute('get', '/getServiceChecks', 'getServiceChecks', 'operator');
+addRoute('get', '/getServiceComments', 'getServiceComments', 'operator');
 addRoute('get', '/getServiceAcknowledges', 'getServiceAcknowledges', 'operator');
+addRoute('get', '/getServiceEventHandler', 'getServiceEventHandler', 'operator');
+addRoute('get', '/getServiceNotifications', 'getServiceNotifications', 'operator');
+
 
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
 addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');
+addRoute('post', '/enableServiceCheck', 'enableServiceCheck');
+addRoute('post', '/disableServiceCheck', 'disableServiceCheck');
 addRoute('post', '/getServiceGroup', 'getServiceGroup', 'operator');
 addRoute('post', '/getHostTemplate', 'getHostTemplate', 'operator');
 addRoute('post', '/getContactGroups', 'getContactGroups', 'operator');
 addRoute('post', '/getServicesByHost', 'getServicesByHost', 'operator');
 addRoute('post', '/getServiceTemplate', 'getServiceTemplate', 'operator');
 addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
+addRoute('post', '/submitPassiveCheckResult', 'submitPassiveCheckResult');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
+addRoute('post', '/enableServiceEventHandler', 'enableServiceEventHandler');
+addRoute('post', '/enableServiceNotification', 'enableServiceNotification');
+addRoute('post', '/disableServiceNotification', 'disableServiceNotification');
+addRoute('post', '/disableServiceEventHandler', 'disableServiceEventHandler');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
-
 
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
@@ -52,6 +63,7 @@ addRoute('post', '/createServiceGroup', 'createServiceGroup');
 addRoute('post', '/createHostTemplate', 'createHostTemplate');
 addRoute('post', '/createHostDowntime', 'createHostDowntime');
 addRoute('post', '/createServiceToHost', 'createServiceToHost');
+addRoute('post', '/createServiceComment', 'createServiceComment');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
@@ -103,7 +115,6 @@ addRoute('post', '/modifyServicefromHostTemplate', 'modifyServicefromHostTemplat
 addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
 
-
 addRoute('post', '/deleteHost', 'deleteHost');
 addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteService', 'deleteService');
@@ -115,6 +126,8 @@ addRoute('post', '/deleteServiceGroup', 'deleteServiceGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
 addRoute('post', '/deleteHostDowntime', 'deleteHostDowntime');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
+addRoute('post', '/deleteServiceComment', 'deleteServiceComment');
+addRoute('post', '/deleteAllServiceComments', 'deleteAllServiceComments');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
 addRoute('post', '/deleteServiceDowntime', 'deleteServiceDowntime');
