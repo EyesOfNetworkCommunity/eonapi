@@ -205,10 +205,10 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`deleteCheckCommandParameterToHostTemplate` | POST | [**templateHostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to host template. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`exporterNotifierConfig` | POST | [****] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Write configuration in the nagios file. It export the configuration of advance notification.|
 |`getDetailsEvent` | POST | [**idEvent, queue**] | "http_code": "200 OK", "result": [with the executed actions] | Get event details.|
-|`modifyEvent` | POST | [**comments, idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify comments from an active event.|
-|`deleteEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Delete a resolved event.|
-|`acknowledgeEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge an event.|
-|`ownDisownEvent` | POST | [**idEvent, owner =""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Own or Disown an event.|
+|`modifyEvent` | POST | [**comments, idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify comments from an active event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`deleteEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Delete a resolved event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`acknowledgeEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge an event. returncode==0 or 1 if the idEvent given doesn't exist.|
+|`ownDisownEvent` | POST | [**idEvent, owner =""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Own or Disown an event.returncode==0 or 1 if the idEvent given doesn't exist||`getNameProcess` | GET | [****] | "http_code": "200 OK", "result": [with the executed actions] | Get process name used by EON.||`getPIDProcess` | POST | [**process**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Get PID and status process.returncode==0 or 1 if the process given doesn't exist (check getNameProcess).||`actionProcess` | POST | [**process,action**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] |Do actions on proceess (start,stop,restart,reload,verify).returncode==0 or 1 if the process/action given doesn't exist.|
 
 
 
