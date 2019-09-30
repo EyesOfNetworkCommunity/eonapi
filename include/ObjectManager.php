@@ -782,13 +782,12 @@ class ObjectManager {
 
 			return $result;
 		}
-	/* Get process by id */
+	/* Get process status by name */
 	public function getPIDProcess($process){
 
 		global $path_nagios_bin;
 		global $path_nagios_etc;
 		global $array_serv_system;
-
 		
 		$processTab = $this->getNameProcess();
 
@@ -814,30 +813,98 @@ class ObjectManager {
 				
 	} 
 
-	/* Do actions on process | Stop - Restart - Reload - Check */
+	/* Do actions on process | stop - start - restart - reload - verify */
 
-/*	public function actionProcess($process,$action){
+
+	public function actionProcess($process,$action){
 		global $path_nagios_bin;
 		global $path_nagios_etc;
 		global $array_serv_system;
+		$error = "";
+		$success = "";
+		$code=0;
+		$doReload = FALSE;
 
 		
 		$processTab = $this->getNameProcess();
 
 		if(in_array($process,$processTab)){
-		
 			$cmd = $array_serv_system[$process]["status"];
 			$PID = exec($cmd,$result);
-			if($PID!=null){
-				$result_process["status"]="UP";
-				$result_process["PID"]= $PID;
+			$processActions = array_keys($array_serv_system[$process]["proc_act"]);
+
+			if(in_array($action,$processActions)){
+				switch($action){
+					case $action=="stop" :
+						if($PID!=null){
+							$cmd = $array_serv_system[$process]["proc_act"][$action];
+							exec($cmd,$result);
+							$doReload = TRUE;
+
+							$success = $result;
+							break;
+						}else {
+							$code = 1;
+							$error = $process." process is already on ".$action;
+							break;
+						}
+					case $action=="start" :
+						if($PID==null){
+							$cmd = $array_serv_system[$process]["proc_act"][$action];
+							exec($cmd,$result);
+							$doReload = TRUE;
+							
+							$success =$result;
+							break;
+						}else {
+							$code = 1;
+							$error = $process." process is already on ".$action;
+							break;
+						}
+					
+					case $action=="restart" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success = $result;
+						break;
+
+					case $action=="reload" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success = $result;
+						break;
+
+					case $action=="verify" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success =$result;
+						break;
+				}
+
+				if ($doReload == True && in_array("reload",$processActions)){
+					$cmd = $array_serv_system[$process]["proc_act"]["reload"];
+					exec($cmd,$result);
+				}
+
+			}else {
+				$error =  "You can't do action named ". $action." on ".$process. " process";
+				$code = 1;
+			}		
+			
+		} else {
+			$error =  "Process named ".$process." doesn't exist.";
+			$code = 1;
 			}
-			else {
-				$result_process["status"]= "DOWN";
-				$result_process["PID"] = "";
-			}
+
+		if ($code==1){
+			$result=array("code"=>$code,"description"=>$error);	
+		}elseif($code == 0){
+			return array("code"=>$code,"description"=>$success);
+		}
+		
+
+		return $result;
 	}
-*/
 
 	/* Get all process */
 	public function getNameProcess(){
