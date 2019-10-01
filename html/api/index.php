@@ -26,32 +26,57 @@ addRoute('get', '/getDowntimes', 'getDowntimes', 'operator');
 addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
 addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
+addRoute('get', '/getHostChecks', 'getHostChecks', 'operator');
 addRoute('get', '/getServiceChecks', 'getServiceChecks', 'operator');
+
 addRoute('get', '/getServiceComments', 'getServiceComments', 'operator');
+addRoute('get', '/getHostAcknowledges', 'getHostAcknowledges', 'operator');
+addRoute('get', '/getHostComments', 'getHostComments', 'operator');
+
+addRoute('get', '/getHostEventHandler', 'getHostEventHandler', 'operator');
 addRoute('get', '/getServiceAcknowledges', 'getServiceAcknowledges', 'operator');
 addRoute('get', '/getServiceEventHandler', 'getServiceEventHandler', 'operator');
 addRoute('get', '/getServiceNotifications', 'getServiceNotifications', 'operator');
+addRoute('get', '/getHostNotifications', 'getHostNotifications', 'operator');
 
+addRoute('post', '/enableHostCheck', 'enableHostCheck');
+addRoute('post', '/disableHostCheck', 'disableHostCheck');
+addRoute('post', '/disableServiceCheck', 'disableServiceCheck');
+addRoute('post', '/enableServiceCheck', 'enableServiceCheck');
+
+addRoute('post', '/submitServicePassiveCheckResult', 'submitPassiveCheckResult');
+addRoute('post', '/submitHostPassiveCheckResult', 'submitHostPassiveCheckResult');
+
+addRoute('post', '/disableServiceNotification', 'disableServiceNotification');
+addRoute('post', '/disableServiceEventHandler', 'disableServiceEventHandler');
+addRoute('post', '/enableHostNotification', 'enableHostNotification');
+addRoute('post', '/disableHostNotification', 'disableHostNotification');
+addRoute('post', '/disableHostEventHandler', 'disableHostEventHandler');
+addRoute('post', '/enableHostEventHandler', 'enableHostEventHandler');
+addRoute('post', '/enableServiceEventHandler', 'enableServiceEventHandler');
+addRoute('post', '/enableServiceNotification', 'enableServiceNotification');
+addRoute('post', '/scheduleHostForcedCheck', 'scheduleHostForcedCheck');
+addRoute('post', '/scheduleServiceForcedCheck', 'scheduleServiceForcedCheck');
 
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
 addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');
-addRoute('post', '/enableServiceCheck', 'enableServiceCheck');
-addRoute('post', '/disableServiceCheck', 'disableServiceCheck');
+
 addRoute('post', '/getServiceGroup', 'getServiceGroup', 'operator');
 addRoute('post', '/getHostTemplate', 'getHostTemplate', 'operator');
 addRoute('post', '/getContactGroups', 'getContactGroups', 'operator');
 addRoute('post', '/getServicesByHost', 'getServicesByHost', 'operator');
 addRoute('post', '/getServiceTemplate', 'getServiceTemplate', 'operator');
 addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
-addRoute('post', '/submitPassiveCheckResult', 'submitPassiveCheckResult');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
-addRoute('post', '/enableServiceEventHandler', 'enableServiceEventHandler');
-addRoute('post', '/enableServiceNotification', 'enableServiceNotification');
-addRoute('post', '/disableServiceNotification', 'disableServiceNotification');
-addRoute('post', '/disableServiceEventHandler', 'disableServiceEventHandler');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
+
+addRoute('post', '/createHostAcknowledge', 'createHostAcknowledge');
+addRoute('post', '/createServiceAcknowledge', 'createServiceAcknowledge');
+addRoute('post', '/createHostComment', 'createHostComment');
+addRoute('post', '/deleteHostComment', 'deleteHostComment');
+addRoute('post', '/deleteAllHostComments', 'deleteAllHostComments');
 
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
@@ -67,7 +92,8 @@ addRoute('post', '/createServiceComment', 'createServiceComment');
 addRoute('post', '/createMultipleObjects', 'createMultipleObjects');
 addRoute('post', '/createServiceTemplate', 'createServiceTemplate');
 addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
-addRoute('post', '/createServiceAcknowledge', 'createServiceAcknowledge');
+
+
 
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
