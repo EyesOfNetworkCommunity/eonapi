@@ -214,32 +214,32 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`getHostComments`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all hosts comments|
 |`getHostEventHandler`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all hosts with EventHandler info|
 |`getHostNotifications`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all hosts with Notifications info|
-|`enableHostCheck`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host active check|
-|`disableHostCheck`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host active check|
-|`enableServiceCheck`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service active check|
-|`disableServiceCheck`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service active check|
-|`enableHostNotification`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host notifications|
-|`disableHostNotification`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host notifications|
-|`enableServiceNotification`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service notifications|
-|`disableServiceNotification`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service notifications|
-|`enableHostEventHandler`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host eventhandler|
-|`disableHostEventHandler`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host eventhandler|
-|`enableServiceEventHandler`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service eventhandler|
-|`disableServiceEventHandler`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service eventhandler|
-|`scheduleHostForcedCheck`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Force check a host|
-|`scheduleServiceForcedCheck`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Force check a service|
-|`createHostAcknowledge`| POST | [**hostName, sticky, notify, persistent, comment, user, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge a host|
-|`createServiceAcknowledge`| POST | [**hostName, serviceName, sticky, notify, persistent, comment, user, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge a service|
-|`deleteHostAcknowledge`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Remove Acknowledgement on a host|
-|`deleteServiceAcknowledge`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Remove Acknowledgement on a service|
-|`createHostComment`| POST | [**hostName, persistent, user, comment, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a host comment|
-|`createServiceComment`| POST | [**hostName, serviceName, persistent, user, comment, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a service comment|
-`deleteHostComment`| POST | [**hostName, idComment, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a host comment|
-`deleteServiceComment`| POST | [**hostName, idComment, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a service comment|
-`deleteAllHostComments`| POST | [**hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
-`deleteAllServiceComments`| POST | [**hostName, serviceName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
-`submitHostPassiveCheckResult`| POST | [**hostName, returnCode, outPut, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a host passive check result|
-`submitServicePassiveCheckResult`| POST | [**hostName, serviceName, returnCode, outPut, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a service passive check result|
+|`enableHostCheck`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host active check|
+|`disableHostCheck`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host active check|
+|`enableServiceCheck`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service active check|
+|`disableServiceCheck`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service active check|
+|`enableHostNotification`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host notifications|
+|`disableHostNotification`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host notifications|
+|`enableServiceNotification`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service notifications|
+|`disableServiceNotification`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service notifications|
+|`enableHostEventHandler`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host eventhandler|
+|`disableHostEventHandler`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host eventhandler|
+|`enableServiceEventHandler`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service eventhandler|
+|`disableServiceEventHandler`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service eventhandler|
+|`scheduleHostForcedCheck`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Force check a host|
+|`scheduleServiceForcedCheck`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Force check a service|
+|`createHostAcknowledge`| POST | [**hostName, sticky, notify, persistent, comment, user**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge a host|
+|`createServiceAcknowledge`| POST | [**hostName, serviceName, sticky, notify, persistent, comment, user**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge a service|
+|`deleteHostAcknowledge`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Remove Acknowledgement on a host|
+|`deleteServiceAcknowledge`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Remove Acknowledgement on a service|
+|`createHostComment`| POST | [**hostName, persistent, user, comment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a host comment|
+|`createServiceComment`| POST | [**hostName, serviceName, persistent, user, comment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a service comment|
+`deleteHostComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a host comment|
+`deleteServiceComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a service comment|
+`deleteAllHostComments`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
+`deleteAllServiceComments`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
+`submitHostPassiveCheckResult`| POST | [**hostName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a host passive check result|
+`submitServicePassiveCheckResult`| POST | [**hostName, serviceName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a service passive check result|
 
 ## EONAPI calls examples
 To illustrate the EON API features tab, you will find a few implementation examples (JSON body parameters):
