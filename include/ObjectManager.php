@@ -6141,7 +6141,7 @@ class ObjectManager {
 		try{
 			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
 			$nhp = new NagiosHostPeer();
-			$host = $nsp->getByName($hostName);
+			$host = $nhp->getByName($hostName);
 			$date = new DateTime();
 			$timestamp = $date->getTimestamp();
 			if(!$host){
@@ -6183,7 +6183,7 @@ class ObjectManager {
 		try{
 			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
 			$nhp = new NagiosHostPeer();
-			$host = $nsp->getByName($hostName);
+			$host = $nhp->getByName($hostName);
 			$date = new DateTime();
 			$timestamp = $date->getTimestamp();
 			if(!$host){
