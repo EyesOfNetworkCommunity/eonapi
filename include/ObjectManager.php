@@ -6151,7 +6151,7 @@ class ObjectManager {
 				$cmdline = '['.$timestamp.'] ACKNOWLEDGE_HOST_PROBLEM;'.$hostName.';'.$sticky.';'.$notify.';'.$persistent.';'.$user.';'.$comment.''.PHP_EOL;
 				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
 				
-				$AcknowledgeList = $this->getServiceAcknowledges();
+				$AcknowledgeList = $this->getHostAcknowledges();
 				$verify = False;
 				if($AcknowledgeList[$hostName]["acknowledged"] == 1){
 					$verify=True;
@@ -6192,7 +6192,7 @@ class ObjectManager {
 			}else{
 				$cmdline = '['.$timestamp.'] REMOVE_HOST_ACKNOWLEDGEMENT;'.$hostName.' '.PHP_EOL;
 				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
-				$AcknowledgeList = $this->getServiceAcknowledges();
+				$AcknowledgeList = $this->getHostAcknowledges();
 				$verify = True;
 					if($AcknowledgeList[$hostName]["acknowledged"] != 1){
 						$verify=False;
@@ -6216,7 +6216,7 @@ class ObjectManager {
 	public function getHostAcknowledges(){
 		$acknowledge=array();
 		$tab=array("host_name","description","host_address","acknowledged","acknowledgement_type","state","last_state_change","last_time_ok","last_time_warning","last_time_critical","last_time_unknown","comments_with_info","contacts","notifications_enabled");
-		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+		foreach($this->listNagiosObjects("hosts",NULL,$tab)["default"] as $key=>$value){
 			$acknowledge[$value["host_name"]] = $value;
 
 		}
