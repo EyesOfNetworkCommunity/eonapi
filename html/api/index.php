@@ -58,6 +58,7 @@ addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
+addRoute('post', '/addParentToHost', 'addParentToHost');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addHostGroupToHost', 'addHostGroupToHost');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
@@ -112,6 +113,7 @@ addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteServiceGroup', 'deleteServiceGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
 addRoute('post', '/deleteHostDowntime', 'deleteHostDowntime');
+addRoute('post', '/deleteParentToHost', 'deleteParentToHost');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');

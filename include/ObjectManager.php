@@ -944,6 +944,63 @@ class ObjectManager {
 	}
 
 ########################################## CREATE
+
+	/* LILAC - add kinship link */
+	public function addParentToHost($parentName, $childName, $exportConfiguration=FALSE){
+		
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+
+			// Wants to add a parent 
+			$nhp = new NagiosHostPeer;
+			// Find host
+			$parentHost = $nhp->getByName($parentName);
+			if(!$parentHost) {
+				$code=1;
+				$error .= "Parent Host $parentName does not exists\n";
+			}
+
+			$childHost = $nhp->getByName($childName);
+			if(!$childHost) {
+				$code=1;
+				$error .= "Child Host $childName does not exists\n";
+			}
+
+			if($code==0){
+				$c = new Criteria();
+				$c->add(NagiosHostParentPeer::CHILD_HOST , $childHost->getId());
+				$c->add(NagiosHostParentPeer::PARENT_HOST, $parentHost->getId());
+				$parentRelationship = NagiosHostParentPeer::doSelectOne($c);
+				if($parentRelationship) {
+					$code=1;
+					$error .= "That parent relationship already exist.\n";
+				}else {
+					$tempParent = new NagiosHostParent();
+					$tempParent->setChildHost($childHost->getId());
+					$tempParent->setParentHost($parentHost->getId());
+					$tempParent->save();
+					$success .= "Parent added";
+				}
+
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
+			
+			}
+			
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+
 	/* LILAC - create contact */ 
 	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
 		$error = "";
@@ -4171,6 +4228,57 @@ class ObjectManager {
 	}
 ########################################## DELETE
 
+/* LILAC - delete kinship link */
+public function deleteParentToHost($parentName, $childName, $exportConfiguration=FALSE){
+		
+	$error = "";
+	$success = "";
+	$code=0;
+	
+	try{
+
+		// Wants to add a parent 
+		$nhp = new NagiosHostPeer;
+		// Find host
+		$parentHost = $nhp->getByName($parentName);
+		if(!$parentHost) {
+			$code=1;
+			$error .= "Parent Host $parentName does not exists\n";
+		}
+
+		$childHost = $nhp->getByName($childName);
+		if(!$childHost) {
+			$code=1;
+			$error .= "Child Host $childName does not exists\n";
+		}
+
+		if($code==0){
+			$c = new Criteria();
+			$c->add(NagiosHostParentPeer::CHILD_HOST , $childHost->getId());
+			$c->add(NagiosHostParentPeer::PARENT_HOST, $parentHost->getId());
+			$parentRelationship = NagiosHostParentPeer::doSelectOne($c);
+			if($parentRelationship) {
+				$parentRelationship->delete();
+				$success  .= "That parent relationship been deleted.\n";
+			}else {
+				$code = 1;
+				$error.= "That parent relationship does not exist yet.\n";
+			}
+
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		
+		}
+		
+	}catch(Exception $e) {
+		$code=1;
+		$error .= $e->getMessage();
+	}
+	
+	$logs = $this->getLogs($error, $success);
+	
+	return array("code"=>$code,"description"=>$logs);
+}
 	/* LILAC - delete host Downtimes */
     public function deleteHostDowntime($idDowntime){
 		$error = "";
