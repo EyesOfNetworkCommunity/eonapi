@@ -629,6 +629,22 @@ class ObjectManager {
 			return "Host named ".$hostName." doesn't exist."; 
 		}
 	}
+	
+	/* LILAC - Get Host by ID */
+	public function getHostById($id){
+        $nhp = new NagiosHostPeer;
+		// Find host
+		$host = $nhp->getById($id);
+		if($host){
+			return $host->toArray();
+		}else{
+			return "Host with ID ".$id." doesn't exist."; 
+		}
+	}
+	
+	
+	
+	
 	/* LILAC - Get Hosts by template name */
 	public function getHostsBytemplate( $templateHostName){
         $nhtp = new NagiosHostTemplatePeer;
