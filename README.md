@@ -104,6 +104,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `getResources` | GET | None | "status": "authorized" | Return the list of resources.  |
 | `getCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Return the informations of a command |
 | `getHost` | POST | [**hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return the given host |
+| `getHostById` | POST | [**id**] | "http_code": "200 OK", "result": [with the executed actions] | return the given host |
 | `getHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return the given host group|
 | `getHostsByTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given template host |
 | `getHostsByHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given hostgroup |
