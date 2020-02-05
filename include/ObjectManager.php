@@ -602,7 +602,8 @@ class ObjectManager {
 	
 	/* LILAC - List Hosts */
 	public function listHosts( $hostName = false, $hostTemplate = false ){
-		return listNagiosObjects("hosts");
+		//return listNagiosObjects("hosts");
+		return("test");
 		//return true;
 	}
 
