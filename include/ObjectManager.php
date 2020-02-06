@@ -604,6 +604,27 @@ class ObjectManager {
 	public function listHosts( $hostName = false, $hostTemplate = false ){
 		return $this->listNagiosObjects("hosts")["default"];
 	}
+	
+	
+	public function iTopIdExists($iTopId_toSearch){
+		$hosts_list = listHosts();
+		foreach ($host_list as $host){
+			foreach ($host["custom_variable_names"] as $custom_variable_key => $custom_variable_name){
+				if ($custom_variable_name == "ITOP_ID"){
+					if (array_key_exists($custom_variable_key, $host["custom_variable_values"])){
+						$iTopId = $host["custom_variable_values"][$custom_variable_key];
+						if (!empty($iTopId)){
+							if ($iTopId == $iTopId_toSearch){
+								$hostId = getHost($host["name"])["Id"];
+								return($hostId);
+							}
+						}
+					}
+				}
+			}
+		}
+		return(false);
+	}
 
 ########################################## GET
 	/* EONAPI - Display results */
