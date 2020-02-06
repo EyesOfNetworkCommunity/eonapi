@@ -16,8 +16,9 @@ define("EONAPI_KEY", "€On@piK3Y");
 function apiKey( $user_id )
 {
     $key = md5(EONAPI_KEY.$user_id);
+    $machineid = file_get_contents("/etc/machine-id");
 
-    return hash('sha256', $key.$_SERVER['SERVER_ADDR']);
+    return hash('sha256', $key.$machineid);
 }
 
 
