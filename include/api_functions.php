@@ -118,8 +118,8 @@ function verifyAuthenticationByApiKey( $request, $right ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = $request->get('username');
-    $paramApiKey = $request->get('apiKey');
+    $paramUsername = mysql_real_escape_string($request->get('username'));
+    $paramApiKey = mysql_real_escape_string($request->get('apiKey'));
     
     //Do not set $serverApiKey to NULL (bypass risk)
     $serverApiKey = EONAPI_KEY;
@@ -149,8 +149,8 @@ function verifyAuthenticationByPassword( $request ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = $request->get('username');
-    $paramPassword = $request->get('password');
+    $paramUsername = mysql_real_escape_string($request->get('username'));
+    $paramPassword = mysql_real_escape_string($request->get('password'));
     
     $usersql = getUserByUsername( $paramUsername );
     $user_right = mysqli_result($usersql, 0, "readonly");
@@ -179,7 +179,7 @@ function getApiKey(){
     $authenticationValid = verifyAuthenticationByPassword( $request );
     if( $authenticationValid == TRUE ){
         //ID of the authenticated user
-        $paramUsername = $request->get('username');
+	$paramUsername = mysql_real_escape_string($request->get('username'));
         $usersql = getUserByUsername( $paramUsername );
         $user_id = mysqli_result($usersql, 0, "user_id");
         
