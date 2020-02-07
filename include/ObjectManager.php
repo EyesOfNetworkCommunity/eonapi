@@ -5769,6 +5769,37 @@ class ObjectManager {
 								);
 				}
 
+				public function deleteHostbyId($id, $exportConfiguration = false) {
+								$error = "";
+								$success = "";
+								$code = 0;
+								try {
+												$nhp = new NagiosHostPeer;
+												$host = $nhp->getById($id);
+												if ($host) {
+																$host->delete();
+																$success .= "Host with ID " . $id . " deleted\n";
+												}
+												else {
+																$code = 1;
+																$error .= "Host with ID " . $id . " not found\n";
+												}
+
+												// Export
+												if ($exportConfiguration == true) $this->exportConfigurationToNagios();
+								}
+								catch(Exception $e) {
+												$code = 1;
+												$error .= $e->getMessage() . "\n";
+								}
+
+								$logs = $this->getLogs($error, $success);
+								return array(
+												"code" => $code,
+												"description" => $logs
+								);
+				}	
+	
 				/* LILAC - Delete Templates Hosts */
 				public function deleteHostTemplate($templateHostName) {
 								$error = "";
