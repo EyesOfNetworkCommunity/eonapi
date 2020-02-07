@@ -1,7 +1,7 @@
 Summary:        API for the EON suite.
 Name:           eonapi
 Version:        2.0
-Release:        1.eon
+Release:        2.eon
 Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/master.tar.gz#/%{name}-%{version}.tar.gz
 Group:          Applications/System
 License:        GPL
@@ -30,6 +30,7 @@ install -m 640 eonapi.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 rm -rf %{buildroot}%{datadir}/%{name}.spec
 
 %post
+echo "[EyesOfNetwork/eonapi] Due to a security vulnerability, the authentication token for the admin user has been regenerated. Please consider replacing the token in your third party tools."
 systemctl restart httpd
 
 %clean
@@ -42,6 +43,11 @@ rm -rf %{buildroot}
 %{_sysconfdir}/httpd/conf.d/eonapi.conf
 
 %changelog
+* Fri Feb 07 2020 Sebastien DAVOULT <d@vou.lt> - 2.0-2
+- FIX modifyNagiosMainConfiguration set value to none (null)
+- FIX mysql_real_escape_string() for [username,password,apiKey] variables
+- FIX APIKEY is now based on machine-id
+
 * Thu Jul 24 2019 Sebastien DAVOULT <d@vou.lt> - 2.0-1
 - FIX manage displayName
 - Add "modifyHostTemplate"
