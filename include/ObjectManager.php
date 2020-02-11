@@ -5225,7 +5225,7 @@ public function deleteParentToHost($parentName, $childName, $exportConfiguration
 	}
 
 
-	public function deleteHostbyId($id, $exportConfiguration = false) {
+	public function deleteHostById($id, $exportConfiguration = false) {
 		$error = "";
 		$success = "";
 		$code = 0;
