@@ -105,7 +105,7 @@ addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToSe
 
 
 addRoute('post', '/deleteHost', 'deleteHost');
-addRoute('post', '/deleteHostbyId', 'deleteHostbyId');
+addRoute('post', '/deleteHostById', 'deleteHostById');
 addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteService', 'deleteService');
 addRoute('post', '/deleteCommand', 'deleteCommand');
