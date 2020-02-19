@@ -1269,7 +1269,7 @@ class ObjectManager {
 				$tempHost = new NagiosHost();
 				$tempHost->setName($hostName);
 				$tempHost->setAlias($hostAlias);
-				$tempHost->setDisplayName($hostName);
+				// $tempHost->setDisplayName($hostName);
 				$tempHost->setAddress($hostIp);
 				$tempHost->save();
 				$success .= "Host $hostName added\n";
