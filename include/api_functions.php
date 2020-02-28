@@ -157,6 +157,9 @@ function verifyAuthenticationByPassword( $request ){
     $paramPassword = $request->get('password');
     
     $usersql = getUserByUsername( $paramUsername );
+    if($usersql == null){
+        return false;
+    }
     $user_right = $usersql[0]["readonly"];
     $user_type = $usersql[0]["user_type"];
     
