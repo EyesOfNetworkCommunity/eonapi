@@ -4,7 +4,7 @@ fonction: '/getHostGroup'
 title: 'Get Host Group'
 type: 'POST'
 
-layout: nil
+layout: default
 ---
 
 This method allows users get informations about a Host Group.

@@ -100,15 +100,6 @@ You will find below the updated list of actions (**"API_function"**) possible in
 
 | Action URL **[API_function]** | Request type | Parameters (body/payload) | Expected response | Comments |
 | --- | --- | --- | --- | --- |
-| `getAuthenticationStatus` | GET | None | "status": "authorized" | Confirm that the provided user account has admin privileges and the permission to make advanced API calls. This means the association username/apiKey is correct.  |
-| `getResources` | GET | None | "status": "authorized" | Return the list of resources.  |
-| `getCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": [with the executed actions] | Return the informations of a command |
-| `getHost` | POST | [**hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return the given host |
-| `getHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return the given host group|
-| `getHostsByTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given template host |
-| `getHostsByHostGroup` | POST | [**hostGroupName**] | "http_code": "200 OK", "result": [with the executed actions] | return hosts link with the given hostgroup |
-| `getServicesByHost` | POST | [**hostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host|
-| `getServicesByHostTemplate` | POST | [**templateHostName**] | "http_code": "200 OK", "result": [with the executed actions] | return services link with the given host template|
 | `getContact` | POST | [**contactName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact otherwise it return all the contact|
 | `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
 | `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |

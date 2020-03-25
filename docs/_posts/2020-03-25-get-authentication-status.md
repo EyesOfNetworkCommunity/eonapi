@@ -4,7 +4,7 @@ fonction: '/getAuthenticationStatus'
 title: 'Get Authentication Status'
 type: 'GET'
 
-layout: nil
+layout: default
 ---
 
 Confirm that the provided user account has admin privileges and the permission to make advanced API calls. This means the association username/apiKey is correct.

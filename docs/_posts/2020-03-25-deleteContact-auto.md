@@ -1,13 +1,13 @@
 ---
 category: Fonction
-fonction: '/getHost'
-title: 'Get Host'
+fonction: '/deleteContact'
+title: 'deleteContact'
 type: 'POST'
 
 layout: default
 ---
 
-This method allows users get informations about a specific Host.
+This method allows users get informations about a specific lilac object.
 
 ### Request
 
@@ -16,17 +16,16 @@ This method allows users get informations about a specific Host.
 
 ```Authentication: bearer TOKEN```
 ```{
-    "hostName": 'host_name'
+    [contactName]
 }```
 
 ### Response
 
-**If succeeds**, returns informations about the given host.
+**If succeeds**, delete the given contact.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", 
-    "result": [with the executed actions]
+    "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

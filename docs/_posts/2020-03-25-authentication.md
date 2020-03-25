@@ -1,8 +1,6 @@
 ---
-fonction: '/getApiKey'
 title: 'Authenticate'
-
-layout: nil
+layout: default
 ---
 
 ## Utilisation: How do I use EONAPI?
