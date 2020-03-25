@@ -1,5 +1,5 @@
 ---
-path: '/getApiKey'
+fonction: '/getApiKey'
 title: 'Authenticate'
 
 layout: nil

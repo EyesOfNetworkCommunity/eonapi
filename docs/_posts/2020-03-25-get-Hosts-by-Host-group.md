@@ -1,6 +1,6 @@
 ---
 category: Fonction
-path: '/getHostsByHostGroup'
+fonction: '/getHostsByHostGroup'
 title: 'Get Hosts By Host Group'
 type: 'POST'
 

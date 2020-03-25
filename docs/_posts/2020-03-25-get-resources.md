@@ -1,6 +1,6 @@
 ---
 category: Fonction
-path: '/getResources'
+fonction: '/getResources'
 title: 'Get resources'
 type: 'GET'
 

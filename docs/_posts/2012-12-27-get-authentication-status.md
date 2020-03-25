@@ -1,6 +1,6 @@
 ---
 category: Fonction
-path: '/getAuthenticationStatus'
+fonction: '/getAuthenticationStatus'
 title: 'Get Authentication Status'
 type: 'GET'
 

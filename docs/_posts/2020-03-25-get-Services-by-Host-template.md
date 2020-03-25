@@ -1,6 +1,6 @@
 ---
 category: Fonction
-path: '/getServicesByHostTemplate'
+fonction: '/getServicesByHostTemplate'
 title: 'Get Services By Host Template'
 type: 'POST'
 

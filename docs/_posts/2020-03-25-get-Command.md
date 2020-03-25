@@ -1,6 +1,6 @@
 ---
 category: Fonction
-path: '/getCommand'
+fonction: '/getCommand'
 title: 'Get command'
 type: 'POST'
 
