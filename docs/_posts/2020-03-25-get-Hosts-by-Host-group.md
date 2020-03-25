@@ -4,7 +4,7 @@ path: '/getHostsByHostGroup'
 title: 'Get Hosts By Host Group'
 type: 'POST'
 
-layout: nil
+layout: default
 ---
 
 This method allows users get informations about a command.

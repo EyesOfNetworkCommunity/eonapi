@@ -4,7 +4,7 @@ path: '/getServicesByHost'
 title: 'Get Services By Host'
 type: 'POST'
 
-layout: nil
+layout: default
 ---
 
 This method allows users get informations about services linked to a specified host.

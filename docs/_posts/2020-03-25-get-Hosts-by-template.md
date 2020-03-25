@@ -4,7 +4,7 @@ path: '/getHostsByTemplate'
 title: 'Get Hosts by Template'
 type: 'POST'
 
-layout: nil
+layout: default
 ---
 
 This method allows users get informations about hosts through is link with a specific template.

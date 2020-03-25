@@ -1,12 +1,12 @@
 ---
 title: 'Get Started'
 
-layout: nil
+layout: default
 ---
 
-## Installation steps: Get started!
+## Installation steps through git: 
 1. Clone the project EONAPI:
-```$ git clone https://github.com/eyesofnetworkcommunity/eonapi.git eonapi-git
+```$ git clone https://github.com/eyesofnetworkcommunity/eonapi.git
 ```
 
 2. Make the symbolic links in your project:
@@ -25,3 +25,6 @@ layout: nil
 
 4. Restart the httpd daemon:
 ```$ service httpd restart```
+
+## Installation through RPM:
+

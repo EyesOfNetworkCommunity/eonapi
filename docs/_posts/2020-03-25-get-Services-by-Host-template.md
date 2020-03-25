@@ -4,7 +4,7 @@ path: '/getServicesByHostTemplate'
 title: 'Get Services By Host Template'
 type: 'POST'
 
-layout: nil
+layout: default
 ---
 
 This method allows users get services linked to a host template.

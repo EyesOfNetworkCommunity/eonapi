@@ -1,7 +1,7 @@
 ---
 title: 'Eyes of network Api'
 
-layout: nil
+layout: default
 ---
 
 ## Introduction 
