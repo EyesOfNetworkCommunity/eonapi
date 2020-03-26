@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Host'
 fonction: '/checkHost'
 title: 'checkHost'
 type: 'POST'
@@ -16,7 +16,10 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    type, adress, port, path
+    type,
+   adress,
+   port,
+   path
 }```
 
 ### Response
@@ -25,7 +28,8 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": [with the executed actions]
+    "http_code": "200 OK",
+   "result": [with the executed actions]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

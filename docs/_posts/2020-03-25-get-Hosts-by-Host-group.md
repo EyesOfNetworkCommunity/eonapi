@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: Host
 fonction: '/getHostsByHostGroup'
 title: 'Get Hosts By Host Group'
 type: 'POST'

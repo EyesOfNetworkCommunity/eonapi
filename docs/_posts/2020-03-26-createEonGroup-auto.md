@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Other'
 fonction: '/createEonGroup'
 title: 'createEonGroup'
 type: 'POST'
@@ -16,7 +16,10 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    group_name, group_descr="",is_ldap_group=false, group_right=array()
+    group_name,
+   group_descr="",
+  is_ldap_group=false,
+   group_right=array()
 }```
 
 ### Response
@@ -25,7 +28,9 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]
+    "http_code": "200 OK",
+   "result": ["code":returnCode,
+  "description":"logs"]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

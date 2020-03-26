@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: '$CATEGORY$'
 fonction: '/$FONCTION$'
 title: '$NAME$'
 type: '$TYPE$'

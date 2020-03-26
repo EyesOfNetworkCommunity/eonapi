@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: Host
 fonction: '/getHostsByTemplate'
 title: 'Get Hosts by Template'
 type: 'POST'

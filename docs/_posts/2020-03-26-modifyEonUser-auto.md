@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Other'
 fonction: '/modifyEonUser'
 title: 'modifyEonUser'
 type: 'POST'
@@ -16,7 +16,19 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    user_mail=NULL, user_name, new_user_name=NULL,user_descr=NULL,user_group=NULL, user_password=NULL, is_ldap_user=NULL, user_location=NULL, user_limitation=NULL, user_language = NULL, in_nagvis = NULL, in_cacti = NULL, nagvis_group = NULL
+    user_mail=NULL,
+   user_name,
+   new_user_name=NULL,
+  user_descr=NULL,
+  user_group=NULL,
+   user_password=NULL,
+   is_ldap_user=NULL,
+   user_location=NULL,
+   user_limitation=NULL,
+   user_language = NULL,
+   in_nagvis = NULL,
+   in_cacti = NULL,
+   nagvis_group = NULL
 }```
 
 ### Response
@@ -25,7 +37,9 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]
+    "http_code": "200 OK",
+   "result": ["code":returnCode,
+  "description":"logs"]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

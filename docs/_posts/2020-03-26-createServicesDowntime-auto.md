@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Service'
 fonction: '/createServicesDowntime'
 title: 'createServicesDowntime'
 type: 'POST'
@@ -16,7 +16,15 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    hostName, serviceName, comment, startTime, endTime, user, fixed=1, duration=1000 , childHostAction = FALSE
+    hostName,
+   serviceName,
+   comment,
+   startTime,
+   endTime,
+   user,
+   fixed=1,
+   duration=1000 ,
+   childHostAction = FALSE
 }```
 
 ### Response
@@ -25,7 +33,9 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]
+    "http_code": "200 OK",
+   "result": ["code":returnCode,
+  "description":"logs"]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

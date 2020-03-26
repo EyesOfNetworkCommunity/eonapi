@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Nagios'
 fonction: '/listNagiosStates'
 title: 'listNagiosStates'
 type: 'POST'
@@ -16,7 +16,8 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    backendid = NULL, filters = FALSE
+    backendid = NULL,
+   filters = FALSE
 }```
 
 ### Response
@@ -25,7 +26,8 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": [with the executed actions]
+    "http_code": "200 OK",
+   "result": [with the executed actions]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

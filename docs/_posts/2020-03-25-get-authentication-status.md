@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: Other
 fonction: '/getAuthenticationStatus'
 title: 'Get Authentication Status'
 type: 'GET'

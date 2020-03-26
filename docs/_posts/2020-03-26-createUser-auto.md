@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Other'
 fonction: '/createUser'
 title: 'createUser'
 type: 'POST'
@@ -16,7 +16,12 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    userName, userMail, admin, filterName, filterValue, exportConfiguration
+    userName,
+   userMail,
+   admin,
+   filterName,
+   filterValue,
+   exportConfiguration
 }```
 
 ### Response
@@ -25,7 +30,8 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": [with the executed actions]
+    "http_code": "200 OK",
+   "result": [with the executed actions]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

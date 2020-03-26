@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: Service
 fonction: '/getServicesByHostTemplate'
 title: 'Get Services By Host Template'
 type: 'POST'

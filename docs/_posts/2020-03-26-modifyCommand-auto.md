@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Command'
 fonction: '/modifyCommand'
 title: 'modifyCommand'
 type: 'POST'
@@ -16,7 +16,10 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    commandName,newCommandName="",commandLine,commandDescription=""
+    commandName,
+  newCommandName="",
+  commandLine,
+  commandDescription=""
 }```
 
 ### Response
@@ -25,7 +28,10 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": ["code":returnCode,"description":"logs","changes":numerOfchanges]
+    "http_code": "200 OK",
+   "result": ["code":returnCode,
+  "description":"logs",
+  "changes":numerOfchanges]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

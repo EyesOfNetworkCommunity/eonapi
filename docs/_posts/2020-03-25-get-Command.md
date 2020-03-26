@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: Command
 fonction: '/getCommand'
 title: 'Get command'
 type: 'POST'

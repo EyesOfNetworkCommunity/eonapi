@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: 'Contact'
 fonction: '/addContactToServiceInHost'
 title: 'addContactToServiceInHost'
 type: 'POST'
@@ -16,7 +16,9 @@ This method allows users get informations about a specific lilac object.
 
 ```Authentication: bearer TOKEN```
 ```{
-    contactName, serviceName, hostName
+    contactName,
+   serviceName,
+   hostName
 }```
 
 ### Response
@@ -25,7 +27,9 @@ This method allows users get informations about a specific lilac object.
 
 ```Status: 200 OK```
 ```{
-    "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]
+    "http_code": "200 OK",
+   "result": ["code":returnCode,
+  "description":"logs"]
 }```
 
 For errors responses, see the [response status codes documentation](#response-status-codes).

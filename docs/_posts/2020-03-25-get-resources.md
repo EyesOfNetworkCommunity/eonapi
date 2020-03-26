@@ -1,5 +1,5 @@
 ---
-category: Fonction
+category: Other
 fonction: '/getResources'
 title: 'Get resources'
 type: 'GET'
