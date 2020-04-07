@@ -122,20 +122,20 @@ function verifyAuthenticationByApiKey( $request, $right ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = mysql_real_escape_string($request->get('username'));
-    $paramApiKey = mysql_real_escape_string($request->get('apiKey'));
+    $paramUsername = $request->get('username');
+    $paramApiKey = $request->get('apiKey');
     
     //Do not set $serverApiKey to NULL (bypass risk)
     $serverApiKey = EONAPI_KEY;
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_right = mysqli_result($usersql, 0, $right);
-    $user_type = mysqli_result($usersql, 0, "user_type");
+    $user_right = $usersql[$right];
+    $user_type = $usersql[0]["user_type"];
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
         //ID of the authenticated user
-        $user_id = mysqli_result($usersql, 0, "user_id");
+        $user_id = $usersql[0]["user_id"];
         $serverApiKey = apiKey( $user_id );    
     }
     
@@ -153,16 +153,19 @@ function verifyAuthenticationByPassword( $request ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = mysql_real_escape_string($request->get('username'));
-    $paramPassword = mysql_real_escape_string($request->get('password'));
+    $paramUsername = $request->get('username');
+    $paramPassword = $request->get('password');
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_right = mysqli_result($usersql, 0, "readonly");
-    $user_type = mysqli_result($usersql, 0, "user_type");
+    if($usersql == null){
+        return false;
+    }
+    $user_right = $usersql[0]["readonly"];
+    $user_type = $usersql[0]["user_type"];
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
-        $userpasswd = mysqli_result($usersql, 0, "user_passwd");
+        $userpasswd = $usersql[0]["user_passwd"];
         $password = md5($paramPassword);
         
         //IF match the hashed password
@@ -181,11 +184,12 @@ function getApiKey(){
     $response = \Slim\Slim::getInstance()->response();
     
     $authenticationValid = verifyAuthenticationByPassword( $request );
+    $usersql=0;
     if( $authenticationValid == TRUE ){
         //ID of the authenticated user
-	$paramUsername = mysql_real_escape_string($request->get('username'));
+	    $paramUsername = $request->get('username');
         $usersql = getUserByUsername( $paramUsername );
-        $user_id = mysqli_result($usersql, 0, "user_id");
+        $user_id = $usersql[0]["user_id"];
         
         $serverApiKey = apiKey( $user_id );
         
