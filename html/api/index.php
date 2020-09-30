@@ -27,6 +27,10 @@ addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
 addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
 
+addRoute('post','/checkDisk', 'checkDisk', 'operator');
+addRoute('post','/checkRAM', 'checkRAM', 'operator');
+addRoute('post','/checkPort', 'checkPort', 'operator');
+addRoute('post','/healthCheck', 'healthCheck', 'operator');
 
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');

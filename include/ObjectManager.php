@@ -45,6 +45,176 @@ class ObjectManager {
 		$this->authUser = $request->get('username');  
 	}
 
+		/*--------- health check ---------*/
+
+	function healthCheck(){
+		$disk_info = $this->checkDisk();
+		$RAM_info = $this->checkRAM();
+		$port_info = $this->checkPort();
+		return array($disk_info, $RAM_info, $port_info);
+	}
+	function checkDisk(){
+
+		$output = shell_exec('df');
+		$array_output_line =preg_split("[\n]", $output);
+	
+		unset($array_output_line[0]);
+		unset($array_output_line[sizeof($array_output_line)]);
+	
+	
+		foreach($array_output_line as $elt) {
+			$array_output = preg_split("/[\s]+/",$elt);
+			if($array_output[5] == "/"){
+				$disk_space_total = $array_output[4];
+			}
+			$array_output[4] = str_replace("%", "", $array_output[4]);
+			if ($array_output[4] > 98) {
+				$location_problem_critic[] = $array_output[5];
+			}
+			else if($array_output[4] > 90){
+				$location_problem_warning[] = $array_output[5];
+			}
+		}
+		//diplay results
+		if(!isset($location_problem_warning) && !isset($location_problem_critic)){
+			$problems =  "No disk problem found";
+		}
+		else{
+			$problems = "Found some problems on those locations : ";
+			if(isset($location_problem_warning)){
+				foreach($location_problem_warning as $elt){
+					$problems.$elt." Warning ";
+				}
+			}
+			if(isset($location_problem_critic)){
+				foreach($location_problem_critic as $elt){
+					$problems.$elt." Critic ";
+				}
+			}
+			
+		}
+		$disk_space = "Total space disk avaible : ".(100-$disk_space_total)."%";
+
+		return array($problems, $disk_space);
+	}
+
+	function checkRAM(){
+	
+		$output = shell_exec('vmstat');
+		$array_output_line = preg_split("[\n]", $output);
+		$array_output = preg_split("/[\s]+/",$array_output_line[2]);
+		unset($array_output[0]);
+		$usedRAM = $array_output[5] + $array_output[6];
+		$totalRAM = $array_output[4] + $array_output[5] + $array_output[6];
+		$ratioRAM = ( $usedRAM * 100 )/ $totalRAM ;
+		if($array_output[7] != 0 && $array_output[8] != 0){
+			$state = "Critic";
+			$problems = "RAM is overloaded and using virtual RAM (swap) !";
+		} else if ( $ratioRAM > 95 ){
+			$state = "Warning";
+			$problems = "RAM is near to get overloaded ( < 95% ) ! ";
+		} else {
+			$problems = "No RAM problem found ";
+			$state = "Good";
+		}
+		$ram_used =  "RAM use : ".round($ratioRAM)."%";
+
+		return array($problems, $ram_used, "Result : ".$state);
+	}
+
+	
+
+	function checkPort(){
+		$output = shell_exec('httpd -v');
+		$output = str_replace("\n"," ",$output);
+		$http_info =  "HTTPD informations : ".$output;
+		$output = shell_exec('systemctl status httpd');
+		$array_output_line =preg_split("[\n]", $output);
+		$httpd_state =  $array_output_line[2];
+		$output = shell_exec('netstat -nlpt | grep ":80 "');
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_80 = $this->verifyPort($array_output_line, "80");
+		} else {
+			$port_80 =  "80 : The socket is not being used";
+		}
+		$output = shell_exec('netstat -nlpt | grep ":8080 "');
+	
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_8080 = $this->verifyPort($array_output_line, "8080");
+		} else {
+			$port_8080 = "8080 : The socket is not being used";
+		}
+			$output = shell_exec('netstat -nlpt | grep ":443 "');
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_443 = $this->verifyPort($array_output_line, "443");
+		} else {
+			$port_443 = "443 : The socket is not being used";
+		}
+		return array($http_info, $httpd_state, $port_80, $port_8080, $port_443);
+		
+	}
+
+	function verifyPort($array, $port){
+		foreach($array as $elt) {
+			$array_output = preg_split("/[\s]+/",$elt);
+			switch ($array_output[5]) {
+				case "LISTEN":
+					return $port.": The socket is listening for incoming connections. ";
+				break;
+	
+				case "ESTABLISHED":
+					return $port.": The socket has an established connection. ";
+				break;
+	
+				case "SYN_SENT":
+					return $port.": The socket is actively attempting to establish a connection. ";
+				break;
+	
+				case "FIN_WAIT1":
+					return $port.": The socket is closed, and the connection is shutting down. ";
+				break;
+	
+				case "FIN_WAIT2":
+					return $port.": Connection is closed, and the socket is waiting for a shutdown from the remote end. ";
+				break;
+	
+				case "TIME_WAIT":
+					return $port.": The socket is waiting after close to handle packets still in the network.";
+				break;
+	
+				case "CLOSE":
+					return $port.": The socket is not being used. ";
+				break;
+	
+				case "CLOSE_WAIT":
+					return $port.": The remote end has shut down, waiting for the socket to close. ";
+				break;
+	
+				case "LAST_ACK":
+					return $port.": The remote end has shut down, and the socket is closed. Waiting for acknowledgement. ";
+				break;
+	
+				case "CLOSING":
+					return $port.": Both sockets are shut down but we still don't have all our data sent. ";
+				break;
+	
+				case "UNKNOWN":
+					return $port.": The state of the socket is unknown. ";
+				break;
+	
+				case "SYN_RECV":
+					return $port.": A connection request has been received from the network. ";
+				break;
+			}
+		}
+	}
+	
+	
+	
+
 ######################################### NOTIFIER CONTROLEUR
 	/*---------EXPORTER------*/
 	public function exporterNotifierConfig(){
