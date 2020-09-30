@@ -54,8 +54,13 @@ class ObjectManager {
 		return array($disk_info, $RAM_info, $port_info);
 	}
 	function checkDisk(){
-
-		$output = shell_exec('df');
+		try {
+			$output = shell_exec('df');
+		}
+		catch (Exception $e){
+			return array("Failed to execute 'df' command in CentOS");
+		}
+		
 		$array_output_line =preg_split("[\n]", $output);
 	
 		unset($array_output_line[0]);
@@ -75,6 +80,7 @@ class ObjectManager {
 				$location_problem_warning[] = $array_output[5];
 			}
 		}
+
 		//diplay results
 		if(!isset($location_problem_warning) && !isset($location_problem_critic)){
 			$problems =  "No disk problem found";
@@ -99,8 +105,13 @@ class ObjectManager {
 	}
 
 	function checkRAM(){
-	
-		$output = shell_exec('vmstat');
+		try {
+			$output = shell_exec('vmstat');
+		}
+		catch (Exception $e){
+			return array("Failed to execute 'vmstat' command in CentOS");
+		}
+		
 		$array_output_line = preg_split("[\n]", $output);
 		$array_output = preg_split("/[\s]+/",$array_output_line[2]);
 		unset($array_output[0]);
@@ -125,28 +136,53 @@ class ObjectManager {
 	
 
 	function checkPort(){
-		$output = shell_exec('httpd -v');
+		try{
+			$output = shell_exec('httpd -v');
+		}
+		catch (Exception $e){
+			return array("Failed to execute 'httpd -v' command in CentOS");
+		}
 		$output = str_replace("\n"," ",$output);
 		$http_info =  "HTTPD informations : ".$output;
+		try{
 		$output = shell_exec('systemctl status httpd');
+		}
+		catch (Exception $e){
+			return array("Failed to execute 'systemctl status httpd' command in CentOS");
+		}
 		$array_output_line =preg_split("[\n]", $output);
 		$httpd_state =  $array_output_line[2];
+		try{
 		$output = shell_exec('netstat -nlpt | grep ":80 "');
+		}
+		catch (Exception $e){
+			return array("Failed to execute 'netstat -nlpt | grep \":80\"' command in CentOS");
+		}
 		if(isset($output)){
 			$array_output_line = preg_split("[\n]", $output);
 			$port_80 = $this->verifyPort($array_output_line, "80");
 		} else {
 			$port_80 =  "80 : The socket is not being used";
 		}
+		try{
 		$output = shell_exec('netstat -nlpt | grep ":8080 "');
-	
+		}
+		catch (Exception $e){
+			return array("Failed to execute 'netstat -nlpt | grep \":8080\"' command in CentOS");
+		}
 		if(isset($output)){
 			$array_output_line = preg_split("[\n]", $output);
 			$port_8080 = $this->verifyPort($array_output_line, "8080");
 		} else {
 			$port_8080 = "8080 : The socket is not being used";
 		}
-			$output = shell_exec('netstat -nlpt | grep ":443 "');
+		try{
+		$output = shell_exec('netstat -nlpt | grep ":443 "');
+		}
+		catch (Exception $e){
+			return array("Failed to execute 'netstat -nlpt | grep \":443\"' command in CentOS");
+		}
+		
 		if(isset($output)){
 			$array_output_line = preg_split("[\n]", $output);
 			$port_443 = $this->verifyPort($array_output_line, "443");
