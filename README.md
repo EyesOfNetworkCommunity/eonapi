@@ -149,6 +149,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
+| `healthCheck` | POST | [] | "http_code": "200 OK", "result": [with the executed actions] | Check if there are problems with the RAM / Disks / Ports and display informations about it |
 | `listNagiosBackends` | POST | [] | "http_code": "200 OK", "result": [with the executed actions] | Return available backend informations(log) |
 | `listNagiosObjects` | POST | [**object, backendid = NULL, columns = FALSE, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return nagios object like services, hosts, and their respective informations on which you can filter |
 | `listNagiosStates` | POST | [**backendid = NULL, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return states of hosts and services  |
