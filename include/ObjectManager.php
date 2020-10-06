@@ -45,8 +45,25 @@ class ObjectManager {
 		$this->authUser = $request->get('username');  
 	}
 
-		/*--------- health check ---------*/
+######################################### NOTIFIER CONTROLEUR
+	/*---------EXPORTER------*/
+	public function exporterNotifierConfig(){
+		$error ="";
+		$success = "";
+		$code =0;
+		exec("/usr/bin/php /srv/eyesofnetwork/eonweb/module/admin_notifier/cli/export.php", $result_cmdact);
+		if(count($result_cmdact)>0){
+			$error .= implode("\n",$result_cmdact);
+			$code =1 ;
+		}else{
+			$success .= "Exportation success.";
+		}
 
+		$logs = $this->getLogs($error, $success);
+        return array("code"=>$code,"description"=>$logs);
+	}
+	
+	/*--------- health check ---------*/
 	function healthCheck(){
 		$disk_info = $this->checkDisk();
 		$RAM_info = $this->checkRAM();
@@ -54,13 +71,10 @@ class ObjectManager {
 		return array($disk_info, $RAM_info, $port_info);
 	}
 	function checkDisk(){
-		try {
-			$output = shell_exec('df');
+		$output = shell_exec('df');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'df' command in CentOS");
 		}
-		catch (Exception $e){
-			return array("Failed to execute 'df' command in CentOS");
-		}
-		
 		$array_output_line =preg_split("[\n]", $output);
 	
 		unset($array_output_line[0]);
@@ -80,8 +94,7 @@ class ObjectManager {
 				$location_problem_warning[] = $array_output[5];
 			}
 		}
-
-		//diplay results
+		//results
 		if(!isset($location_problem_warning) && !isset($location_problem_critic)){
 			$problems =  "No disk problem found";
 		}
@@ -99,19 +112,17 @@ class ObjectManager {
 			}
 			
 		}
-		$disk_space = "Total space disk avaible : ".(100-$disk_space_total)."%";
+		$disk_space = (100-$disk_space_total)." %";
 
-		return array($problems, $disk_space);
+		return array("result"=>$problems, "total space disk avaible"=>$disk_space);
 	}
 
 	function checkRAM(){
-		try {
-			$output = shell_exec('vmstat');
+	
+		$output = shell_exec('vmstat');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'vmstat' command in CentOS");
 		}
-		catch (Exception $e){
-			return array("Failed to execute 'vmstat' command in CentOS");
-		}
-		
 		$array_output_line = preg_split("[\n]", $output);
 		$array_output = preg_split("/[\s]+/",$array_output_line[2]);
 		unset($array_output[0]);
@@ -128,68 +139,45 @@ class ObjectManager {
 			$problems = "No RAM problem found ";
 			$state = "Good";
 		}
-		$ram_used =  "RAM use : ".round($ratioRAM)."%";
+		$ram_used =  round($ratioRAM)." %";
 
-		return array($problems, $ram_used, "Result : ".$state);
+		return array("RAM info"=>$problems, "RAM use"=>$ram_used, "result"=>$state);
 	}
 
 	
 
 	function checkPort(){
-		try{
-			$output = shell_exec('httpd -v');
-		}
-		catch (Exception $e){
-			return array("Failed to execute 'httpd -v' command in CentOS");
+		$output = shell_exec('httpd -v');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'httpd -v' command in CentOS");
 		}
 		$output = str_replace("\n"," ",$output);
-		$http_info =  "HTTPD informations : ".$output;
-		try{
-		$output = shell_exec('systemctl status httpd');
-		}
-		catch (Exception $e){
-			return array("Failed to execute 'systemctl status httpd' command in CentOS");
-		}
-		$array_output_line =preg_split("[\n]", $output);
-		$httpd_state =  $array_output_line[2];
-		try{
+		$http_info =  $output;
 		$output = shell_exec('netstat -nlpt | grep ":80 "');
-		}
-		catch (Exception $e){
-			return array("Failed to execute 'netstat -nlpt | grep \":80\"' command in CentOS");
-		}
 		if(isset($output)){
 			$array_output_line = preg_split("[\n]", $output);
 			$port_80 = $this->verifyPort($array_output_line, "80");
 		} else {
-			$port_80 =  "80 : The socket is not being used";
+			$port_80 =  "The socket is not being used";
 		}
-		try{
 		$output = shell_exec('netstat -nlpt | grep ":8080 "');
-		}
-		catch (Exception $e){
-			return array("Failed to execute 'netstat -nlpt | grep \":8080\"' command in CentOS");
-		}
+		
+	
 		if(isset($output)){
 			$array_output_line = preg_split("[\n]", $output);
 			$port_8080 = $this->verifyPort($array_output_line, "8080");
 		} else {
-			$port_8080 = "8080 : The socket is not being used";
+			$port_8080 = "The socket is not being used";
 		}
-		try{
 		$output = shell_exec('netstat -nlpt | grep ":443 "');
-		}
-		catch (Exception $e){
-			return array("Failed to execute 'netstat -nlpt | grep \":443\"' command in CentOS");
-		}
 		
 		if(isset($output)){
 			$array_output_line = preg_split("[\n]", $output);
 			$port_443 = $this->verifyPort($array_output_line, "443");
 		} else {
-			$port_443 = "443 : The socket is not being used";
+			$port_443 = "The socket is not being used";
 		}
-		return array($http_info, $httpd_state, $port_80, $port_8080, $port_443);
+		return array("HTTPD informations"=>$http_info, "80"=>$port_80, "8080"=>$port_8080, "443"=>$port_443);
 		
 	}
 
@@ -251,25 +239,6 @@ class ObjectManager {
 	
 	
 
-######################################### NOTIFIER CONTROLEUR
-	/*---------EXPORTER------*/
-	public function exporterNotifierConfig(){
-		$error ="";
-		$success = "";
-		$code =0;
-		exec("/usr/bin/php /srv/eyesofnetwork/eonweb/module/admin_notifier/cli/export.php", $result_cmdact);
-		if(count($result_cmdact)>0){
-			$error .= implode("\n",$result_cmdact);
-			$code =1 ;
-		}else{
-			$success .= "Exportation success.";
-		}
-
-		$logs = $this->getLogs($error, $success);
-        return array("code"=>$code,"description"=>$logs);
-	}
-	
-	/*--------- ADD ---------*/
 	public function addNotifierMethod($method_name, $method_type, $method_line){
 		$error = "";
 		$success = "";
@@ -6247,5 +6216,6 @@ class ObjectManager {
 
 	}*/
 }
+
 
 ?>
