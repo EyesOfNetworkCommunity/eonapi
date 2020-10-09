@@ -114,7 +114,8 @@ class ObjectManager {
 		}
 		$disk_space = (100-$disk_space_total)." %";
 
-		return array("result"=>$problems, "total space disk avaible"=>$disk_space);
+		$return = array("result"=>$problems, "total space disk avaible"=>$disk_space);
+		return array("disk"=>$return);
 	}
 
 	function checkRAM(){

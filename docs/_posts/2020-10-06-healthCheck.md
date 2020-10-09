@@ -19,6 +19,7 @@ This method allows users to get general informations about the system.
 
 ```Status: 200 OK```
 ```{
+    "api_version": "2.4.2",
     "http_code": "200 OK", 
     "result": [with the executed actions]
 }```
