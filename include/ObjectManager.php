@@ -142,7 +142,8 @@ class ObjectManager {
 		}
 		$ram_used =  round($ratioRAM)." %";
 
-		return array("RAM info"=>$problems, "RAM use"=>$ram_used, "result"=>$state);
+		$return = array("RAM info"=>$problems, "RAM use"=>$ram_used, "result"=>$state);
+		return array("RAM"=>$return);
 	}
 
 	
@@ -178,8 +179,8 @@ class ObjectManager {
 		} else {
 			$port_443 = "The socket is not being used";
 		}
-		return array("HTTPD informations"=>$http_info, "80"=>$port_80, "8080"=>$port_8080, "443"=>$port_443);
-		
+		$return = array("HTTPD informations"=>$http_info, "80"=>$port_80, "8080"=>$port_8080, "443"=>$port_443);
+		return array("ports"=>$return);
 	}
 
 	function verifyPort($array, $port){
