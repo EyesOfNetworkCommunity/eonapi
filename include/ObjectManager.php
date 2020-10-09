@@ -87,34 +87,20 @@ class ObjectManager {
 				$disk_space_total = $array_output[4];
 			}
 			$array_output[4] = str_replace("%", "", $array_output[4]);
-			if ($array_output[4] > 98) {
-				$location_problem_critic[] = $array_output[5];
+			if ($array_output[4] > 98 && $array_output[5] == "/") {
+				$problem = "Critic";
 			}
-			else if($array_output[4] > 90){
-				$location_problem_warning[] = $array_output[5];
+			else if($array_output[4] > 90 && $array_output[5] == "/"){
+				$problem = "Warning";
+			}
+			else if ($array_output[5] == "/"){
+				$problem =  "No disk problem found";
 			}
 		}
-		//results
-		if(!isset($location_problem_warning) && !isset($location_problem_critic)){
-			$problems =  "No disk problem found";
-		}
-		else{
-			$problems = "Found some problems on those locations : ";
-			if(isset($location_problem_warning)){
-				foreach($location_problem_warning as $elt){
-					$problems.$elt." Warning ";
-				}
-			}
-			if(isset($location_problem_critic)){
-				foreach($location_problem_critic as $elt){
-					$problems.$elt." Critic ";
-				}
-			}
 			
-		}
 		$disk_space = (100-$disk_space_total)." %";
 
-		$return = array("result"=>$problems, "total space disk avaible"=>$disk_space);
+		$return = array("result"=>$problem, "total space disk avaible"=>$disk_space);
 		return array("disk"=>$return);
 	}
 
