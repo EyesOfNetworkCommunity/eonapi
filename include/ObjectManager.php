@@ -174,51 +174,51 @@ class ObjectManager {
 			$array_output = preg_split("/[\s]+/",$elt);
 			switch ($array_output[5]) {
 				case "LISTEN":
-					return $port.": The socket is listening for incoming connections. ";
+					return "The socket is listening for incoming connections. ";
 				break;
 	
 				case "ESTABLISHED":
-					return $port.": The socket has an established connection. ";
+					return "The socket has an established connection. ";
 				break;
 	
 				case "SYN_SENT":
-					return $port.": The socket is actively attempting to establish a connection. ";
+					return "The socket is actively attempting to establish a connection. ";
 				break;
 	
 				case "FIN_WAIT1":
-					return $port.": The socket is closed, and the connection is shutting down. ";
+					return "The socket is closed, and the connection is shutting down. ";
 				break;
 	
 				case "FIN_WAIT2":
-					return $port.": Connection is closed, and the socket is waiting for a shutdown from the remote end. ";
+					return "Connection is closed, and the socket is waiting for a shutdown from the remote end. ";
 				break;
 	
 				case "TIME_WAIT":
-					return $port.": The socket is waiting after close to handle packets still in the network.";
+					return "The socket is waiting after close to handle packets still in the network.";
 				break;
 	
 				case "CLOSE":
-					return $port.": The socket is not being used. ";
+					return "The socket is not being used. ";
 				break;
 	
 				case "CLOSE_WAIT":
-					return $port.": The remote end has shut down, waiting for the socket to close. ";
+					return "The remote end has shut down, waiting for the socket to close. ";
 				break;
 	
 				case "LAST_ACK":
-					return $port.": The remote end has shut down, and the socket is closed. Waiting for acknowledgement. ";
+					return "The remote end has shut down, and the socket is closed. Waiting for acknowledgement. ";
 				break;
 	
 				case "CLOSING":
-					return $port.": Both sockets are shut down but we still don't have all our data sent. ";
+					return "Both sockets are shut down but we still don't have all our data sent. ";
 				break;
 	
 				case "UNKNOWN":
-					return $port.": The state of the socket is unknown. ";
+					return "The state of the socket is unknown. ";
 				break;
 	
 				case "SYN_RECV":
-					return $port.": A connection request has been received from the network. ";
+					return "A connection request has been received from the network. ";
 				break;
 			}
 		}
