@@ -87,14 +87,14 @@ class ObjectManager {
 				$disk_space_total = $array_output[4];
 			}
 			$array_output[4] = str_replace("%", "", $array_output[4]);
-			if ($array_output[4] > 98 && $array_output[5] == "/") {
-				$problem = "Critic";
+			if ($array_output[4] > 95 && $array_output[5] == "/") {
+				$problem = "Critical";
 			}
 			else if($array_output[4] > 90 && $array_output[5] == "/"){
 				$problem = "Warning";
 			}
 			else if ($array_output[5] == "/"){
-				$problem =  "No disk problem found";
+				$problem =  "OK";
 			}
 		}
 			
@@ -117,18 +117,18 @@ class ObjectManager {
 		$totalRAM = $array_output[4] + $array_output[5] + $array_output[6];
 		$ratioRAM = ( $usedRAM * 100 )/ $totalRAM ;
 		if($array_output[7] != 0 && $array_output[8] != 0){
-			$state = "Critic";
+			$state = "Critical";
 			$problems = "RAM is overloaded and using virtual RAM (swap) !";
-		} else if ( $ratioRAM > 95 ){
+		} else if ( $ratioRAM > 90 ){
 			$state = "Warning";
-			$problems = "RAM is near to get overloaded ( < 95% ) ! ";
+			$problems = "RAM is near to get overloaded ! ";
 		} else {
-			$problems = "No RAM problem found ";
-			$state = "Good";
+			$problems = "No RAM problem found";
+			$state = "OK";
 		}
 		$ram_used =  round($ratioRAM)." %";
-
 		$return = array("RAM info"=>$problems, "RAM use"=>$ram_used, "result"=>$state);
+
 		return array("RAM"=>$return);
 	}
 
