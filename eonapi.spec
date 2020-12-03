@@ -1,7 +1,7 @@
 Summary:        API for the EON suite.
 Name:           eonapi
 Version:        2.0
-Release:        2.eon
+Release:        3.eon
 Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/master.tar.gz#/%{name}-%{version}.tar.gz
 Group:          Applications/System
 License:        GPL
@@ -43,6 +43,14 @@ rm -rf %{buildroot}
 %{_sysconfdir}/httpd/conf.d/eonapi.conf
 
 %changelog
+* Thu Dec 03 2020 Sebastien DAVOULT <d@vou.lt> - 2.0-3
+- issue #16 injection getApiKey
+- fix exception
+- Add jekyll + Wiredcraft to manage documentation in eonapi
+- Add Jekyll Documentation
+- Update api_functions sql
+- Fix verifyAuthenticationByApiKey()
+
 * Fri Feb 07 2020 Sebastien DAVOULT <d@vou.lt> - 2.0-2
 - FIX modifyNagiosMainConfiguration set value to none (null)
 - FIX mysql_real_escape_string() for [username,password,apiKey] variables
