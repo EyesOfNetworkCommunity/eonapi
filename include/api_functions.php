@@ -121,7 +121,7 @@ function verifyAuthenticationByApiKey( $request, $right ){
     $serverApiKey = EONAPI_KEY;
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_right = $usersql[$right];
+    $user_right = $usersql[0][$right];
     $user_type = $usersql[0]["user_type"];
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
