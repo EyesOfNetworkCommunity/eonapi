@@ -1041,7 +1041,7 @@ class ObjectManager {
 
 		$ServiceDown=array();
 		$tabColumns=array("id","host_name","host_address","display_name","acknowledged","acknowledged_type","comment","comments_with_info","last_state_change");
-		$tabFilters=array("state > 0","host_state = 0","state_type = 1",);
+		$tabFilters=array("state > 0","host_state = 0","state_type = 1");
 		$tabDate=array("last_state_change");
 		$tabConcat=array("comments_with_info");
 
