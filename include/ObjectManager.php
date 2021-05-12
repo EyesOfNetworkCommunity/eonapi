@@ -4296,7 +4296,7 @@ class ObjectManager {
 		$templateHost = $nhtp->getByName($templateHostName);
 		// Find template host
 		if(!$templateHost) {
-			$error .= "Tempalte Host :  $templateHostName not found\n";
+			$error .= "Template Host :  $templateHostName not found\n";
 		}
 		if( empty($error) ) {
 			//We prepared the list of existing custom arg in the Host
@@ -4337,7 +4337,7 @@ class ObjectManager {
 		$templateService = $nstp->getByName($templateServiceName);
 		// Find template host
 		if(!$templateService) {
-			$error .= "Tempalte Service:  $templateServiceName not found\n";
+			$error .= "Template Service:  $templateServiceName not found\n";
 		}
 		if( empty($error) ) {
 			//We prepared the list of existing custom arg in the Host
