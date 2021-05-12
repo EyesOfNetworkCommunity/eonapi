@@ -2566,34 +2566,41 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
-	
+
 	/* LILAC - create Service to Host template*/
-    public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){		
-        $error = "";
+	public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){
+		$error = "";
 		$success = "";
 		$code=0;
-        	    
-        $nsp = new NagiosHostTemplatePeer;
+
+		$nsp = new NagiosHostTemplatePeer;
 		$template = $nsp->getByName($hostTemplateName);
-		
+
 		if(!$template) {
 			$code=1;
 			$error .= "template $hostTemplateName doesn't exist\n";
 		}
-        
-        $nstp = new NagiosServiceTemplatePeer;
-		
-        //Test if the parent templates exist
-        if(isset($service->inheritance)) {
+
+		$nstp = new NagiosServiceTemplatePeer;
+
+		// Test if service already exits
+		$existingService = NagiosServicePeer::getByHostTemplateAndDescription($hostTemplateName,$service->name);
+		if($existingService) {
+			$code=1;
+			$error .= "That service already exists in that list!\n";
+		}
+
+		// Test if the parent templates exist
+		if(isset($service->inheritance)) {
 			$templateName = $service->inheritance;
 			$serviceTemplate = $nstp->getByName($templateName);
 			if(!$serviceTemplate) {
 				$code=1;
-				$error .= "Service Template $templateName not found\n";	
-			}       
+				$error .= "Service Template $templateName not found\n";
+			}
 		}
-		
-		if(empty($error)) {	
+
+		if(empty($error)) {
 			try {
 				// service interface
 				$tempService = new NagiosService();
@@ -2611,7 +2618,7 @@ class ObjectManager {
 					$newInheritance->save();
 					$success .= "Service Template ".$service->inheritance." added to service $service->name \n";
 				}
-				
+
 				if(isset($service->command)){
 					$cmd = NagiosCommandPeer::getByName($service->command);
 					if($cmd){
@@ -2631,22 +2638,22 @@ class ObjectManager {
 							$success .= "Command Parameter ".$params." added to $service->name\n";
 						}
 					}
-				}		
-				
+				}
+
 				// Export
-                if( $exportConfiguration == TRUE )
-				    $this->exportConfigurationToNagios($error, $success);
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
 			}
 			catch(Exception $e) {
 				$code=1;
 				$error .= $e->getMessage()."\n";
 			}
 		}
-                
-        $logs = $this->getLogs($error, $success);
-        
-        return array("code"=>$code,"description"=>$logs);
-        
+
+		$logs = $this->getLogs($error, $success);
+
+		return array("code"=>$code,"description"=>$logs);
+
 	}
 
 	/* LILAC - create Service to Host*/
