@@ -9,18 +9,25 @@
 #
 */
 
-require "/srv/eyesofnetwork/eonapi/include/Slim/Slim.php";
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Factory\AppFactory;
+
+require '/srv/eyesofnetwork/eonapi/include/vendor/autoload.php';
 require "/srv/eyesofnetwork/eonapi/include/api_functions.php";
 require "/srv/eyesofnetwork/eonapi/include/ObjectManager.php";
 
-\Slim\Slim::registerAutoloader();
-$app = new \Slim\Slim();
+$app = AppFactory::create();
+$app->setBasePath('/eonapi');
 
 /* API routes are defined here (http method / association route / function) */
 //GET
+$app->get('/', function (Request $request, Response $response, $args) {
+    $response->getBody()->write("Hello world!");
+    return $response;
+});
 $app->get('/getApiKey', 'getApiKey');
 $app->get('/getAuthenticationStatus', 'getAuthenticationStatus');
-
 //POST (parameters in body)
 addRoute('get', '/getDowntimes', 'getDowntimes', 'operator');
 addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
@@ -184,11 +191,8 @@ addRoute('post','/exporterNotifierConfig', 'exporterNotifierConfig');
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
 	
     global $app;
-    
-    $app->$httpMethod($routeName, function() use ($methodName,$right){
-		
-        $request = \Slim\Slim::getInstance()->request();
-        $response = \Slim\Slim::getInstance()->response();
+
+    $app->$httpMethod($routeName, function(Request $request, Response $response, $args) use ($methodName,$right){
         $body = json_decode($request->getBody());
         $logs = "";
 
@@ -220,16 +224,17 @@ function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
             $result = getJsonResponse($response, "417", $array);
             echo $result;
 
-            return;
+            return $response;
         }
 
         $authenticationValid = verifyAuthenticationByApiKey( $request, $right );
         if( $authenticationValid == true ){
-            $co = new $className;
+            $co = new ObjectManager($request, $response);
             $logs = call_user_func_array(array($co, $methodName), $paramsValue);
         }
 
         constructResponse( $response, $logs, $authenticationValid );
+        return $response;
     });
 }
 

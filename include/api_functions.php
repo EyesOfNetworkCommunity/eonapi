@@ -10,7 +10,8 @@
 
 // => Modify this key with your own secret at initialization
 define("EONAPI_KEY", "€On@piK3Y");
-
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /* API key encryption */
 function apiKey( $user_id )
@@ -73,16 +74,13 @@ function getJsonResponse( $response, $code, $array = null ){
 	
 	global $app;
 	
-    $eonapi = \Slim\Slim::VERSION;
-    $codeMessage = $response->getMessageForCode( $code );
+    $eonapi = \Slim\App::VERSION;
+    $codeMessage = $response->getStatusCode();
     $arrayHeader = array("api_version" => $eonapi, "http_code" => $codeMessage);
     $arrayMerge = array_merge( $arrayHeader, $array );
 
     $jsonResponse = json_encode($arrayMerge, JSON_PRETTY_PRINT);
     $jsonResponseWithHeader = $jsonResponse;
-
-	$app->response->headers->set('Content-Type', 'application/json');
-	$app->response->setStatus($codeMessage);
 	
     return $jsonResponseWithHeader;
 }
@@ -107,6 +105,7 @@ function constructResponse( $response, $logs, $authenticationValid = false ){
         $result = getJsonResponse($response, "401", $array);
         echo $result;
     }
+    return $response;
 }
 
 /*---Authorization checks--*/
@@ -114,9 +113,8 @@ function verifyAuthenticationByApiKey( $request, $right ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = $request->get('username');
-    $paramApiKey = $request->get('apiKey');
-    
+    $paramUsername = $_GET['username'];
+    $paramApiKey = $_GET['apiKey'];
     //Do not set $serverApiKey to NULL (bypass risk)
     $serverApiKey = EONAPI_KEY;
     
@@ -145,8 +143,8 @@ function verifyAuthenticationByPassword( $request ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = $request->get('username');
-    $paramPassword = $request->get('password');
+    $paramUsername = $_GET['username'];
+    $paramPassword = $_GET['password'];
     
     $usersql = getUserByUsername( $paramUsername );
     if($usersql == null){
@@ -171,15 +169,12 @@ function verifyAuthenticationByPassword( $request ){
 
 
 /*---Custom calls---*/
-function getApiKey(){
-    $request = \Slim\Slim::getInstance()->request();
-    $response = \Slim\Slim::getInstance()->response();
-    
+function getApiKey(ServerRequestInterface $request, ResponseInterface $response){
     $authenticationValid = verifyAuthenticationByPassword( $request );
     $usersql=0;
     if( $authenticationValid == TRUE ){
         //ID of the authenticated user
-	    $paramUsername = $request->get('username');
+	    $paramUsername = $_GET['username'];
         $usersql = getUserByUsername( $paramUsername );
         $user_id = $usersql[0]["user_id"];
         
@@ -194,13 +189,10 @@ function getApiKey(){
         $result = getJsonResponse($response, "401", $array);
         echo $result;
     }  
+    return $response;
 }
 
-function getAuthenticationStatus(){
-	
-	$request = \Slim\Slim::getInstance()->request();
-    $response = \Slim\Slim::getInstance()->response();
-    
+function getAuthenticationStatus(ServerRequestInterface $request, ResponseInterface $response){    
     $authenticationValid = verifyAuthenticationByApiKey( $request,"readonly" );    
     if( $authenticationValid == TRUE ){
         $array = array("status" => "authorized");
@@ -212,6 +204,8 @@ function getAuthenticationStatus(){
         $result = getJsonResponse($response, "401", $array);
         echo $result;
     }
+
+    return $response;
 }
 
 ?>

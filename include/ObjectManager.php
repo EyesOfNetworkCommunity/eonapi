@@ -34,15 +34,16 @@ require_once("dto/NotifierMethod.php");
 require_once("dto/NotifierRule.php");
 
 use Nagios\Livestatus\Client;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 # Class with all api functions
 class ObjectManager {
     
 	private $authUser;
 		
-    function __construct(){
+    function __construct(ServerRequestInterface $request, ResponseInterface $response){
 		# Get api userName
-		$request = \Slim\Slim::getInstance()->request();
-		$this->authUser = $request->get('username');  
+		$this->authUser = $_GET['username'];  
 	}
 
 ######################################### NOTIFIER CONTROLEUR
@@ -945,7 +946,7 @@ class ObjectManager {
 
 ########################################## CREATE
 	/* LILAC - create contact */ 
-	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
+	public function createContact($contactName, $contactMail, $contactAlias="description", $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -1170,7 +1171,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Create Host and Services */
-	public function createHost( $templateHostName="GENERIC_HOST", $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function createHost($hostName, $hostIp, $templateHostName="GENERIC_HOST", $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
@@ -1649,7 +1650,7 @@ class ObjectManager {
 	}
 
 	/* EONWEB - Create User */
-	public function createEonUser($user_mail="", $user_name,$user_descr="",$user_group, $user_password, $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
+	public function createEonUser($user_group, $user_password, $user_name, $user_mail="", $user_descr="", $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
 		$error = "";
 		$success = "";
 		$code = 0;
@@ -3868,7 +3869,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Modify Command --- */  
-    public function modifyCommand($commandName, $newCommandName=NULL, $commandLine, $commandDescription=NULL){
+    public function modifyCommand($commandName, $commandLine, $newCommandName=NULL, $commandDescription=NULL){
         /*---Modify check command ==> 'dummy_ok'---*/
 		//TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
 		$error = "";
@@ -3945,7 +3946,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Modify Host */
-	public function modifyHost( $templateHostName=NULL, $hostName,$newHostName=NULL, $hostIp=NULL, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function modifyHost( $hostName, $templateHostName=NULL, $newHostName=NULL, $hostIp=NULL, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
