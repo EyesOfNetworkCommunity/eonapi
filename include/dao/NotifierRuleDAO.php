@@ -144,7 +144,7 @@ class NotifierRuleDAO {
             
             //Delete the method that have benn unlink from rule
             foreach($tab as $method_id){
-                if(!in_array($method_id,split(",",$methods_id_str))){
+                if(!in_array($method_id,preg_split(",",$methods_id_str))){
                     $request = $this->connexion->prepare($this->delete_rule_method_request);
                     $request->execute(array(
                         'rule_id'       => $id,
@@ -154,7 +154,7 @@ class NotifierRuleDAO {
             }
 
             //Add the method that have been linked to rule
-            foreach(split(",",$methods_id_str) as $method_id){
+            foreach(preg_split(",",$methods_id_str) as $method_id){
                 if(!in_array($method_id,$tab)){
                     $request = $this->connexion->prepare($this->add_rule_method_request);
                     $request->execute(array(
