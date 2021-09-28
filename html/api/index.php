@@ -29,6 +29,7 @@ addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
 
 
 addRoute('post', '/getHost', 'getHost', 'operator');
+addRoute('post', '/getHostById', 'getHostById', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
 addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');
@@ -58,6 +59,7 @@ addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
+addRoute('post', '/addParentToHost', 'addParentToHost');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addHostGroupToHost', 'addHostGroupToHost');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
@@ -103,6 +105,7 @@ addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToSe
 
 
 addRoute('post', '/deleteHost', 'deleteHost');
+addRoute('post', '/deleteHostById', 'deleteHostById');
 addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteService', 'deleteService');
 addRoute('post', '/deleteCommand', 'deleteCommand');
@@ -112,6 +115,7 @@ addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteServiceGroup', 'deleteServiceGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
 addRoute('post', '/deleteHostDowntime', 'deleteHostDowntime');
+addRoute('post', '/deleteParentToHost', 'deleteParentToHost');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
@@ -151,6 +155,7 @@ addRoute('post', '/exportConfiguration', 'exportConfiguration');
 addRoute('post', '/listNagiosStates', 'listNagiosStates', 'readonly');
 addRoute('post', '/listNagiosObjects', 'listNagiosObjects', 'readonly');
 addRoute('post', '/listNagiosBackends', 'listNagiosBackends', 'readonly');
+addRoute('post', '/listHosts', 'listHosts', 'readonly');
 
 //==============================================================================
 //eonweb

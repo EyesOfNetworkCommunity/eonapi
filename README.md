@@ -173,6 +173,7 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteServiceTemplate` | POST | [**templateName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete the given Service template |
 | `deleteCommand` | POST | [**commandName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a command to Nagios. |
 | `deleteHost` | POST | [**hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a nagios host. |
+| `deleteHostById` | POST | [**id, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a nagios host by its ID. |
 | `deleteContactGroupToContact` | POST | [**contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete a contact group to a nagios contact. |
 | `deleteContactNotificationCommandToContact` | POST | [**contactName, commandName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete a contact notification command to a nagios contact. |
 | `deleteServiceGroupToServiceInHost` | POST | [**serviceGroupName, serviceName, hostName, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | delete a service group in the given service of the specified host. |
