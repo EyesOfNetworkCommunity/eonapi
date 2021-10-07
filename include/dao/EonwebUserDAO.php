@@ -335,7 +335,9 @@ class EonwebUserDAO {
             $old_pwd = $this->getUserPasswd($user_id);
             //Verify if password is changed
             // EON 6.0.1 - Upgrade password hash
-            if($old_pwd != false && password_hash(md5($user_password), PASSWORD_DEFAULT) != $old_pwd){ 
+            // if($old_pwd != false && md5($user_password) != $old_pwd){ 
+            if($old_pwd != false && (!password_verify(md5($user_password),$old_pwd))){ 
+                
                 $user_password = password_hash(md5($user_password), PASSWORD_DEFAULT);
             }
              
