@@ -156,7 +156,8 @@ function verifyAuthenticationByPassword( $request ){
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
         $userpasswd = $usersql[0]["user_passwd"];
-        $password = md5($paramPassword);
+        // EON 6.0.1 - Upgrade password hash
+        $password = password_hash(md5($paramPassword), PASSWORD_DEFAULT);
         
         //IF match the hashed password
         if($userpasswd == $password)
