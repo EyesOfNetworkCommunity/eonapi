@@ -72,7 +72,8 @@ class EonwebUserDAO {
      */
     public function createEonwebUser($user_name,$user_descr,$user_group, $user_password, $user_type, $user_location, $user_limitation, $in_nagvis = false, $in_cacti = false, $nagvis_group = false, $user_language = false){
         try{
-            $passwd_temp = md5($user_password);
+            // EON 6.0.1 - Upgrade password hash
+            $passwd_temp = password_hash(md5($user_password), PASSWORD_DEFAULT);
             $request = $this->connexion->prepare($this->request_create_usr);
             $request->execute(array(
                  'user_name'        => $user_name,
@@ -140,8 +141,9 @@ class EonwebUserDAO {
     public function createNagvisUser($user_name, $password, $nagvis_group){
         try{
             $nagvis_salt = '29d58ead6a65f5c00342ae03cdc6d26565e20954';
-            $sha_password = sha1($nagvis_salt.$password);
-
+            // EON 6.0.1 - Upgrade password hash
+            $sha_password = sha1($nagvis_salt.password_hash($password, PASSWORD_DEFAULT));
+            
             $request = $this->connexion_nagvis->prepare($this->request_create_usr_nagvis);
             $request->execute(array(
                  'user_name'        => $user_name,
@@ -177,7 +179,8 @@ class EonwebUserDAO {
     public function updateNagvisUser($nagvis_id, $user_name, $password, $nagvis_group){
         try{
             $nagvis_salt = '29d58ead6a65f5c00342ae03cdc6d26565e20954';
-            $sha_password = sha1($nagvis_salt.$password);
+            // EON 6.0.1 - Upgrade password hash
+            $sha_password = sha1($nagvis_salt.password_hash($password, PASSWORD_DEFAULT));
 
             $request = $this->connexion_nagvis->prepare($this->request_update_usr_nagvis);
             $request->execute(array(
@@ -331,10 +334,11 @@ class EonwebUserDAO {
             $old_user = $this->selectOneEonwebUserById($user_id);
             $old_pwd = $this->getUserPasswd($user_id);
             //Verify if password is changed
-            if($old_pwd != false && md5($user_password) != $old_pwd){ 
-                $user_password = md5($user_password);
+            // EON 6.0.1 - Upgrade password hash
+            if($old_pwd != false && password_hash(md5($user_password), PASSWORD_DEFAULT) != $old_pwd){ 
+                $user_password = password_hash(md5($user_password), PASSWORD_DEFAULT);
             }
-                
+             
             $request = $this->connexion->prepare($this->request_update_usr);
             $request->execute(array(
                  'user_id'          => $user_id,
