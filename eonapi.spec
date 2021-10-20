@@ -30,7 +30,6 @@ install -m 640 eonapi.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 rm -rf %{buildroot}%{datadir}/%{name}.spec
 
 %post
-echo "[EyesOfNetwork/eonapi] Due to a security vulnerability, the authentication token for the admin user has been regenerated. Please consider replacing the token in your third party tools."
 systemctl restart httpd
 
 %clean
