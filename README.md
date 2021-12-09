@@ -210,6 +210,14 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`deleteCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to a Service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`deleteCheckCommandParameterToHostTemplate` | POST | [**templateHostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to host template. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`exporterNotifierConfig` | POST | [****] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Write configuration in the nagios file. It export the configuration of advance notification.|
+|`getDetailsEvent` | POST | [**idEvent, queue**] | "http_code": "200 OK", "result": [with the executed actions] | Get event details.|
+|`modifyEvent` | POST | [**comments, idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify comments from an active event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`deleteEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Delete a resolved event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`acknowledgeEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge an event. returncode==0 or 1 if the idEvent given doesn't exist.|
+|`ownDisownEvent` | POST | [**idEvent, owner =""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Own or Disown an event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`getNameProcess` | GET | [****] | "http_code": "200 OK", "result": [with the executed actions] | Get process name used by EON.|
+|`getPIDProcess` | POST | [**process**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Get PID and status process.returncode==0 or 1 if the process given doesn't exist (check getNameProcess).|
+|`actionProcess` | POST | [**process,action**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] |Do actions on proceess (start,stop,restart,reload,verify).returncode==0 or 1 if the process/action given doesn't exist.|
 |`getHostChecks` | GET | [None] | "http_code": "200 OK", "result": "result": [with the executed actions] | Return all services with active check info|
 |`getServiceChecks`| GET | [None] | "http_code": "200 OK", "result": "result": [with the executed actions] | Return all services with active check info|
 |`getServiceComments`| GET | [None] | "http_code": "200 OK", "result": "result": [with the executed actions] | Return all services comments|
@@ -240,12 +248,13 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`deleteServiceAcknowledge`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Remove Acknowledgement on a service|
 |`createHostComment`| POST | [**hostName, persistent, user, comment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a host comment|
 |`createServiceComment`| POST | [**hostName, serviceName, persistent, user, comment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a service comment|
-`deleteHostComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a host comment|
-`deleteServiceComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a service comment|
-`deleteAllHostComments`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
-`deleteAllServiceComments`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
-`submitHostPassiveCheckResult`| POST | [**hostName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a host passive check result|
-`submitServicePassiveCheckResult`| POST | [**hostName, serviceName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a service passive check result|
+|`deleteHostComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a host comment|
+|`deleteServiceComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a service comment|
+|`deleteAllHostComments`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
+|`deleteAllServiceComments`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
+|`submitHostPassiveCheckResult`| POST | [**hostName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a host passive check result|
+|`submitServicePassiveCheckResult`| POST | [**hostName, serviceName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a service passive check result|
+
 
 ## EONAPI calls examples
 To illustrate the EON API features tab, you will find a few implementation examples (JSON body parameters):
@@ -529,7 +538,13 @@ To illustrate the EON API features tab, you will find a few implementation examp
   "parameters": ["titi","toto"]
 }
 ```
-
+* /ownDisownEvent
+```json 
+{
+	"idEvent": 5,
+	"owner" : "Admin"
+}
+```
 **NB:** You should notice the optional parameter `exportConfiguration` (boolean true or false) that allows the nagios configuration export. An API call doesn't need systematically a nagios configuration reload. That's why you should set this parameter depending your needs.
 
 ## Add EONAPI features: How to do this?

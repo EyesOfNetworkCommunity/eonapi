@@ -846,6 +846,292 @@ class ObjectManager {
 			return "Host named ".$hostName." doesn't exist."; 
 		}
 	}
+	/* GED - Get Event details by idEvent */
+
+	public function getDetailsEvent($idEvent,$queue){  //queue : active or history
+
+		global $database_ged;
+		/* find event */
+		$sql = "SELECT * FROM nagios_queue_".$queue ." WHERE id =".$idEvent;
+		
+		$result = sqlrequest($database_ged, $sql);
+		$event = mysqli_fetch_assoc($result);
+
+		if ($event){
+			
+			return $event;
+		}
+		else{
+			
+			return "Event with id ".$idEvent." doesn't exist."; 
+		}
+		
+	}
+
+		/* GED - modify an active event by idEvent */
+
+		public function modifyEvent($comments,$idEvent){
+			$error = "";
+			$success = "";
+			$code=0;
+			global $database_ged;			
+			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+			$res = sqlrequest($database_ged, $sql);
+			$verif = mysqli_fetch_assoc($res);
+			/* modify comment */
+			If($verif["id"] == $idEvent){
+				$sql = "UPDATE  nagios_queue_active SET comments= \"".$comments."\" WHERE id = ".$idEvent;
+				 sqlrequest($database_ged, $sql);
+				$success =  "Comments modified.";
+				
+			}
+			
+			else{
+				$error =  "Event with id ".$idEvent." doesn't exist.";
+				$code = 1;
+			}
+		
+			$logs = $this->getLogs($error, $success);
+		
+			$result=array("code"=>$code,"description"=>$logs);	
+
+			return $result;
+		}
+
+
+	/* GED - own event  */
+	public function ownDisownEvent($idEvent,$owner=""){
+		$error = "";
+		$success = "";
+		$code=0;
+		global $database_ged;			
+		$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+		$res = sqlrequest($database_ged, $sql);
+		$verif = mysqli_fetch_assoc($res);
+
+		If($verif["id"] == $idEvent){
+			$sql = "UPDATE  nagios_queue_active SET nagios_queue_active.owner = \"".$owner."\" WHERE id = ".$idEvent;
+			 sqlrequest($database_ged, $sql);
+			$success= "Event owned.";
+		}
+		
+		else{
+			$error= "Event with id ".$idEvent." doesn't exist.";
+			$code = 1;
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);	
+
+		return $result;
+	}
+
+	/* GED - delete an Event (history) */
+	public function deleteEvent($idEvent){
+		$error = "";
+		$success = "";
+		$code=0;
+		global $database_ged;			
+		$sql = "SELECT * from nagios_queue_history   WHERE id = ".$idEvent;
+		$res = sqlrequest($database_ged, $sql);
+		$verif = mysqli_fetch_assoc($res);
+
+		If($verif["id"] == $idEvent && $verif["queue"]=="h"){
+
+			$sql = "DELETE FROM  nagios_queue_history WHERE id = ".$idEvent;
+			sqlrequest($database_ged, $sql);
+			$success = "Event deleted.";
+		}
+		
+		else{
+			$error =  "Event with id ".$idEvent." doesn't exist.";
+			$code = 1;
+		}
+
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);	
+
+		return $result;
+	}
+
+
+		/* GED - acknowledge an Event (active) */
+		public function acknowledgeEvent($idEvent){
+			$error = "";
+			$success = "";
+			$code=0;
+			global $database_ged;			
+			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+			$res = sqlrequest($database_ged, $sql);
+			$verif = mysqli_fetch_assoc($res);
+			/*  if the event exist */
+			If($verif["id"] == $idEvent){
+
+				/*  copy the event from nagios_queue_active to nagios_queue_history */
+				$sql = "INSERT INTO nagios_queue_history  SELECT * FROM nagios_queue_active where nagios_queue_active.id =".$idEvent." 
+				ON DUPLICATE KEY UPDATE id = (select max(id)+1 from nagios_queue_history)";
+
+				$sql2 = "UPDATE nagios_queue_history SET nagios_queue_history.queue='h' where id = ".$idEvent;
+ 
+
+
+				sqlrequest($database_ged, $sql);
+				sqlrequest($database_ged, $sql2);
+
+				/* delete from nagios_queue_active */
+				$sql = "DELETE FROM nagios_queue_active WHERE id=".$idEvent;
+				sqlrequest($database_ged, $sql);
+				$success =  "Event acknowlegded.";
+			}
+			
+			else{
+				$error =  "Event with id ".$idEvent." doesn't exist.";
+				$code = 1;
+			}
+	
+			$logs = $this->getLogs($error, $success);
+		
+			$result=array("code"=>$code,"description"=>$logs);	
+
+			return $result;
+		}
+	/* Get process status by name */
+	public function getPIDProcess($process){
+
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+		
+		$processTab = $this->getNameProcess();
+
+		if(in_array($process,$processTab)){
+		
+			$cmd = $array_serv_system[$process]["status"];
+			$PID = exec($cmd,$result);
+			if($PID!=null){
+				$result_process["status"]="UP";
+				$result_process["PID"]= $PID;
+			}
+			else {
+				$result_process["status"]= "DOWN";
+				$result_process["PID"] = "";
+			}
+			return $result_process;
+		}
+		else {
+			
+			return "Process named ".$process." doesn't exist.";
+		 	
+		}
+				
+	} 
+
+	/* Do actions on process | stop - start - restart - reload - verify */
+
+
+	public function actionProcess($process,$action){
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+		$error = "";
+		$success = "";
+		$code=0;
+		$doReload = FALSE;
+
+		
+		$processTab = $this->getNameProcess();
+
+		if(in_array($process,$processTab)){
+			$cmd = $array_serv_system[$process]["status"];
+			$PID = exec($cmd,$result);
+			$processActions = array_keys($array_serv_system[$process]["proc_act"]);
+
+			if(in_array($action,$processActions)){
+				switch($action){
+					case $action=="stop" :
+						if($PID!=null){
+							$cmd = $array_serv_system[$process]["proc_act"][$action];
+							exec($cmd,$result);
+							$doReload = TRUE;
+
+							$success = $result;
+							break;
+						}else {
+							$code = 1;
+							$error = $process." process is already on ".$action;
+							break;
+						}
+					case $action=="start" :
+						if($PID==null){
+							$cmd = $array_serv_system[$process]["proc_act"][$action];
+							exec($cmd,$result);
+							$doReload = TRUE;
+							
+							$success =$result;
+							break;
+						}else {
+							$code = 1;
+							$error = $process." process is already on ".$action;
+							break;
+						}
+					
+					case $action=="restart" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success = $result;
+						break;
+
+					case $action=="reload" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success = $result;
+						break;
+
+					case $action=="verify" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success =$result;
+						break;
+				}
+
+				if ($doReload == True && in_array("reload",$processActions)){
+					$cmd = $array_serv_system[$process]["proc_act"]["reload"];
+					exec($cmd,$result);
+				}
+
+			}else {
+				$error =  "You can't do action named ". $action." on ".$process. " process";
+				$code = 1;
+			}		
+			
+		} else {
+			$error =  "Process named ".$process." doesn't exist.";
+			$code = 1;
+			}
+
+		if ($code==1){
+			$result=array("code"=>$code,"description"=>$error);	
+		}elseif($code == 0){
+			return array("code"=>$code,"description"=>$success);
+		}
+		
+
+		return $result;
+	}
+
+	/* Get all process */
+	public function getNameProcess(){
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+
+		$process = array_keys($array_serv_system);
+		return $process;
+	}
+
+
 	/* LILAC - Get Hosts by template name */
 	public function getHostsBytemplate( $templateHostName){
         $nhtp = new NagiosHostTemplatePeer;

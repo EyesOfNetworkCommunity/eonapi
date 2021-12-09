@@ -77,6 +77,17 @@ addRoute('post', '/deleteAllHostComments', 'deleteAllHostComments');
 
 addRoute('get','/healthCheck', 'healthCheck', 'operator');
 
+addRoute('post', '/getDetailsEvent', 'getDetailsEvent', 'operator');
+addRoute('post', '/modifyEvent', 'modifyEvent');
+addRoute('post', '/deleteEvent', 'deleteEvent');
+addRoute('post', '/acknowledgeEvent', 'acknowledgeEvent');
+addRoute('post', '/ownDisownEvent', 'ownDisownEvent');
+
+addRoute('post', '/getPIDProcess', 'getPIDProcess');
+addRoute('get', '/getNameProcess', 'getNameProcess');
+addRoute('post', '/actionProcess', 'actionProcess');
+
+
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
