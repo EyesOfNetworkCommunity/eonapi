@@ -43,7 +43,7 @@ class NotifierRuleDTO {
      * 
      */
     public function getNotifierRuleByNameAndType($name,$type){
-        $result   = $this->ruleDAO->selectOneRuleByNameAndType($name,$type);
+        $result   = $this->ruleDAO->selectOneRuleByNameAndType($name,strtolower($type));
         if($result){
             $rule = new NotifierRule();
             $rule->setId                 ($result["id"]);
@@ -59,7 +59,7 @@ class NotifierRuleDTO {
             $rule->setSort_key           ($result["sort_key"]);
             $rule->setTimeperiod_id      ($result["timeperiod_id"]);
             
-            foreach(split(",", $result["methods"]) as $m_id){
+            foreach(explode(",", $result["methods"]) as $m_id){
                 $rule->addMethod($m_id);
             }
             return $rule;

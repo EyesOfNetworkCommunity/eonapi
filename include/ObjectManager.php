@@ -63,7 +63,39 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
-	
+	/*--------- GET ---------*/
+	public function getNotifierRule($rule_name,$rule_type){
+		$ruledto = new NotifierRuleDTO();
+		$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
+		
+		if($rule){
+			return $rule->toArray();
+		}else{
+			return "ERROR : Rule named ".$rule_name." doesn't exist."; 
+		}
+	}
+
+	public function getNotifierMethod($method_name,$method_type){
+		$methodDto = new NotifierMethodDTO();
+		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
+
+		if($method){
+			return $method->toArray();
+		}else{
+			return "ERROR : Method named ".$method_name." doesn't exist."; 
+		}
+	}
+
+	public function getNotifierTimeperiod($timeperiod_name){
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
+		
+		if($timeperiod){
+			return $timeperiod->toArray();
+		}else{
+			return "ERROR : Timeperiod named ".$timeperiod_name." doesn't exist."; 
+		}
+	}
 	/*--------- ADD ---------*/
 	public function addNotifierMethod($method_name, $method_type, $method_line){
 		$error = "";
@@ -79,13 +111,13 @@ class ObjectManager {
 			$method->setLine($method_line);
 			$method->setType($method_type);
 			if($method->save()){
-				$success .= "$method_name created his id is : ".$method->getId();			
+				$success .= "SUCCESS :$method_name created his id is : ".$method->getId();			
 			}else{
-				$error .= "$method_name failed to be created.";
+				$error .= "ERROR : $method_name failed to be created. ";
 				$code =1;
 			}
 		}else{
-			$error .= "$method_name have not been created the cause may be that the name is already used.";
+			$error .= "ERROR : $method_name have not been created the cause may be that the name is already used.";
 			$code =1;
 		}
 		
@@ -111,65 +143,93 @@ class ObjectManager {
 			if(!$rule){
 				$rule = new NotifierRule();
 				$rule->setName($rule_name);
-				$rule->setType($rule_type);
+				$rule->setType(strtolower($rule_type));
 				$rule->setTimeperiod_id($timeperiod->getId());
 
-				if($rule_contact == "*"){
-					$rule->setContact($rule_contact);
-				}elseif(is_array($rule_contact)){
-					$rule->setContact(implode(",",$rule_contact));
-				}else{
-					$rule->setContact($rule_contact);				
+				//============== Contact ================
+				if(is_array($rule_contact)){
+					$rule_contact = implode(",",$rule_contact);
 				}
-
+				$list_contact = array();
+				foreach(explode(",",$rule_contact) as $contact_name){
+					$ncp = new NagiosContactPeer;
+					$contact = $ncp->getByName( $contact_name );
+					if($contact_name != "*" && !$contact){
+						$error .= " | ERROR: ".$contact_name." does not exist.";
+						$code = 1;
+					}else{
+						array_push($list_contact, $contact_name);
+					}
+				}
+				$rule->setContact(implode(",",$list_contact));
+				
+				//============== Host ================
 				if(is_array($rule_host)){
-					$rule->setHost(implode(",",$rule_host));
-				}else{
-					$rule->setHost($rule_host);
+					$rule_host = implode(",",$rule_host);
 				}
+				foreach(explode(",",$rule_host) as $host_name){
+					$nhp = new NagiosHostPeer;
+					$host = $nhp->getByName( $host_name );
+					if($host_name!= "*" && !$host){
+						$error .= " | ERROR: ".$host_name." does not exist.";
+						$code = 1; 
+					}
+				}
+				$rule->setHost($rule_host);
+				
 
 				$rule->setDebug($rule_debug);
 				$rule->setNotificationnumber($rule_notificationNumber);
 				$rule->setTracking($rule_tracking);
 				
-				if($rule_type == "host"){
+				if(strtolower($rule_type) == "host"){
 					$rule->setService("-");
 					
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
-						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
-						$stringState=array();
-						foreach($rule_state as $state){
-							if(in_array(strtoupper($state),$availableStateHost)){
-								array_push($stringState, strtoupper($state));
-							}
-						}
-						$rule->setState(implode(",",$stringState));
+
+					$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
+
+					if(is_array($rule_state)){
+						$rule_state = implode(",",$rule_state);
 					}
+
+					$stringState=array();
+					foreach(explode(",",$rule_state) as $state){
+						if(in_array(strtoupper($state),$availableStateHost)){
+							array_push($stringState, strtoupper($state));
+						}
+					}
+					$rule->setState(implode(",",$stringState));
 
 				}else{
-					if($rule_service == "*"){
-						$rule->setService($rule_service);
-					}else{
-						$rule->setService(implode(",",$rule_service));
+					if(is_array($rule_service)){
+						$rule_service = implode(",",$rule_service);
+					}
+					foreach(explode(",",$rule_service) as $service_name){
+						$c = new Criteria();
+						$c->add(NagiosServicePeer::DESCRIPTION, $service_name);
+						$service = NagiosServicePeer::doSelectOne($c);
+						if($service_name!= "*" && !$service){
+							$error .= " | ERROR: ".$service_name." does not exist.";
+							$code = 1; 
+						}
+					}
+					$rule->setService($rule_service);
+
+					$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
+					if(is_array($rule_state)){
+						$rule_state = implode(",",$rule_state);
 					}
 
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
-						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
-						$stringState=array();
-						foreach($rule_state as $state){
-							if(in_array(strtoupper($state),$availableStateService)){
-								array_push($stringState, strtoupper($state));
-							}
+					$stringState=array();
+					foreach(explode(",",$rule_state) as $state){
+						if(in_array(strtoupper($state),$availableStateService)){
+							array_push($stringState, strtoupper($state));
 						}
-						$rule->setState(implode(",",$stringState));
 					}
+					$rule->setState(implode(",",$stringState));
 				}
 
-				if(isset($rule_method) and is_array($rule_method)){
+				if(isset($rule_method) && is_array($rule_method)){
 					foreach($rule_method as $method_name){
 						$mdto = new NotifierMethodDTO();
 						$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule_type);
@@ -231,12 +291,12 @@ class ObjectManager {
 
 			$id = $timeperiod->save();
 			if(!$id){
-				$error .= "| ERROR Failed to saved the new timeperiod.";
+				$error .= "ERROR Failed to saved the new timeperiod. ";
 				$code = 1; 
-			} else $success .= " | SUCCESS : Timeperiod $timeperiod_name successfully saved with id :  $id";
+			} else $success .= "SUCCESS : Timeperiod $timeperiod_name successfully saved with id :  $id";
 
 		}else{
-			$error .= "| ERROR : The Timeperiod '$timeperiod_name' already exist.";
+			$error .= "ERROR : The Timeperiod '$timeperiod_name' already exist.";
 			$code = 1;
 		}
 		
@@ -255,14 +315,14 @@ class ObjectManager {
 		$method = $methodDTO->getNotifierMethodByNameAndType($method_name, $method_type);
 		if($method){
 			if($method->deleteMethod()){
-				$success .= "Delete $method_name success.";
+				$success .= "SUCCESS : Delete $method_name success. ";
 			}else{
-				$error .= "The deletion of $method_name failed. A rules certainly use this methods. ";
+				$error .= "ERROR :The deletion of $method_name failed. A rules certainly use this methods. ";
 				$code =1;
 			}
 
 		}else {
-			$error .= " ERROR the method $method_name specified have not been found.";
+			$error .= "| ERROR : the method $method_name specified have not been found. ";
 			$code=1;
 		}
 		$logs = $this->getLogs($error, $success);
@@ -279,14 +339,14 @@ class ObjectManager {
 		$rule = $ruleDTO->getNotifierRuleByNameAndType($rule_name, $rule_type);
 		if($rule){
 			if($rule->deleteRule()){
-				$success .= "Delete $rule_name success.";
+				$success .= "SUCCESS : Delete $rule_name success. ";
 			}else{
-				$error .= "The deletion of $rule_name failed. ";
+				$error .= "ERROR :The deletion of $rule_name failed. ";
 				$code =1;
 			}
 
 		}else {
-			$error .= " ERROR the rule $rule_name specified have not been found.";
+			$error .= "| ERROR : the rule $rule_name specified have not been found. ";
 			$code=1;
 		}
 		
@@ -304,13 +364,13 @@ class ObjectManager {
 		$timeperiod = $timeperiodDTO->getNotifierTimeperiodByName($timeperiod_name);
 		if($timeperiod){
 			if($timeperiod->deleteTimeperiod()){
-				$success .= "Delete $timeperiod_name success.";
+				$success .= "SUCCESS : Delete $timeperiod_name success. ";
 			}else{
-				$error .= "The deletion of $timeperiod_name failed. A rules certainly use this timeperiods. ";
+				$error .= "| ERROR :The deletion of $timeperiod_name failed. A rules certainly use this timeperiods. ";
 				$code =1;
 			}
 		}else {
-			$error .= " ERROR the timeperiod $timeperiod_name specified have not been found.";
+			$error .= "| ERROR : the timeperiod $timeperiod_name specified have not been found. ";
 			$code=1;
 		}
 		
@@ -328,14 +388,14 @@ class ObjectManager {
 		$ruledto = new NotifierRuleDTO();
 		$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
 		if(!$rule){
-			$error .= "| ERROR : The rules $rule_name does not exist yet. "; 
+			$error .= "ERROR : The rules $rule_name does not exist yet. "; 
 			$code = 1;
 		}else{
 			if(isset($rule_timeperiod)){
 				$timeperiodDto = new NotifierTimeperiodDTO();
 				$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($rule_timeperiod);
 				if(!$timeperiod){
-					$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist.";
+					$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist. ";
 				}else{
 					$rule->setTimeperiod_id($timeperiod->getId());
 				}
@@ -350,90 +410,58 @@ class ObjectManager {
 				$rule->setType($change_type);
 				if(isset($rule_service)){
 					if(is_array($rule_service)){
-						$newservice = array();
-						foreach($rule_service as $service){
-							//Check if the 'service' is an existing lilac command 
-							$commande = NagiosCommandPeer::getByName($service);
-							if($command){
-								array_push($newservice, $service);
-							}
-						}
-						$rule->setService(implode(",",$newservice));
-
-					}elseif(count(explode(",",$rule_service)) > 1 ){
-						$newservice = array();
-						foreach(explode(",",$rule_service) as $service){
-							//Check if the 'service' is an existing lilac command 
-							$commande = NagiosCommandPeer::getByName($service);
-							if($command){
-								array_push($newservice, $service);
-							}
-						}
-						$rule->setService(implode(",",$newservice));
+						$rule_service = implode(",",$rule_service);
 					}
-					else{
-						$rule->setService($rule_service);
+					foreach(explode(",",$rule_service) as $service_name){
+						$c = new Criteria();
+						$c->add(NagiosServicePeer::DESCRIPTION, $service_name);
+						$service = NagiosServicePeer::doSelectOne($c);
+						if($service_name!= "*" && !$service){
+							$error .= "| ERROR: ".$service_name." does not exist. ";
+						}
 					}
+					$rule->setService($rule_service);
 				}
 			}
 
 			if(isset($new_rule_name)){
 				if(!$ruledto->getNotifierRuleByNameAndType($new_rule_name,$rule->getType())){
 					$rule->setName($new_rule_name);
-				}else $error .= " | ERROR : The rule name have not been changed due to an existing rule with this name.";
+				}else $error .= "| ERROR : The rule name have not been changed due to an existing rule with this name. ";
 			}
 			
 			if(isset($rule_contact)){
 				if(is_array($rule_contact)){
-					$newcontact = array();
-					foreach($rule_contact as $contact){
-						//Check if the 'contact' is an existing lilac contact
-						$cnt = NagiosContactPeer::getByName($contact);
-						if($cnt){
-							array_push($newcontact, $contact);
-						}
-					}
-					$rule->setContact(implode(",",$newcontact));
-				}elseif(count(explode(",",$rule_contact))>1){
-					$newcontact = array();
-					foreach(explode(",",$rule_contact) as $contact){
-						//Check if the 'contact' is an existing lilac contact
-						$cnt = NagiosContactPeer::getByName($contact);
-						if($cnt){
-							array_push($newcontact, $contact);
-						}
-					}
-					$rule->setContact(implode(",",$newcontact));
-				}else{
-					$rule->setContact($rule_contact);
+					$rule_contact = implode(",",$rule_contact);
 				}
+				$list_contact = array();
+				foreach(explode(",",$rule_contact) as $contact_name){
+					$ncp = new NagiosContactPeer;
+					$contact = $ncp->getByName( $contact_name );
+					if($contact_name != "*" && !$contact){
+						$error .= " | ERROR: ".$contact_name." does not exist.";
+					}else{
+						array_push($list_contact, $contact_name);
+					}
+				}
+				$rule->setContact(implode(",",$list_contact));
 			}
 			
 			if(isset($rule_host)){
 				if(is_array($rule_host)){
-					$newhost = array();
-					foreach($rule_host as $host){
-						//Check if the 'host' is an existing lilac host
-						$cnt = NagiosHostPeer::getByName($host);
-						if($cnt){
-							array_push($newhost, $host);
-						}
-					}
-					$rule->setHost(implode(",",$newhost));
-
-				}elseif(count(explode(",",$rule_host))>1){
-					$newhost = array();
-					foreach(explode(",",$rule_host) as $host){
-						//Check if the 'host' is an existing lilac host
-						$cnt = NagioshostPeer::getByName($host);
-						if($cnt){
-							array_push($newhost, $host);
-						}
-					}
-					$rule->setHost(implode(",",$newhost));
-				}else{
-					$rule->setHost($rule_host);
+					$rule_host = implode(",",$rule_host);
 				}
+				$list_host = array();
+				foreach(explode(",",$rule_host) as $host_name){
+					$nhp = new NagiosHostPeer;
+					$host = $nhp->getByName( $host_name );
+					if($host_name!= "*" && !$host){
+						$error .= " | ERROR: ".$host_name." does not exist.";
+					}else{
+						array_push($list_host, $host_name);
+					}
+				}
+				$rule->setHost(implode(",",$list_host));
 			}
 			
 			if(isset($rule_debug)){
@@ -450,12 +478,15 @@ class ObjectManager {
 
 			if(isset($rule_state)){
 				if($rule->getType()=="host"){
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
+					if(isset($rule_state)){
 						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
 						$stringState=array();
-						foreach($rule_state as $state){
+						if(is_array($rule_state)){
+							$rule_state = implode(",",$rule_state);
+						}
+	
+						$stringState=array();
+						foreach(explode(",",$rule_state) as $state){
 							if(in_array(strtoupper($state),$availableStateHost)){
 								array_push($stringState, strtoupper($state));
 							}
@@ -463,13 +494,15 @@ class ObjectManager {
 						$rule->setState(implode(",",$stringState));
 					}
 				}else{
-
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
+					if(isset($rule_state)){
 						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
 						$stringState=array();
-						foreach($rule_state as $state){
+						if(is_array($rule_state)){
+							$rule_state = implode(",",$rule_state);
+						}
+	
+						$stringState=array();
+						foreach(explode(",",$rule_state) as $state){
 							if(in_array(strtoupper($state),$availableStateService)){
 								array_push($stringState, strtoupper($state));
 							}
@@ -484,9 +517,21 @@ class ObjectManager {
 					$mdto = new NotifierMethodDTO();
 					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
 					if(!$m){
-						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+						$error .= "| ERROR : The method $method_name does not exist in the database for this type of object. ";
 					}else{
-						$rule->addMethod($method_name);
+						$found = false;
+						$methods_list = $rule->getMethods();
+						foreach($methods_list as $method_link){
+							if($method_link->getName() == $m->getName()){
+								$found = true;
+							}
+						}
+						if(!$found){
+							$rule->addMethod($method_name);
+						}else{
+							$error .= "| ERROR : The method $method_name is already linked to this rule. ";
+						}
+						
 					}
 				}
 			}
@@ -496,22 +541,23 @@ class ObjectManager {
 					$mdto = new NotifierMethodDTO();
 					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
 					if(!$m){
-						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+						$error .= "| ERROR : The method $method_name does not exist in the database for this type of object. ";
 					}else{
 						$rule->deleteMethod($method_name);
 					}
 				}
 			}
 			
-			if($rule->getMethods() != array()){
+			if(count($rule->getMethods())>=1){
 				if($rule->save()){
-					$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+					$success .= "| SUCCESS : The rules '$rule_name' have been saved with all the configuration. ";
 				}else{
 					$error .= "| ERROR : The rules failed to saved the configuration. "; 
 					$code = 1;
 				}
 			}else {
-				$error .= "| ERROR : The rules failed to saved the configuration no methods are set. "; 
+				$dump = $rule->toArray();
+				$error .= "| ERROR : The rules failed to saved the configuration no methods are set. ". implode(",",$dump); 
 				$code = 1;
 			}
 			
@@ -531,7 +577,7 @@ class ObjectManager {
 		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
 		
 		if(!$timeperiod){
-			$error .= "| ERROR : The Timeperiod '$timeperiod_name' does not exist.";
+			$error .= "ERROR : The Timeperiod '$timeperiod_name' does not exist.";
 			$code = 1;
 		}else{
 			if(isset($new_timeperiod_name)){
@@ -574,7 +620,7 @@ class ObjectManager {
 		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
 
 		if(!$method){
-			$error .= "$method_name does not exist in the database.";
+			$error .= "ERROR : $method_name does not exist in the database. ";
 			$code =1;
 		}else{
 			if(isset($new_method_name)){
@@ -588,9 +634,9 @@ class ObjectManager {
 			}
 
 			if($method->save()){
-				$success .= $method->getName()." updated his id is : ".$method->getId();			
+				$success .= "| SUCCESS : ".$method->getName()." updated his id is : ".$method->getId();			
 			}else{
-				$error .= $method->getName()." failed to be updated.";
+				$error .= "| ERROR : ".$method->getName()." failed to be updated. ";
 				$code =1;
 			}
 		}
@@ -873,6 +919,53 @@ class ObjectManager {
 		return($HostsDown);
 	}
 
+	/* EONWEB-LIVESTATUS - Get Services Status*/	
+	public function getServicesStatus(){
+		
+
+		$ServiceDown=array();
+		$tabColumns=array("id","host_name","host_address","display_name","state","acknowledged","acknowledged_type","comment","comments_with_info","last_state_change");
+		$tabFilters=array();
+		$tabDate=array("last_state_change");
+		$tabConcat=array("comments_with_info");
+
+		$dateT=array();
+		foreach($this->listNagiosObjects("services",NULL,$tabColumns,$tabFilters)["default"] as $sd ){
+			foreach($sd as $k=>$sdown){
+					if(in_array($k,$tabDate)){
+						$ta["human_".$k]=gmdate("Y-m-d\TH:i:s\Z",$sdown);
+						$dateT=($k=="last_state_change"?array("last_state_change"=>$sdown):NULL);
+					}elseif(in_array($k,$tabConcat)){
+						$concat="";
+						if(sizeof($sd[$k])>0){
+							for($i=0;$i<=sizeof($sd[$k])-1;$i++){
+								if(sizeof($sd[$k][$i])>0){
+								for($j=0;$j<=sizeof($sd[$k][$i])-1;$j++){
+									$concat.=$sd[$k][$i][$j]." | ";
+								}
+							}
+								$concat.=(sizeof($sd[$k][$i])>1? NULL: "|");
+							}
+						}
+						$ta["human_".$k]=$concat;
+						$ta["date"]=time();
+						$ta["human_date"]=gmdate("Y-m-d\TH:i:s\Z",$ta["date"]);
+						if(isset($dateT["last_state_change"])){
+							$date1=new DateTime();
+							$date2=new DateTime();
+							$date2->setTimestamp($dateT["last_state_change"]);
+							$interval=$date2->diff($date1);
+							$ta["human_duration"]=$interval->format('%ad %hh %im %ss ');
+						}
+					}
+					$ta[$k]=$sdown;
+				}
+			array_push($ServiceDown,$ta);
+		}
+		
+		return $ServiceDown;
+	}
+
 	/* EONWEB-LIVESTATUS - Get Services Down*/	
 	public function getServicesDown(){
 		
@@ -942,6 +1035,54 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
 
 		return array("code"=>$code,"description"=>$logs);
+	}
+
+	/* EonWeb - get user */
+	public function getEonUser($user_name){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$eonUserDto = new EonwebUserDTO();
+			$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+			
+			if(!$eonUser){
+				$error .= "$user_name does not exist.";
+			}else{
+				return $eonUser->toArray();
+			}
+
+		}catch (Exception $e){
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return $logs;
+	}
+
+	/* EonWeb - get group */
+	public function getEonGroup($group_name){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$eonGroupDto = new EonwebGroupDTO();
+			$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+			
+			if(!$eonGroup){
+				$error .= "$group_name does not exist.";
+			}else{
+				return $eonGroup->toArray();
+			}
+
+		}catch (Exception $e){
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return $logs;
 	}
 
 ########################################## CREATE

@@ -64,7 +64,7 @@ class NotifierRule {
             $mdto = new NotifierMethodDTO();
             $m = $mdto->getNotifierMethodByNameAndType($method,$this->type);
             if($m){
-                array_push($this->methods,$m );
+                array_push($this->methods, $m );
             }
         }
     }
@@ -74,9 +74,9 @@ class NotifierRule {
      * @param $methodName
      */
     public function deleteMethod($methodName){
-        for($i; $i<sizeof($this->methods);$i++ ){
+        for($i=0; $i<sizeof($this->methods);$i++ ){
           if($this->methods[$i]->getName() == $methodName){
-            unset($this->methods[$i]);
+            array_splice($this->methods, $i, 1);
           } 
         }
     }
@@ -97,6 +97,32 @@ class NotifierRule {
         }else{
             return $this->ruleDAO->createRule($this->name,$this->type,$this->timeperiod_id,$this->debug,$this->contact,$this->host,$this->service,$this->state,$this->notificationnumber,$this->tracking,implode(",",$str_methods_id));
         }
+    }
+
+    /**
+     * Return a dictionnary of the object
+     */
+    function toArray(){
+        $array = [];
+        $array["id"] = $this->id;
+        $array["name"] = $this->name;
+        $array["type"] = $this->type;
+        $array["debug"] = $this->debug;
+        $array["contact"] = $this->contact;
+        $array["host"] = $this->host;
+        $array["service"] = $this->service;
+        $array["state"] = $this->state;
+        $array["notificationnumber"] = $this->notificationnumber;
+    
+        //other databases components
+        $array["timeperiod_id"] = $this->timeperiod_id;
+        $array["tracking"] = $this->tracking;
+        $array["sort_key"] = $this->sort_key;
+        $array["methods"] = array();
+        foreach($this->methods as $method){
+            array_push($method->toArray());
+        }        
+        return $array;
     }
 
     /**
@@ -154,7 +180,7 @@ class NotifierRule {
      */ 
     public function setType($type)
     {
-        $this->type = $type;
+        $this->type = strtolower($type);
 
         return $this;
     }
