@@ -54,6 +54,19 @@ class NotifierTimeperiod {
         $this->timeperiodDAO = new NotifierTimeperiodDAO();
     }
 
+    /**
+     * Return a dictionnary of the object
+     */
+    function toArray(){
+        $array = [];
+        $array["id"] = $this->id;
+        $array["name"] = $this->name;
+        $array["daysOfWeek"] = $this->daysOfWeek;
+        $array["timeperiod"] = $this->timeperiod;
+        
+        return $array;
+    }
+
      /**
      * Update the current state of this Timeperiod in the database
      * 

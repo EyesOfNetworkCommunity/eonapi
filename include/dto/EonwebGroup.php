@@ -55,6 +55,20 @@ class EonwebGroup {
     }
 
     /**
+     * Return a dictionnary of the object
+     */
+    function toArray(){
+        $array = [];
+        $array["group_id"] = $this->group_id;
+        $array["group_name"] = $this->group_name;
+        $array["group_type"] = $this->group_type;
+        $array["group_description"] = $this->group_description;
+        $array["group_dn"] = $this->group_dn;
+        $array["group_right"] = $this->group_right;
+        return $array;
+    }
+
+    /**
      * Delete in databases the object
      */
     function delete(){

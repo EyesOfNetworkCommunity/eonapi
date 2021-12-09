@@ -10,14 +10,16 @@
 
 // => Modify this key with your own secret at initialization
 define("EONAPI_KEY", "€On@piK3Y");
-
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 /* API key encryption */
 function apiKey( $user_id )
 {
     $key = md5(EONAPI_KEY.$user_id);
+    $machineid = file_get_contents("/etc/machine-id");
 
-    return hash('sha256', $key.$_SERVER['SERVER_ADDR']);
+    return hash('sha256', $key.$machineid);
 }
 
 
@@ -57,19 +59,14 @@ function has_empty($array) {
     return false;
 }
 
-function getUserByUsername( $username ){
+function getUserByUsername($username){
     global $database_eonweb;
-    
-    $usersql = sqlrequest($database_eonweb,
-		"SELECT U.user_id as user_id,U.user_name as user_name,U.user_passwd as user_passwd,U.user_type as user_type,
-		U.user_limitation as user_limitation,R.tab_1 as readonly,R.tab_2 as operator,R.tab_6 as admin
-		FROM users as U left join groups as G on U.group_id = G.group_id left join groupright as R on R.group_id=G.group_id
-		WHERE U.user_name = '".$username."'",
-		false,
-		array((string)$username)
-	);
-    
-    return $usersql;
+    $result = sql($database_eonweb, "SELECT U.user_id as user_id,U.user_name as user_name,U.user_passwd as user_passwd,U.user_type as user_type,
+    U.user_limitation as user_limitation,R.tab_1 as readonly,R.tab_2 as operator,R.tab_6 as admin
+    FROM users as U left join groups as G on U.group_id = G.group_id left join groupright as R on R.group_id=G.group_id
+    WHERE U.user_name = ?", array($username));
+   
+    return $result;
 }
 
 /*---HTTP Response---*/
@@ -77,16 +74,13 @@ function getJsonResponse( $response, $code, $array = null ){
 	
 	global $app;
 	
-    $eonapi = \Slim\Slim::VERSION;
-    $codeMessage = $response->getMessageForCode( $code );
+    $eonapi = \Slim\App::VERSION;
+    $codeMessage = $response->getStatusCode();
     $arrayHeader = array("api_version" => $eonapi, "http_code" => $codeMessage);
     $arrayMerge = array_merge( $arrayHeader, $array );
 
     $jsonResponse = json_encode($arrayMerge, JSON_PRETTY_PRINT);
     $jsonResponseWithHeader = $jsonResponse;
-
-	$app->response->headers->set('Content-Type', 'application/json');
-	$app->response->setStatus($codeMessage);
 	
     return $jsonResponseWithHeader;
 }
@@ -111,6 +105,7 @@ function constructResponse( $response, $logs, $authenticationValid = false ){
         $result = getJsonResponse($response, "401", $array);
         echo $result;
     }
+    return $response;
 }
 
 /*---Authorization checks--*/
@@ -118,20 +113,19 @@ function verifyAuthenticationByApiKey( $request, $right ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = $request->get('username');
-    $paramApiKey = $request->get('apiKey');
-    
+    $paramUsername = $_GET['username'];
+    $paramApiKey = $_GET['apiKey'];
     //Do not set $serverApiKey to NULL (bypass risk)
     $serverApiKey = EONAPI_KEY;
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_right = mysqli_result($usersql, 0, $right);
-    $user_type = mysqli_result($usersql, 0, "user_type");
+    $user_right = $usersql[0][$right];
+    $user_type = $usersql[0]["user_type"];
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
         //ID of the authenticated user
-        $user_id = mysqli_result($usersql, 0, "user_id");
+        $user_id = $usersql[0]["user_id"];
         $serverApiKey = apiKey( $user_id );    
     }
     
@@ -149,20 +143,25 @@ function verifyAuthenticationByPassword( $request ){
     $authenticationValid = false;
     
     //Parameters in request
-    $paramUsername = $request->get('username');
-    $paramPassword = $request->get('password');
+    $paramUsername = $_GET['username'];
+    $paramPassword = $_GET['password'];
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_right = mysqli_result($usersql, 0, "readonly");
-    $user_type = mysqli_result($usersql, 0, "user_type");
+    if($usersql == null){
+        return false;
+    }
+    $user_right = $usersql[0]["readonly"];
+    $user_type = $usersql[0]["user_type"];
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
-        $userpasswd = mysqli_result($usersql, 0, "user_passwd");
+        $userpasswd = $usersql[0]["user_passwd"];
         $password = md5($paramPassword);
         
+        // EON 6.0.1 - Upgrade password hash
         //IF match the hashed password
-        if($userpasswd == $password)
+        // if($userpasswd == $password)
+        if(password_verify($password, $userpasswd))
             $authenticationValid = true;
     }
     
@@ -172,16 +171,14 @@ function verifyAuthenticationByPassword( $request ){
 
 
 /*---Custom calls---*/
-function getApiKey(){
-    $request = \Slim\Slim::getInstance()->request();
-    $response = \Slim\Slim::getInstance()->response();
-    
+function getApiKey(ServerRequestInterface $request, ResponseInterface $response){
     $authenticationValid = verifyAuthenticationByPassword( $request );
+    $usersql=0;
     if( $authenticationValid == TRUE ){
         //ID of the authenticated user
-        $paramUsername = $request->get('username');
+	    $paramUsername = $_GET['username'];
         $usersql = getUserByUsername( $paramUsername );
-        $user_id = mysqli_result($usersql, 0, "user_id");
+        $user_id = $usersql[0]["user_id"];
         
         $serverApiKey = apiKey( $user_id );
         
@@ -194,13 +191,10 @@ function getApiKey(){
         $result = getJsonResponse($response, "401", $array);
         echo $result;
     }  
+    return $response;
 }
 
-function getAuthenticationStatus(){
-	
-	$request = \Slim\Slim::getInstance()->request();
-    $response = \Slim\Slim::getInstance()->response();
-    
+function getAuthenticationStatus(ServerRequestInterface $request, ResponseInterface $response){    
     $authenticationValid = verifyAuthenticationByApiKey( $request,"readonly" );    
     if( $authenticationValid == TRUE ){
         $array = array("status" => "authorized");
@@ -212,6 +206,8 @@ function getAuthenticationStatus(){
         $result = getJsonResponse($response, "401", $array);
         echo $result;
     }
+
+    return $response;
 }
 
 ?>
