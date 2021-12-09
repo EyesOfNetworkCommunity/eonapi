@@ -34,15 +34,16 @@ require_once("dto/NotifierMethod.php");
 require_once("dto/NotifierRule.php");
 
 use Nagios\Livestatus\Client;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 # Class with all api functions
 class ObjectManager {
     
 	private $authUser;
 		
-    function __construct(){
+    function __construct(ServerRequestInterface $request, ResponseInterface $response){
 		# Get api userName
-		$request = \Slim\Slim::getInstance()->request();
-		$this->authUser = $request->get('username');  
+		$this->authUser = $_GET['username'];  
 	}
 
 ######################################### NOTIFIER CONTROLEUR
@@ -1085,8 +1086,65 @@ class ObjectManager {
 	}
 
 ########################################## CREATE
+
+	/* LILAC - add kinship link */
+	public function addParentToHost($parentName, $childName, $exportConfiguration=FALSE){
+		
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+
+			// Wants to add a parent 
+			$nhp = new NagiosHostPeer;
+			// Find host
+			$parentHost = $nhp->getByName($parentName);
+			if(!$parentHost) {
+				$code=1;
+				$error .= "Parent Host $parentName does not exists\n";
+			}
+
+			$childHost = $nhp->getByName($childName);
+			if(!$childHost) {
+				$code=1;
+				$error .= "Child Host $childName does not exists\n";
+			}
+
+			if($code==0){
+				$c = new Criteria();
+				$c->add(NagiosHostParentPeer::CHILD_HOST , $childHost->getId());
+				$c->add(NagiosHostParentPeer::PARENT_HOST, $parentHost->getId());
+				$parentRelationship = NagiosHostParentPeer::doSelectOne($c);
+				if($parentRelationship) {
+					$code=1;
+					$error .= "That parent relationship already exist.\n";
+				}else {
+					$tempParent = new NagiosHostParent();
+					$tempParent->setChildHost($childHost->getId());
+					$tempParent->setParentHost($parentHost->getId());
+					$tempParent->save();
+					$success .= "Parent added";
+				}
+
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
+			
+			}
+			
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+
 	/* LILAC - create contact */ 
-	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
+	public function createContact($contactName, $contactMail, $contactAlias="description", $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -1311,7 +1369,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Create Host and Services */
-	public function createHost( $templateHostName="GENERIC_HOST", $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function createHost($hostName, $hostIp, $templateHostName="GENERIC_HOST", $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
@@ -1790,7 +1848,7 @@ class ObjectManager {
 	}
 
 	/* EONWEB - Create User */
-	public function createEonUser($user_mail="", $user_name,$user_descr="",$user_group, $user_password, $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
+	public function createEonUser($user_group, $user_password, $user_name, $user_mail="", $user_descr="", $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
 		$error = "";
 		$success = "";
 		$code = 0;
@@ -2707,34 +2765,41 @@ class ObjectManager {
         
         return array("code"=>$code,"description"=>$logs);
 	}
-	
+
 	/* LILAC - create Service to Host template*/
-    public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){		
-        $error = "";
+	public function createServiceToHostTemplate ($hostTemplateName, $service, $exportConfiguration = FALSE ){
+		$error = "";
 		$success = "";
 		$code=0;
-        	    
-        $nsp = new NagiosHostTemplatePeer;
+
+		$nsp = new NagiosHostTemplatePeer;
 		$template = $nsp->getByName($hostTemplateName);
-		
+
 		if(!$template) {
 			$code=1;
 			$error .= "template $hostTemplateName doesn't exist\n";
 		}
-        
-        $nstp = new NagiosServiceTemplatePeer;
-		
-        //Test if the parent templates exist
-        if(isset($service->inheritance)) {
+
+		$nstp = new NagiosServiceTemplatePeer;
+
+		// Test if service already exits
+		$existingService = NagiosServicePeer::getByHostTemplateAndDescription($hostTemplateName,$service->name);
+		if($existingService) {
+			$code=1;
+			$error .= "That service already exists in that list!\n";
+		}
+
+		// Test if the parent templates exist
+		if(isset($service->inheritance)) {
 			$templateName = $service->inheritance;
 			$serviceTemplate = $nstp->getByName($templateName);
 			if(!$serviceTemplate) {
 				$code=1;
-				$error .= "Service Template $templateName not found\n";	
-			}       
+				$error .= "Service Template $templateName not found\n";
+			}
 		}
-		
-		if(empty($error)) {	
+
+		if(empty($error)) {
 			try {
 				// service interface
 				$tempService = new NagiosService();
@@ -2752,7 +2817,7 @@ class ObjectManager {
 					$newInheritance->save();
 					$success .= "Service Template ".$service->inheritance." added to service $service->name \n";
 				}
-				
+
 				if(isset($service->command)){
 					$cmd = NagiosCommandPeer::getByName($service->command);
 					if($cmd){
@@ -2772,22 +2837,22 @@ class ObjectManager {
 							$success .= "Command Parameter ".$params." added to $service->name\n";
 						}
 					}
-				}		
-				
+				}
+
 				// Export
-                if( $exportConfiguration == TRUE )
-				    $this->exportConfigurationToNagios($error, $success);
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
 			}
 			catch(Exception $e) {
 				$code=1;
 				$error .= $e->getMessage()."\n";
 			}
 		}
-                
-        $logs = $this->getLogs($error, $success);
-        
-        return array("code"=>$code,"description"=>$logs);
-        
+
+		$logs = $this->getLogs($error, $success);
+
+		return array("code"=>$code,"description"=>$logs);
+
 	}
 
 	/* LILAC - create Service to Host*/
@@ -4002,7 +4067,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Modify Command --- */  
-    public function modifyCommand($commandName, $newCommandName=NULL, $commandLine, $commandDescription=NULL){
+    public function modifyCommand($commandName, $commandLine, $newCommandName=NULL, $commandDescription=NULL){
         /*---Modify check command ==> 'dummy_ok'---*/
 		//TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
 		$error = "";
@@ -4079,7 +4144,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Modify Host */
-	public function modifyHost( $templateHostName=NULL, $hostName,$newHostName=NULL, $hostIp=NULL, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function modifyHost( $hostName, $templateHostName=NULL, $newHostName=NULL, $hostIp=NULL, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
@@ -4312,6 +4377,57 @@ class ObjectManager {
 	}
 ########################################## DELETE
 
+/* LILAC - delete kinship link */
+public function deleteParentToHost($parentName, $childName, $exportConfiguration=FALSE){
+		
+	$error = "";
+	$success = "";
+	$code=0;
+	
+	try{
+
+		// Wants to add a parent 
+		$nhp = new NagiosHostPeer;
+		// Find host
+		$parentHost = $nhp->getByName($parentName);
+		if(!$parentHost) {
+			$code=1;
+			$error .= "Parent Host $parentName does not exists\n";
+		}
+
+		$childHost = $nhp->getByName($childName);
+		if(!$childHost) {
+			$code=1;
+			$error .= "Child Host $childName does not exists\n";
+		}
+
+		if($code==0){
+			$c = new Criteria();
+			$c->add(NagiosHostParentPeer::CHILD_HOST , $childHost->getId());
+			$c->add(NagiosHostParentPeer::PARENT_HOST, $parentHost->getId());
+			$parentRelationship = NagiosHostParentPeer::doSelectOne($c);
+			if($parentRelationship) {
+				$parentRelationship->delete();
+				$success  .= "That parent relationship been deleted.\n";
+			}else {
+				$code = 1;
+				$error.= "That parent relationship does not exist yet.\n";
+			}
+
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		
+		}
+		
+	}catch(Exception $e) {
+		$code=1;
+		$error .= $e->getMessage();
+	}
+	
+	$logs = $this->getLogs($error, $success);
+	
+	return array("code"=>$code,"description"=>$logs);
+}
 	/* LILAC - delete host Downtimes */
     public function deleteHostDowntime($idDowntime){
 		$error = "";
@@ -4437,7 +4553,7 @@ class ObjectManager {
 		$templateHost = $nhtp->getByName($templateHostName);
 		// Find template host
 		if(!$templateHost) {
-			$error .= "Tempalte Host :  $templateHostName not found\n";
+			$error .= "Template Host :  $templateHostName not found\n";
 		}
 		if( empty($error) ) {
 			//We prepared the list of existing custom arg in the Host
@@ -4478,7 +4594,7 @@ class ObjectManager {
 		$templateService = $nstp->getByName($templateServiceName);
 		// Find template host
 		if(!$templateService) {
-			$error .= "Tempalte Service:  $templateServiceName not found\n";
+			$error .= "Template Service:  $templateServiceName not found\n";
 		}
 		if( empty($error) ) {
 			//We prepared the list of existing custom arg in the Host
