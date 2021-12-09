@@ -65,6 +65,172 @@ class ObjectManager {
 		$logs = $this->getLogs($error, $success);
         return array("code"=>$code,"description"=>$logs);
 	}
+	
+	/*--------- health check ---------*/
+	function healthCheck(){
+		$disk_info = $this->checkDisk();
+		$RAM_info = $this->checkRAM();
+		$port_info = $this->checkPort();
+		return array($disk_info, $RAM_info, $port_info);
+	}
+	function checkDisk(){
+		$output = shell_exec('df');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'df' command in CentOS");
+		}
+		$array_output_line =preg_split("[\n]", $output);
+	
+		unset($array_output_line[0]);
+		unset($array_output_line[sizeof($array_output_line)]);
+	
+	
+		foreach($array_output_line as $elt) {
+			$array_output = preg_split("/[\s]+/",$elt);
+			if($array_output[5] == "/"){
+				$disk_space_total = $array_output[4];
+			}
+			$array_output[4] = str_replace("%", "", $array_output[4]);
+			if ($array_output[4] > 95 && $array_output[5] == "/") {
+				$problem = "Critical";
+			}
+			else if($array_output[4] > 90 && $array_output[5] == "/"){
+				$problem = "Warning";
+			}
+			else if ($array_output[5] == "/"){
+				$problem =  "OK";
+			}
+		}
+			
+		$disk_space = (100-$disk_space_total)." %";
+
+		$return = array("result"=>$problem, "total space disk avaible"=>$disk_space);
+		return array("disk"=>$return);
+	}
+
+	function checkRAM(){
+	
+		$output = shell_exec('vmstat');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'vmstat' command in CentOS");
+		}
+		$array_output_line = preg_split("[\n]", $output);
+		$array_output = preg_split("/[\s]+/",$array_output_line[2]);
+		unset($array_output[0]);
+		$usedRAM = $array_output[5] + $array_output[6];
+		$totalRAM = $array_output[4] + $array_output[5] + $array_output[6];
+		$ratioRAM = ( $usedRAM * 100 )/ $totalRAM ;
+		if($array_output[7] != 0 && $array_output[8] != 0){
+			$state = "Critical";
+			$problems = "RAM is overloaded and using virtual RAM (swap) !";
+		} else if ( $ratioRAM > 90 ){
+			$state = "Warning";
+			$problems = "RAM is near to get overloaded ! ";
+		} else {
+			$problems = "No RAM problem found";
+			$state = "OK";
+		}
+		$ram_used =  round($ratioRAM)." %";
+		$return = array("RAM info"=>$problems, "RAM use"=>$ram_used, "result"=>$state);
+
+		return array("RAM"=>$return);
+	}
+
+	
+
+	function checkPort(){
+		$output = shell_exec('httpd -v');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'httpd -v' command in CentOS");
+		}
+		$output = str_replace("\n"," ",$output);
+		$http_info =  $output;
+		$output = shell_exec('netstat -nlpt | grep ":80 "');
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_80 = $this->verifyPort($array_output_line, "80");
+		} else {
+			$port_80 =  "The socket is not being used";
+		}
+		$output = shell_exec('netstat -nlpt | grep ":8080 "');
+		
+	
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_8080 = $this->verifyPort($array_output_line, "8080");
+		} else {
+			$port_8080 = "The socket is not being used";
+		}
+		$output = shell_exec('netstat -nlpt | grep ":443 "');
+		
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_443 = $this->verifyPort($array_output_line, "443");
+		} else {
+			$port_443 = "The socket is not being used";
+		}
+		$return = array("HTTPD informations"=>$http_info, "80"=>$port_80, "8080"=>$port_8080, "443"=>$port_443);
+		return array("ports"=>$return);
+	}
+
+	function verifyPort($array, $port){
+		foreach($array as $elt) {
+			$array_output = preg_split("/[\s]+/",$elt);
+			switch ($array_output[5]) {
+				case "LISTEN":
+					return "The socket is listening for incoming connections. ";
+				break;
+	
+				case "ESTABLISHED":
+					return "The socket has an established connection. ";
+				break;
+	
+				case "SYN_SENT":
+					return "The socket is actively attempting to establish a connection. ";
+				break;
+	
+				case "FIN_WAIT1":
+					return "The socket is closed, and the connection is shutting down. ";
+				break;
+	
+				case "FIN_WAIT2":
+					return "Connection is closed, and the socket is waiting for a shutdown from the remote end. ";
+				break;
+	
+				case "TIME_WAIT":
+					return "The socket is waiting after close to handle packets still in the network.";
+				break;
+	
+				case "CLOSE":
+					return "The socket is not being used. ";
+				break;
+	
+				case "CLOSE_WAIT":
+					return "The remote end has shut down, waiting for the socket to close. ";
+				break;
+	
+				case "LAST_ACK":
+					return "The remote end has shut down, and the socket is closed. Waiting for acknowledgement. ";
+				break;
+	
+				case "CLOSING":
+					return "Both sockets are shut down but we still don't have all our data sent. ";
+				break;
+	
+				case "UNKNOWN":
+					return "The state of the socket is unknown. ";
+				break;
+	
+				case "SYN_RECV":
+					return "A connection request has been received from the network. ";
+				break;
+			}
+		}
+	}
+	
+	
+	
+
+
 	/*--------- GET ---------*/
 	public function getNotifierRule($rule_name,$rule_type){
 		$ruledto = new NotifierRuleDTO();
@@ -974,7 +1140,7 @@ class ObjectManager {
 
 		$ServiceDown=array();
 		$tabColumns=array("id","host_name","host_address","display_name","acknowledged","acknowledged_type","comment","comments_with_info","last_state_change");
-		$tabFilters=array("state > 0","host_state = 0","state_type = 1",);
+		$tabFilters=array("state > 0","host_state = 0","state_type = 1");
 		$tabDate=array("last_state_change");
 		$tabConcat=array("comments_with_info");
 
@@ -7447,5 +7613,6 @@ public function deleteParentToHost($parentName, $childName, $exportConfiguration
         return $result;
 	}
 }
+
 
 ?>

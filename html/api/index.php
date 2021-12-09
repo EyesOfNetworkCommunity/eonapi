@@ -75,6 +75,7 @@ addRoute('post', '/createHostComment', 'createHostComment');
 addRoute('post', '/deleteHostComment', 'deleteHostComment');
 addRoute('post', '/deleteAllHostComments', 'deleteAllHostComments');
 
+addRoute('get','/healthCheck', 'healthCheck', 'operator');
 
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');

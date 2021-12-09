@@ -61,6 +61,7 @@ function has_empty($array) {
 
 function getUserByUsername($username){
     global $database_eonweb;
+
     $result = sql($database_eonweb, "SELECT U.user_id as user_id,U.user_name as user_name,U.user_passwd as user_passwd,U.user_type as user_type,
     U.user_limitation as user_limitation,R.tab_1 as readonly,R.tab_2 as operator,R.tab_6 as admin
     FROM users as U left join groups as G on U.group_id = G.group_id left join groupright as R on R.group_id=G.group_id
@@ -119,13 +120,15 @@ function verifyAuthenticationByApiKey( $request, $right ){
     $serverApiKey = EONAPI_KEY;
     
     $usersql = getUserByUsername( $paramUsername );
+
     $user_right = $usersql[0][$right];
     $user_type = $usersql[0]["user_type"];
+
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
         //ID of the authenticated user
-        $user_id = $usersql[0]["user_id"];
+        $user_id = mysqli_result($usersql, 0, "user_id");
         $serverApiKey = apiKey( $user_id );    
     }
     
@@ -147,15 +150,12 @@ function verifyAuthenticationByPassword( $request ){
     $paramPassword = $_GET['password'];
     
     $usersql = getUserByUsername( $paramUsername );
-    if($usersql == null){
-        return false;
-    }
-    $user_right = $usersql[0]["readonly"];
-    $user_type = $usersql[0]["user_type"];
+    $user_right = mysqli_result($usersql, 0, "readonly");
+    $user_type = mysqli_result($usersql, 0, "user_type");
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
-        $userpasswd = $usersql[0]["user_passwd"];
+        $userpasswd = mysqli_result($usersql, 0, "user_passwd");
         $password = md5($paramPassword);
         
         // EON 6.0.1 - Upgrade password hash
@@ -173,12 +173,12 @@ function verifyAuthenticationByPassword( $request ){
 /*---Custom calls---*/
 function getApiKey(ServerRequestInterface $request, ResponseInterface $response){
     $authenticationValid = verifyAuthenticationByPassword( $request );
-    $usersql=0;
     if( $authenticationValid == TRUE ){
         //ID of the authenticated user
-	    $paramUsername = $_GET['username'];
+
+        $paramUsername = $_GET['username'];
         $usersql = getUserByUsername( $paramUsername );
-        $user_id = $usersql[0]["user_id"];
+        $user_id = mysqli_result($usersql, 0, "user_id");
         
         $serverApiKey = apiKey( $user_id );
         
