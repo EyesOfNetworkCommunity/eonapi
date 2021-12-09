@@ -1,8 +1,8 @@
 Summary:        API for the EON suite.
 Name:           eonapi
-Version:        2.0
-Release:        2.eon
-Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/master.tar.gz#/%{name}-%{version}.tar.gz
+Version:        2.1
+Release:        0.eon
+Source:         https://github.com/EyesOfNetworkCommunity/%{name}/archive/%{version}-%{release}.tar.gz
 Group:          Applications/System
 License:        GPL
 Vendor:         EyesOfNetwork Community
@@ -18,7 +18,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 Eyes Of Network includes a web-based "RESTful" API (Application Programming Interface) called EONAPI that enables external programs to access information from the monitoring database and to manipulate objects inside the databases of EON suite.
 
 %prep
-%setup -q -n %{name}-master
+%setup -q -n %{name}-%{version}-%{release}
 
 %build
 
@@ -30,7 +30,6 @@ install -m 640 eonapi.conf %{buildroot}%{_sysconfdir}/httpd/conf.d/
 rm -rf %{buildroot}%{datadir}/%{name}.spec
 
 %post
-echo "[EyesOfNetwork/eonapi] Due to a security vulnerability, the authentication token for the admin user has been regenerated. Please consider replacing the token in your third party tools."
 systemctl restart httpd
 
 %clean
@@ -43,6 +42,17 @@ rm -rf %{buildroot}
 %{_sysconfdir}/httpd/conf.d/eonapi.conf
 
 %changelog
+* Wed Sep 15 2021 Julien GONZALEZ <julien.gonzalez1498@gmail.com> - 2.1-0
+- Update code compatibility for PHP 8
+
+* Thu Dec 03 2020 Sebastien DAVOULT <d@vou.lt> - 2.0-3
+- issue #16 injection getApiKey
+- fix exception
+- Add jekyll + Wiredcraft to manage documentation in eonapi
+- Add Jekyll Documentation
+- Update api_functions sql
+- Fix verifyAuthenticationByApiKey()
+
 * Fri Feb 07 2020 Sebastien DAVOULT <d@vou.lt> - 2.0-2
 - FIX modifyNagiosMainConfiguration set value to none (null)
 - FIX mysql_real_escape_string() for [username,password,apiKey] variables
