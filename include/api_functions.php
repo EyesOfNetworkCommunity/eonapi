@@ -128,7 +128,7 @@ function verifyAuthenticationByApiKey( $request, $right ){
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
         //ID of the authenticated user
-        $user_id = mysqli_result($usersql, 0, "user_id");
+        $user_id = $usersql[0]["user_id"];
         $serverApiKey = apiKey( $user_id );    
     }
     
@@ -150,12 +150,12 @@ function verifyAuthenticationByPassword( $request ){
     $paramPassword = $_GET['password'];
     
     $usersql = getUserByUsername( $paramUsername );
-    $user_right = mysqli_result($usersql, 0, "readonly");
-    $user_type = mysqli_result($usersql, 0, "user_type");
+    $user_right = $usersql[0]["readonly"];
+    $user_type = $usersql[0]["user_type"];
     
     //IF LOCAL USER AND ADMIN USER (No limitation)
     if( $user_type != "1" && $user_right == "1"){
-        $userpasswd = mysqli_result($usersql, 0, "user_passwd");
+        $userpasswd = $usersql[0]["user_passwd"];
         $password = md5($paramPassword);
         
         // EON 6.0.1 - Upgrade password hash
@@ -178,7 +178,7 @@ function getApiKey(ServerRequestInterface $request, ResponseInterface $response)
 
         $paramUsername = $_GET['username'];
         $usersql = getUserByUsername( $paramUsername );
-        $user_id = mysqli_result($usersql, 0, "user_id");
+        $user_id = $usersql[0]["user_id"];
         
         $serverApiKey = apiKey( $user_id );
         

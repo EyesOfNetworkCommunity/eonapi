@@ -160,8 +160,6 @@ class NotifierRuleDAO {
             }
 
             //Add the method that have been linked to rule
-            foreach(explode(",",$methods_id_str) as $method_id){
-
             foreach(preg_split(",",$methods_id_str) as $method_id){
                 if(!in_array($method_id,$tab)){
                     $request = $this->connexion->prepare($this->add_rule_method_request);
