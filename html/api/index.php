@@ -23,7 +23,7 @@ $app->setBasePath('/eonapi');
 /* API routes are defined here (http method / association route / function) */
 //GET
 $app->get('/', function (Request $request, Response $response, $args) {
-    $response->getBody()->write("Hello world!");
+    $response->getBody()->write("Welcome on the EON api");
     return $response;
 });
 $app->get('/getApiKey', 'getApiKey');
