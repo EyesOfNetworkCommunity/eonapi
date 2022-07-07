@@ -7,7 +7,7 @@ Group:          Applications/System
 License:        GPL
 Vendor:         EyesOfNetwork Community
 URL:            https://github.com/EyesOfNetworkCommunity/eonapi
-Requires:       eonweb
+Requires:       eonweb >= 6.0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-root
 
