@@ -102,6 +102,9 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | --- | --- | --- | --- | --- |
 | `getContact` | POST | [**contactName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact otherwise it return all the contact|
 | `getContactGroup` | POST | [**contactGroupName=FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | return the given contact group otherwise it return all the contac group|
+| `getNotifierRule` | POST | [**rule_name,rule_type**] | "http_code": "200 OK", "result": [with the executed actions] | return the given Notifier Rule otherwise it return an error message|
+| `getNotifierMethod` | POST | [**method_name,method_type**] | "http_code": "200 OK", "result": [with the executed actions] | return the given Notifier Method otherwise it return an error message|
+| `getNotifierTimeperiod` | POST | [**timeperiod_name**] | "http_code": "200 OK", "result": [with the executed actions] | return the given Notifier Timeperiod otherwise it return an error message|
 | `createHost` | POST | [**templateHostName, hostName, hostIp, hostAlias, contactName, contactGroupName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a nagios host (affected to the provided parent template [templateHostName]) if not exists and reload lilac configuration. Posibility to attach a contact and/or a contact group to the host in the same time. |
 | `createEonUser` | POST | [**user_mail, user_name,user_descr="",user_group, user_password, is_ldap_user=false, user_location="", user_limitation=0, user_language = 0, in_nagvis = false, in_cacti = false, nagvis_group = false**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact, a eon user and possibly cacti and nagvis user if necessary. ie bellow |
 | `createEonGroup` | POST | [**group_name, group_descr="",is_ldap_group=false, group_right=array()**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a nagios contact group and a eon group. The user could be limited or admin, If you decide to changed rights, you must provide the complete array like in the ie bellow |
@@ -120,6 +123,9 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `createServiceTemplate` | POST | [**templateName, templateDescription="", servicesGroup=array(), contacts=array(), contactsGroup=array(), checkCommand, checkCommandParameters=array(), templatesToInherit=array(), exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a new Service template, if you didn't give templatesToInherit it will provide "GENERIC_SERVICE" as Inheritance template. The argument witch is by default array take names of objects they are bind. |
 | `createServiceToHost` | POST | [**hostName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a service in the given host. (allow to create a service with optional inherited template, optional command and parameters in a specified host) See example bellow for utilisation |
 | `createServiceToHostTemplate` | POST | [**hostTemplateName, service, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Create a service in the given host template. (allow to create a service with optional inherited template, optional command and parameters in a specified host template) |
+| `addNotifierMethod` | POST | [**method_name, method_type, method_line**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Notifier Method. |
+| `addNotifierTimeperiod` | POST | [**timeperiod_name, timeperiod_days="*", timeperiod_hours_notifications="*"**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Notifier timeperiod. |
+| `addNotifierRule` | POST | [**rule_name, rule_type, rule_timeperiod, rule_method=NULL, rule_contact='*', rule_debug=0, rule_host='*', rule_service='*', rule_state='*', rule_notificationNumber='*', rule_tracking=0**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Notifier Rule. |
 | `addContactToHost` | POST | [**contactName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact to a host if not already attached. |
 | `addContactGroupToHost` | POST | [**contactGroupName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": [with the executed actions] | Attach a nagios contact group to a host if not already attached. |
 | `addHostTemplateToHost` | POST | [**templateHostName, hostName, exportConfiguration**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Add a host template to a nagios host. |
@@ -149,13 +155,19 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `exportConfiguration` | POST | [**JobName**] | "http_code": "200 OK", "result": [with the executed actions] | Export Nagios Configuration. |
 | `listHosts` | POST | [**hostName=FALSE, $hostTemplate=false**] | "http_code": "200 OK", "result": [with the executed actions] | List nagios hosts |
 | `checkHost` | POST | [**type, adress, port, path**] | "http_code": "200 OK", "result": [with the executed actions] | Check an particulary host if it's available|
+| `healthCheck` | POST | [] | "http_code": "200 OK", "result": [with the executed actions] | Check if there are problems with the RAM / Disks / Ports and display informations about it |
 | `listNagiosBackends` | POST | [] | "http_code": "200 OK", "result": [with the executed actions] | Return available backend informations(log) |
 | `listNagiosObjects` | POST | [**object, backendid = NULL, columns = FALSE, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return nagios object like services, hosts, and their respective informations on which you can filter |
 | `listNagiosStates` | POST | [**backendid = NULL, filters = FALSE**] | "http_code": "200 OK", "result": [with the executed actions] | Return states of hosts and services  |
+| `modifyNotifierMethod` | POST | [**method_name, method_type, method_line**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Notifier Method. |
+| `modifyNotifierTimeperiod` | POST | [**timeperiod_name, timeperiod_type, timeperiod_line**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Notifier timeperiod. |
+| `modifyNotifierRule` | POST | [**rule_name, rule_type, rule_timeperiod, rule_method=NULL, rule_contact='*', rule_debug=0, rule_host='*', rule_service='*', rule_state='*', rule_notificationNumber='*', rule_tracking=0**] | "http_code": "200 OK", "result": [with the executed actions] | Create a Notifier Rule. |
 | `modifyContact` | POST | [**contactName, newContactName="", contactAlias="",contactMail="",contactPager="",contactGroup="",serviceNotificationCommand="",hostNotificationCommand="", $options=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given contact. if contact group is already set the membershib will be deleted, The same happen for contact notification command.  |
 | `modifyContactGroup` | POST | [**contactGroupName, newContactGroupName=NULL, description, exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given contact group |
 | `modifyServiceFromHostTemplate` | POST | [**hostTemplateName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
+| `modifyHostTemplate` | POST | [**templateHostName, newTemplateHostName = Null, templateHostDescription=Null, exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
 | `modifyServiceFromHost` | POST | [**hostName, service=array(), exportConfiguration = FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify the given service with the given columnName => value (ie bellow)|
+| `modifyHost` | POST | [**hostName, templateHostName=NULL, newHostName=NULL, hostIp=NULL, hostAlias = "", contactName = NULL, contactGroupName = NULL, exportConfiguration = FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | modify a Nagios Host. returncode=0 or 1 if failed or nothing change |
 | `modifyCommand` | POST | [**commandName,newCommandName="",commandLine,commandDescription=""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs","changes":numerOfchanges] | modify a command to Nagios. returncode=0 or 1 if failed or nothing change |
 | `modifyNagiosRessources` | POST | [**ressources**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify ressources represented in nagios by $USERi$, you passed an collection of "Useri":"value" or "" if you want to remove a ressource an example is given bellow |
 | `modifyCheckCommandToServiceTemplate` | POST | [**commandName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK",  "result": ["code":returnCode,"description":"logs"]  | modify Modify the check command associate with the given service template. returnCode=0 for data updated and 1 if it has failed  |
@@ -182,6 +194,9 @@ You will find below the updated list of actions (**"API_function"**) possible in
 | `deleteHostGroupToHostTemplate` | POST | [**hostGroupName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a Host group in the given Host Template. returncode=0 or 1 if failed |
 | `deleteContactToHostTemplate` | POST | [**contactName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a Contact in the given Host Template. returncode=0 or 1 if failed |
 | `deleteContactGroupToHostTemplate` | POST | [**contactGroupName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a Contact group in the given Host Template. returncode=0 or 1 if failed |
+| `deleteNotifierMethod` | POST | [**method_name, method_type**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a Notifier Method. |
+| `deleteNotifierTimeperiod` | POST | [**timeperiod_name**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a Notifier timeperiod. |
+| `deleteNotifierRule` | POST | [**rule_name, rule_type**] | "http_code": "200 OK", "result": [with the executed actions] | Delete a Notifier Rule. |
 | `deleteInheritanceTemplateToHostTemplate` | POST | [**inheritanceTemplateName, templateHostName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a inherited template in the given Host Template. returncode=0 or 1 if failed |
 | `deleteInheritServiceTemplateToServiceTemplate` | POST | [**inheritanceTemplateName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a inherited Service template in the given service Template. returncode=0 or 1 if failed|
 | `deleteContactGroupToServiceTemplate` | POST | [**contactGroupName, templateServiceName, exportConfiguration=FALSE**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"]  | Delete a contact group in the given service Template. returncode=0 or 1 if failed|
@@ -195,7 +210,50 @@ You will find below the updated list of actions (**"API_function"**) possible in
 |`deleteCheckCommandParameterToServiceInHost` | POST | [**serviceName, hostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to a Service of a specified host. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`deleteCheckCommandParameterToHostTemplate` | POST | [**templateHostName, parameters**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete command parameter to host template. returncode=0 or 1 if failed or didn't changed /!\ parameters is a list|
 |`exporterNotifierConfig` | POST | [****] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Write configuration in the nagios file. It export the configuration of advance notification.|
-
+|`getDetailsEvent` | POST | [**idEvent, queue**] | "http_code": "200 OK", "result": [with the executed actions] | Get event details.|
+|`modifyEvent` | POST | [**comments, idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Modify comments from an active event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`deleteEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Delete a resolved event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`acknowledgeEvent` | POST | [**idEvent**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge an event. returncode==0 or 1 if the idEvent given doesn't exist.|
+|`ownDisownEvent` | POST | [**idEvent, owner =""**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Own or Disown an event.returncode==0 or 1 if the idEvent given doesn't exist|
+|`getNameProcess` | GET | [****] | "http_code": "200 OK", "result": [with the executed actions] | Get process name used by EON.|
+|`getPIDProcess` | POST | [**process**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Get PID and status process.returncode==0 or 1 if the process given doesn't exist (check getNameProcess).|
+|`actionProcess` | POST | [**process,action**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] |Do actions on proceess (start,stop,restart,reload,verify).returncode==0 or 1 if the process/action given doesn't exist.|
+|`getHostChecks` | GET | [None] | "http_code": "200 OK", "result": "result": [with the executed actions] | Return all services with active check info|
+|`getServiceChecks`| GET | [None] | "http_code": "200 OK", "result": "result": [with the executed actions] | Return all services with active check info|
+|`getServiceComments`| GET | [None] | "http_code": "200 OK", "result": "result": [with the executed actions] | Return all services comments|
+|`getServiceAcknowledges`| GET | [None] | "http_code": "200 OK", "result": "result": [with the executed actions] | Return all services with acknowledge info|
+|`getServiceEventHandler`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all services with EventHandler info|
+|`getServiceNotifications`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all services with Notifications info|
+|`getHostAcknowledges`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all hosts with acknowledge info|
+|`getHostComments`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all hosts comments|
+|`getHostEventHandler`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all hosts with EventHandler info|
+|`getHostNotifications`| GET | [None] | "http_code": "200 OK", "result": [with the executed actions] | Return all hosts with Notifications info|
+|`enableHostCheck`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host active check|
+|`disableHostCheck`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host active check|
+|`enableServiceCheck`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service active check|
+|`disableServiceCheck`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service active check|
+|`enableHostNotification`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host notifications|
+|`disableHostNotification`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host notifications|
+|`enableServiceNotification`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service notifications|
+|`disableServiceNotification`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service notifications|
+|`enableHostEventHandler`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable host eventhandler|
+|`disableHostEventHandler`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable host eventhandler|
+|`enableServiceEventHandler`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Enable service eventhandler|
+|`disableServiceEventHandler`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Disable service eventhandler|
+|`scheduleHostForcedCheck`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Force check a host|
+|`scheduleServiceForcedCheck`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Force check a service|
+|`createHostAcknowledge`| POST | [**hostName, sticky, notify, persistent, comment, user**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge a host|
+|`createServiceAcknowledge`| POST | [**hostName, serviceName, sticky, notify, persistent, comment, user**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Acknowledge a service|
+|`deleteHostAcknowledge`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Remove Acknowledgement on a host|
+|`deleteServiceAcknowledge`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Remove Acknowledgement on a service|
+|`createHostComment`| POST | [**hostName, persistent, user, comment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a host comment|
+|`createServiceComment`| POST | [**hostName, serviceName, persistent, user, comment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Create a service comment|
+|`deleteHostComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a host comment|
+|`deleteServiceComment`| POST | [**hostName, idComment**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete a service comment|
+|`deleteAllHostComments`| POST | [**hostName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
+|`deleteAllServiceComments`| POST | [**hostName, serviceName**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | delete all host comment|
+|`submitHostPassiveCheckResult`| POST | [**hostName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a host passive check result|
+|`submitServicePassiveCheckResult`| POST | [**hostName, serviceName, returnCode, outPut**] | "http_code": "200 OK", "result": ["code":returnCode,"description":"logs"] | Submit a service passive check result|
 
 
 ## EONAPI calls examples
@@ -480,7 +538,13 @@ To illustrate the EON API features tab, you will find a few implementation examp
   "parameters": ["titi","toto"]
 }
 ```
-
+* /ownDisownEvent
+```json 
+{
+	"idEvent": 5,
+	"owner" : "Admin"
+}
+```
 **NB:** You should notice the optional parameter `exportConfiguration` (boolean true or false) that allows the nagios configuration export. An API call doesn't need systematically a nagios configuration reload. That's why you should set this parameter depending your needs.
 
 ## Add EONAPI features: How to do this?

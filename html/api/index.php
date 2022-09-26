@@ -9,38 +9,103 @@
 #
 */
 
-require "/srv/eyesofnetwork/eonapi/include/Slim/Slim.php";
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Factory\AppFactory;
+
+require '/srv/eyesofnetwork/eonapi/include/vendor/autoload.php';
 require "/srv/eyesofnetwork/eonapi/include/api_functions.php";
 require "/srv/eyesofnetwork/eonapi/include/ObjectManager.php";
 
-\Slim\Slim::registerAutoloader();
-$app = new \Slim\Slim();
+$app = AppFactory::create();
+$app->setBasePath('/eonapi');
 
 /* API routes are defined here (http method / association route / function) */
 //GET
+$app->get('/', function (Request $request, Response $response, $args) {
+    $response->getBody()->write("Welcome on the EON api");
+    return $response;
+});
 $app->get('/getApiKey', 'getApiKey');
 $app->get('/getAuthenticationStatus', 'getAuthenticationStatus');
-
 //POST (parameters in body)
 addRoute('get', '/getDowntimes', 'getDowntimes', 'operator');
 addRoute('get', '/getHostsDown', 'getHostsDown', 'operator');
 addRoute('get', '/getResources', 'getResources', 'operator');
 addRoute('get', '/getServicesDown', 'getServicesDown', 'operator');
+addRoute('get', '/getHostChecks', 'getHostChecks', 'operator');
+addRoute('get', '/getServiceChecks', 'getServiceChecks', 'operator');
+
+addRoute('get', '/getServiceComments', 'getServiceComments', 'operator');
+addRoute('get', '/getHostAcknowledges', 'getHostAcknowledges', 'operator');
+addRoute('get', '/getHostComments', 'getHostComments', 'operator');
+
+addRoute('get', '/getHostEventHandler', 'getHostEventHandler', 'operator');
+addRoute('get', '/getServiceAcknowledges', 'getServiceAcknowledges', 'operator');
+addRoute('get', '/getServiceEventHandler', 'getServiceEventHandler', 'operator');
+addRoute('get', '/getServiceNotifications', 'getServiceNotifications', 'operator');
+addRoute('get', '/getHostNotifications', 'getHostNotifications', 'operator');
+addRoute('get', '/getServicesStatus', 'getServicesStatus', 'operator');
+
+addRoute('post', '/enableHostCheck', 'enableHostCheck');
+addRoute('post', '/disableHostCheck', 'disableHostCheck');
+addRoute('post', '/disableServiceCheck', 'disableServiceCheck');
+addRoute('post', '/enableServiceCheck', 'enableServiceCheck');
+addRoute('post', '/submitServicePassiveCheckResult', 'submitPassiveCheckResult');
+addRoute('post', '/submitHostPassiveCheckResult', 'submitHostPassiveCheckResult');
+
+addRoute('post', '/disableServiceNotification', 'disableServiceNotification');
+addRoute('post', '/disableServiceEventHandler', 'disableServiceEventHandler');
+addRoute('post', '/enableHostNotification', 'enableHostNotification');
+addRoute('post', '/disableHostNotification', 'disableHostNotification');
+addRoute('post', '/disableHostEventHandler', 'disableHostEventHandler');
+addRoute('post', '/enableHostEventHandler', 'enableHostEventHandler');
+addRoute('post', '/enableServiceEventHandler', 'enableServiceEventHandler');
+addRoute('post', '/enableServiceNotification', 'enableServiceNotification');
+addRoute('post', '/scheduleHostForcedCheck', 'scheduleHostForcedCheck');
+addRoute('post', '/scheduleServiceForcedCheck', 'scheduleServiceForcedCheck');
+
+addRoute('post', '/createHostAcknowledge', 'createHostAcknowledge');
+addRoute('post', '/createServiceAcknowledge', 'createServiceAcknowledge');
+addRoute('post', '/deleteHostAcknowledge', 'deleteHostAcknowledge');
+addRoute('post', '/deleteServiceAcknowledge', 'deleteServiceAcknowledge');
+
+addRoute('post', '/createServiceComment', 'createServiceComment');
+addRoute('post', '/createHostComment', 'createHostComment');
+addRoute('post', '/deleteHostComment', 'deleteHostComment');
+addRoute('post', '/deleteAllHostComments', 'deleteAllHostComments');
+
+addRoute('get','/healthCheck', 'healthCheck', 'operator');
+
+addRoute('post', '/getDetailsEvent', 'getDetailsEvent', 'operator');
+addRoute('post', '/modifyEvent', 'modifyEvent');
+addRoute('post', '/deleteEvent', 'deleteEvent');
+addRoute('post', '/acknowledgeEvent', 'acknowledgeEvent');
+addRoute('post', '/ownDisownEvent', 'ownDisownEvent');
+
+addRoute('post', '/getPIDProcess', 'getPIDProcess');
+addRoute('get', '/getNameProcess', 'getNameProcess');
+addRoute('post', '/actionProcess', 'actionProcess');
 
 
 addRoute('post', '/getHost', 'getHost', 'operator');
 addRoute('post', '/getContact', 'getContact', 'operator');
 addRoute('post', '/getCommand', 'getCommand', 'operator');
+addRoute('post', '/getEonUser', 'getEonUser', 'operator');
+addRoute('post', '/getEonGroup', 'getEonGroup', 'operator');
 addRoute('post', '/getHostGroup', 'getHostGroup', 'operator');
+
+addRoute('post', '/getNotifierRule', 'getNotifierRule', 'operator');
 addRoute('post', '/getServiceGroup', 'getServiceGroup', 'operator');
 addRoute('post', '/getHostTemplate', 'getHostTemplate', 'operator');
 addRoute('post', '/getContactGroups', 'getContactGroups', 'operator');
+addRoute('post', '/getNotifierMethod', 'getNotifierMethod', 'operator');
 addRoute('post', '/getServicesByHost', 'getServicesByHost', 'operator');
 addRoute('post', '/getServiceTemplate', 'getServiceTemplate', 'operator');
 addRoute('post', '/getHostsBytemplate', 'getHostsBytemplate', 'operator');
 addRoute('post', '/getHostsByHostGroup', 'getHostsByHostGroup', 'operator');
+addRoute('post', '/getNotifierTimeperiod', 'getNotifierTimeperiod', 'operator');
 addRoute('post', '/getServicesByHostTemplate', 'getServicesByHostTemplate', 'operator');
-
 
 addRoute('post', '/createUser', 'createUser');
 addRoute('post', '/createHost', 'createHost');
@@ -58,6 +123,7 @@ addRoute('post', '/createServiceDowntime', 'createServiceDowntime');
 addRoute('post', '/createServiceToHostTemplate', 'createServiceToHostTemplate');
 
 addRoute('post', '/addEventBroker', 'addEventBroker');
+addRoute('post', '/addParentToHost', 'addParentToHost');
 addRoute('post', '/addContactToHost', 'addContactToHost');
 addRoute('post', '/addHostGroupToHost', 'addHostGroupToHost');
 addRoute('post', '/addContactGroupToHost', 'addContactGroupToHost');
@@ -101,7 +167,6 @@ addRoute('post', '/modifyServicefromHostTemplate', 'modifyServicefromHostTemplat
 addRoute('post', '/modifyCheckCommandToHostTemplate', 'modifyCheckCommandToHostTemplate');
 addRoute('post', '/modifyCheckCommandToServiceTemplate', 'modifyCheckCommandToServiceTemplate');
 
-
 addRoute('post', '/deleteHost', 'deleteHost');
 addRoute('post', '/deleteContact', 'deleteContact');
 addRoute('post', '/deleteService', 'deleteService');
@@ -112,7 +177,10 @@ addRoute('post', '/deleteContactGroup', 'deleteContactGroup');
 addRoute('post', '/deleteServiceGroup', 'deleteServiceGroup');
 addRoute('post', '/deleteHostTemplate', 'deleteHostTemplate');
 addRoute('post', '/deleteHostDowntime', 'deleteHostDowntime');
+addRoute('post', '/deleteParentToHost', 'deleteParentToHost');
 addRoute('post', '/deleteContactToHost', 'deleteContactToHost');
+addRoute('post', '/deleteServiceComment', 'deleteServiceComment');
+addRoute('post', '/deleteAllServiceComments', 'deleteAllServiceComments');
 addRoute('post', '/deleteServiceTemplate', 'deleteServiceTemplate');
 addRoute('post', '/deleteHostGroupToHost', 'deleteHostGroupToHost');
 addRoute('post', '/deleteServiceDowntime', 'deleteServiceDowntime');
@@ -184,11 +252,8 @@ addRoute('post','/exporterNotifierConfig', 'exporterNotifierConfig');
 function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
 	
     global $app;
-    
-    $app->$httpMethod($routeName, function() use ($methodName,$right){
-		
-        $request = \Slim\Slim::getInstance()->request();
-        $response = \Slim\Slim::getInstance()->response();
+
+    $app->$httpMethod($routeName, function(Request $request, Response $response, $args) use ($methodName,$right){
         $body = json_decode($request->getBody());
         $logs = "";
 
@@ -220,16 +285,17 @@ function addRoute($httpMethod, $routeName, $methodName, $right="admin"){
             $result = getJsonResponse($response, "417", $array);
             echo $result;
 
-            return;
+            return $response;
         }
 
         $authenticationValid = verifyAuthenticationByApiKey( $request, $right );
         if( $authenticationValid == true ){
-            $co = new $className;
+            $co = new ObjectManager($request, $response);
             $logs = call_user_func_array(array($co, $methodName), $paramsValue);
         }
 
         constructResponse( $response, $logs, $authenticationValid );
+        return $response;
     });
 }
 

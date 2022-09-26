@@ -12,7 +12,9 @@
 # Copyright (c) 2019 AXIANS Cloud Builder
 # Contributor: Hoarau Jeremy <jeremy.hoarau@axians.com>
 #
-*/
+*/ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
 
 include("/srv/eyesofnetwork/eonweb/include/config.php");
@@ -34,15 +36,16 @@ require_once("dto/NotifierMethod.php");
 require_once("dto/NotifierRule.php");
 
 use Nagios\Livestatus\Client;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 # Class with all api functions
 class ObjectManager {
     
 	private $authUser;
 		
-    function __construct(){
+    function __construct(ServerRequestInterface $request, ResponseInterface $response){
 		# Get api userName
-		$request = \Slim\Slim::getInstance()->request();
-		$this->authUser = $request->get('username');  
+		$this->authUser = $_GET['username'];  
 	}
 
 ######################################### NOTIFIER CONTROLEUR
@@ -63,6 +66,204 @@ class ObjectManager {
         return array("code"=>$code,"description"=>$logs);
 	}
 	
+	/*--------- health check ---------*/
+	function healthCheck(){
+		$disk_info = $this->checkDisk();
+		$RAM_info = $this->checkRAM();
+		$port_info = $this->checkPort();
+		return array($disk_info, $RAM_info, $port_info);
+	}
+	function checkDisk(){
+		$output = shell_exec('df');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'df' command in CentOS");
+		}
+		$array_output_line =preg_split("[\n]", $output);
+	
+		unset($array_output_line[0]);
+		unset($array_output_line[sizeof($array_output_line)]);
+	
+	
+		foreach($array_output_line as $elt) {
+			$array_output = preg_split("/[\s]+/",$elt);
+			if($array_output[5] == "/"){
+				$disk_space_total = $array_output[4];
+			}
+			$array_output[4] = str_replace("%", "", $array_output[4]);
+			if ($array_output[4] > 95 && $array_output[5] == "/") {
+				$problem = "Critical";
+			}
+			else if($array_output[4] > 90 && $array_output[5] == "/"){
+				$problem = "Warning";
+			}
+			else if ($array_output[5] == "/"){
+				$problem =  "OK";
+			}
+		}
+			
+		$disk_space = (100-$disk_space_total)." %";
+
+		$return = array("result"=>$problem, "total space disk avaible"=>$disk_space);
+		return array("disk"=>$return);
+	}
+
+	function checkRAM(){
+	
+		$output = shell_exec('vmstat');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'vmstat' command in CentOS");
+		}
+		$array_output_line = preg_split("[\n]", $output);
+		$array_output = preg_split("/[\s]+/",$array_output_line[2]);
+		unset($array_output[0]);
+		$usedRAM = $array_output[5] + $array_output[6];
+		$totalRAM = $array_output[4] + $array_output[5] + $array_output[6];
+		$ratioRAM = ( $usedRAM * 100 )/ $totalRAM ;
+		if($array_output[7] != 0 && $array_output[8] != 0){
+			$state = "Critical";
+			$problems = "RAM is overloaded and using virtual RAM (swap) !";
+		} else if ( $ratioRAM > 90 ){
+			$state = "Warning";
+			$problems = "RAM is near to get overloaded ! ";
+		} else {
+			$problems = "No RAM problem found";
+			$state = "OK";
+		}
+		$ram_used =  round($ratioRAM)." %";
+		$return = array("RAM info"=>$problems, "RAM use"=>$ram_used, "result"=>$state);
+
+		return array("RAM"=>$return);
+	}
+
+	
+
+	function checkPort(){
+		$output = shell_exec('httpd -v');
+		if($output == NULL){
+			return array("result"=>"Failed to execute 'httpd -v' command in CentOS");
+		}
+		$output = str_replace("\n"," ",$output);
+		$http_info =  $output;
+		$output = shell_exec('netstat -nlpt | grep ":80 "');
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_80 = $this->verifyPort($array_output_line, "80");
+		} else {
+			$port_80 =  "The socket is not being used";
+		}
+		$output = shell_exec('netstat -nlpt | grep ":8080 "');
+		
+	
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_8080 = $this->verifyPort($array_output_line, "8080");
+		} else {
+			$port_8080 = "The socket is not being used";
+		}
+		$output = shell_exec('netstat -nlpt | grep ":443 "');
+		
+		if(isset($output)){
+			$array_output_line = preg_split("[\n]", $output);
+			$port_443 = $this->verifyPort($array_output_line, "443");
+		} else {
+			$port_443 = "The socket is not being used";
+		}
+		$return = array("HTTPD informations"=>$http_info, "80"=>$port_80, "8080"=>$port_8080, "443"=>$port_443);
+		return array("ports"=>$return);
+	}
+
+	function verifyPort($array, $port){
+		foreach($array as $elt) {
+			$array_output = preg_split("/[\s]+/",$elt);
+			switch ($array_output[5]) {
+				case "LISTEN":
+					return "The socket is listening for incoming connections. ";
+				break;
+	
+				case "ESTABLISHED":
+					return "The socket has an established connection. ";
+				break;
+	
+				case "SYN_SENT":
+					return "The socket is actively attempting to establish a connection. ";
+				break;
+	
+				case "FIN_WAIT1":
+					return "The socket is closed, and the connection is shutting down. ";
+				break;
+	
+				case "FIN_WAIT2":
+					return "Connection is closed, and the socket is waiting for a shutdown from the remote end. ";
+				break;
+	
+				case "TIME_WAIT":
+					return "The socket is waiting after close to handle packets still in the network.";
+				break;
+	
+				case "CLOSE":
+					return "The socket is not being used. ";
+				break;
+	
+				case "CLOSE_WAIT":
+					return "The remote end has shut down, waiting for the socket to close. ";
+				break;
+	
+				case "LAST_ACK":
+					return "The remote end has shut down, and the socket is closed. Waiting for acknowledgement. ";
+				break;
+	
+				case "CLOSING":
+					return "Both sockets are shut down but we still don't have all our data sent. ";
+				break;
+	
+				case "UNKNOWN":
+					return "The state of the socket is unknown. ";
+				break;
+	
+				case "SYN_RECV":
+					return "A connection request has been received from the network. ";
+				break;
+			}
+		}
+	}
+	
+	
+	
+
+
+	/*--------- GET ---------*/
+	public function getNotifierRule($rule_name,$rule_type){
+		$ruledto = new NotifierRuleDTO();
+		$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
+		
+		if($rule){
+			return $rule->toArray();
+		}else{
+			return "ERROR : Rule named ".$rule_name." doesn't exist."; 
+		}
+	}
+
+	public function getNotifierMethod($method_name,$method_type){
+		$methodDto = new NotifierMethodDTO();
+		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
+
+		if($method){
+			return $method->toArray();
+		}else{
+			return "ERROR : Method named ".$method_name." doesn't exist."; 
+		}
+	}
+
+	public function getNotifierTimeperiod($timeperiod_name){
+		$timeperiodDto = new NotifierTimeperiodDTO();
+		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
+		
+		if($timeperiod){
+			return $timeperiod->toArray();
+		}else{
+			return "ERROR : Timeperiod named ".$timeperiod_name." doesn't exist."; 
+		}
+	}
 	/*--------- ADD ---------*/
 	public function addNotifierMethod($method_name, $method_type, $method_line){
 		$error = "";
@@ -78,13 +279,13 @@ class ObjectManager {
 			$method->setLine($method_line);
 			$method->setType($method_type);
 			if($method->save()){
-				$success .= "$method_name created his id is : ".$method->getId();			
+				$success .= "SUCCESS :$method_name created his id is : ".$method->getId();			
 			}else{
-				$error .= "$method_name failed to be created.";
+				$error .= "ERROR : $method_name failed to be created. ";
 				$code =1;
 			}
 		}else{
-			$error .= "$method_name have not been created the cause may be that the name is already used.";
+			$error .= "ERROR : $method_name have not been created the cause may be that the name is already used.";
 			$code =1;
 		}
 		
@@ -110,65 +311,93 @@ class ObjectManager {
 			if(!$rule){
 				$rule = new NotifierRule();
 				$rule->setName($rule_name);
-				$rule->setType($rule_type);
+				$rule->setType(strtolower($rule_type));
 				$rule->setTimeperiod_id($timeperiod->getId());
 
-				if($rule_contact == "*"){
-					$rule->setContact($rule_contact);
-				}elseif(is_array($rule_contact)){
-					$rule->setContact(implode(",",$rule_contact));
-				}else{
-					$rule->setContact($rule_contact);				
+				//============== Contact ================
+				if(is_array($rule_contact)){
+					$rule_contact = implode(",",$rule_contact);
 				}
-
+				$list_contact = array();
+				foreach(explode(",",$rule_contact) as $contact_name){
+					$ncp = new NagiosContactPeer;
+					$contact = $ncp->getByName( $contact_name );
+					if($contact_name != "*" && !$contact){
+						$error .= " | ERROR: ".$contact_name." does not exist.";
+						$code = 1;
+					}else{
+						array_push($list_contact, $contact_name);
+					}
+				}
+				$rule->setContact(implode(",",$list_contact));
+				
+				//============== Host ================
 				if(is_array($rule_host)){
-					$rule->setHost(implode(",",$rule_host));
-				}else{
-					$rule->setHost($rule_host);
+					$rule_host = implode(",",$rule_host);
 				}
+				foreach(explode(",",$rule_host) as $host_name){
+					$nhp = new NagiosHostPeer;
+					$host = $nhp->getByName( $host_name );
+					if($host_name!= "*" && !$host){
+						$error .= " | ERROR: ".$host_name." does not exist.";
+						$code = 1; 
+					}
+				}
+				$rule->setHost($rule_host);
+				
 
 				$rule->setDebug($rule_debug);
 				$rule->setNotificationnumber($rule_notificationNumber);
 				$rule->setTracking($rule_tracking);
 				
-				if($rule_type == "host"){
+				if(strtolower($rule_type) == "host"){
 					$rule->setService("-");
 					
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
-						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
-						$stringState=array();
-						foreach($rule_state as $state){
-							if(in_array(strtoupper($state),$availableStateHost)){
-								array_push($stringState, strtoupper($state));
-							}
-						}
-						$rule->setState(implode(",",$stringState));
+
+					$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
+
+					if(is_array($rule_state)){
+						$rule_state = implode(",",$rule_state);
 					}
+
+					$stringState=array();
+					foreach(explode(",",$rule_state) as $state){
+						if(in_array(strtoupper($state),$availableStateHost)){
+							array_push($stringState, strtoupper($state));
+						}
+					}
+					$rule->setState(implode(",",$stringState));
 
 				}else{
-					if($rule_service == "*"){
-						$rule->setService($rule_service);
-					}else{
-						$rule->setService(implode(",",$rule_service));
+					if(is_array($rule_service)){
+						$rule_service = implode(",",$rule_service);
+					}
+					foreach(explode(",",$rule_service) as $service_name){
+						$c = new Criteria();
+						$c->add(NagiosServicePeer::DESCRIPTION, $service_name);
+						$service = NagiosServicePeer::doSelectOne($c);
+						if($service_name!= "*" && !$service){
+							$error .= " | ERROR: ".$service_name." does not exist.";
+							$code = 1; 
+						}
+					}
+					$rule->setService($rule_service);
+
+					$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
+					if(is_array($rule_state)){
+						$rule_state = implode(",",$rule_state);
 					}
 
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
-						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
-						$stringState=array();
-						foreach($rule_state as $state){
-							if(in_array(strtoupper($state),$availableStateService)){
-								array_push($stringState, strtoupper($state));
-							}
+					$stringState=array();
+					foreach(explode(",",$rule_state) as $state){
+						if(in_array(strtoupper($state),$availableStateService)){
+							array_push($stringState, strtoupper($state));
 						}
-						$rule->setState(implode(",",$stringState));
 					}
+					$rule->setState(implode(",",$stringState));
 				}
 
-				if(isset($rule_method) and is_array($rule_method)){
+				if(isset($rule_method) && is_array($rule_method)){
 					foreach($rule_method as $method_name){
 						$mdto = new NotifierMethodDTO();
 						$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule_type);
@@ -230,12 +459,12 @@ class ObjectManager {
 
 			$id = $timeperiod->save();
 			if(!$id){
-				$error .= "| ERROR Failed to saved the new timeperiod.";
+				$error .= "ERROR Failed to saved the new timeperiod. ";
 				$code = 1; 
-			} else $success .= " | SUCCESS : Timeperiod $timeperiod_name successfully saved with id :  $id";
+			} else $success .= "SUCCESS : Timeperiod $timeperiod_name successfully saved with id :  $id";
 
 		}else{
-			$error .= "| ERROR : The Timeperiod '$timeperiod_name' already exist.";
+			$error .= "ERROR : The Timeperiod '$timeperiod_name' already exist.";
 			$code = 1;
 		}
 		
@@ -254,14 +483,14 @@ class ObjectManager {
 		$method = $methodDTO->getNotifierMethodByNameAndType($method_name, $method_type);
 		if($method){
 			if($method->deleteMethod()){
-				$success .= "Delete $method_name success.";
+				$success .= "SUCCESS : Delete $method_name success. ";
 			}else{
-				$error .= "The deletion of $method_name failed. A rules certainly use this methods. ";
+				$error .= "ERROR :The deletion of $method_name failed. A rules certainly use this methods. ";
 				$code =1;
 			}
 
 		}else {
-			$error .= " ERROR the method $method_name specified have not been found.";
+			$error .= "| ERROR : the method $method_name specified have not been found. ";
 			$code=1;
 		}
 		$logs = $this->getLogs($error, $success);
@@ -278,14 +507,14 @@ class ObjectManager {
 		$rule = $ruleDTO->getNotifierRuleByNameAndType($rule_name, $rule_type);
 		if($rule){
 			if($rule->deleteRule()){
-				$success .= "Delete $rule_name success.";
+				$success .= "SUCCESS : Delete $rule_name success. ";
 			}else{
-				$error .= "The deletion of $rule_name failed. ";
+				$error .= "ERROR :The deletion of $rule_name failed. ";
 				$code =1;
 			}
 
 		}else {
-			$error .= " ERROR the rule $rule_name specified have not been found.";
+			$error .= "| ERROR : the rule $rule_name specified have not been found. ";
 			$code=1;
 		}
 		
@@ -303,13 +532,13 @@ class ObjectManager {
 		$timeperiod = $timeperiodDTO->getNotifierTimeperiodByName($timeperiod_name);
 		if($timeperiod){
 			if($timeperiod->deleteTimeperiod()){
-				$success .= "Delete $timeperiod_name success.";
+				$success .= "SUCCESS : Delete $timeperiod_name success. ";
 			}else{
-				$error .= "The deletion of $timeperiod_name failed. A rules certainly use this timeperiods. ";
+				$error .= "| ERROR :The deletion of $timeperiod_name failed. A rules certainly use this timeperiods. ";
 				$code =1;
 			}
 		}else {
-			$error .= " ERROR the timeperiod $timeperiod_name specified have not been found.";
+			$error .= "| ERROR : the timeperiod $timeperiod_name specified have not been found. ";
 			$code=1;
 		}
 		
@@ -327,14 +556,14 @@ class ObjectManager {
 		$ruledto = new NotifierRuleDTO();
 		$rule = $ruledto->getNotifierRuleByNameAndType($rule_name,$rule_type);
 		if(!$rule){
-			$error .= "| ERROR : The rules $rule_name does not exist yet. "; 
+			$error .= "ERROR : The rules $rule_name does not exist yet. "; 
 			$code = 1;
 		}else{
 			if(isset($rule_timeperiod)){
 				$timeperiodDto = new NotifierTimeperiodDTO();
 				$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($rule_timeperiod);
 				if(!$timeperiod){
-					$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist.";
+					$error .= "| ERROR : The timeperiod ' $rule_timeperiod ' does not exist. ";
 				}else{
 					$rule->setTimeperiod_id($timeperiod->getId());
 				}
@@ -349,90 +578,58 @@ class ObjectManager {
 				$rule->setType($change_type);
 				if(isset($rule_service)){
 					if(is_array($rule_service)){
-						$newservice = array();
-						foreach($rule_service as $service){
-							//Check if the 'service' is an existing lilac command 
-							$commande = NagiosCommandPeer::getByName($service);
-							if($command){
-								array_push($newservice, $service);
-							}
-						}
-						$rule->setService(implode(",",$newservice));
-
-					}elseif(count(explode(",",$rule_service)) > 1 ){
-						$newservice = array();
-						foreach(explode(",",$rule_service) as $service){
-							//Check if the 'service' is an existing lilac command 
-							$commande = NagiosCommandPeer::getByName($service);
-							if($command){
-								array_push($newservice, $service);
-							}
-						}
-						$rule->setService(implode(",",$newservice));
+						$rule_service = implode(",",$rule_service);
 					}
-					else{
-						$rule->setService($rule_service);
+					foreach(explode(",",$rule_service) as $service_name){
+						$c = new Criteria();
+						$c->add(NagiosServicePeer::DESCRIPTION, $service_name);
+						$service = NagiosServicePeer::doSelectOne($c);
+						if($service_name!= "*" && !$service){
+							$error .= "| ERROR: ".$service_name." does not exist. ";
+						}
 					}
+					$rule->setService($rule_service);
 				}
 			}
 
 			if(isset($new_rule_name)){
 				if(!$ruledto->getNotifierRuleByNameAndType($new_rule_name,$rule->getType())){
 					$rule->setName($new_rule_name);
-				}else $error .= " | ERROR : The rule name have not been changed due to an existing rule with this name.";
+				}else $error .= "| ERROR : The rule name have not been changed due to an existing rule with this name. ";
 			}
 			
 			if(isset($rule_contact)){
 				if(is_array($rule_contact)){
-					$newcontact = array();
-					foreach($rule_contact as $contact){
-						//Check if the 'contact' is an existing lilac contact
-						$cnt = NagiosContactPeer::getByName($contact);
-						if($cnt){
-							array_push($newcontact, $contact);
-						}
-					}
-					$rule->setContact(implode(",",$newcontact));
-				}elseif(count(explode(",",$rule_contact))>1){
-					$newcontact = array();
-					foreach(explode(",",$rule_contact) as $contact){
-						//Check if the 'contact' is an existing lilac contact
-						$cnt = NagiosContactPeer::getByName($contact);
-						if($cnt){
-							array_push($newcontact, $contact);
-						}
-					}
-					$rule->setContact(implode(",",$newcontact));
-				}else{
-					$rule->setContact($rule_contact);
+					$rule_contact = implode(",",$rule_contact);
 				}
+				$list_contact = array();
+				foreach(explode(",",$rule_contact) as $contact_name){
+					$ncp = new NagiosContactPeer;
+					$contact = $ncp->getByName( $contact_name );
+					if($contact_name != "*" && !$contact){
+						$error .= " | ERROR: ".$contact_name." does not exist.";
+					}else{
+						array_push($list_contact, $contact_name);
+					}
+				}
+				$rule->setContact(implode(",",$list_contact));
 			}
 			
 			if(isset($rule_host)){
 				if(is_array($rule_host)){
-					$newhost = array();
-					foreach($rule_host as $host){
-						//Check if the 'host' is an existing lilac host
-						$cnt = NagiosHostPeer::getByName($host);
-						if($cnt){
-							array_push($newhost, $host);
-						}
-					}
-					$rule->setHost(implode(",",$newhost));
-
-				}elseif(count(explode(",",$rule_host))>1){
-					$newhost = array();
-					foreach(explode(",",$rule_host) as $host){
-						//Check if the 'host' is an existing lilac host
-						$cnt = NagioshostPeer::getByName($host);
-						if($cnt){
-							array_push($newhost, $host);
-						}
-					}
-					$rule->setHost(implode(",",$newhost));
-				}else{
-					$rule->setHost($rule_host);
+					$rule_host = implode(",",$rule_host);
 				}
+				$list_host = array();
+				foreach(explode(",",$rule_host) as $host_name){
+					$nhp = new NagiosHostPeer;
+					$host = $nhp->getByName( $host_name );
+					if($host_name!= "*" && !$host){
+						$error .= " | ERROR: ".$host_name." does not exist.";
+					}else{
+						array_push($list_host, $host_name);
+					}
+				}
+				$rule->setHost(implode(",",$list_host));
 			}
 			
 			if(isset($rule_debug)){
@@ -449,12 +646,15 @@ class ObjectManager {
 
 			if(isset($rule_state)){
 				if($rule->getType()=="host"){
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
+					if(isset($rule_state)){
 						$availableStateHost = ["UP","DOWN", "UNREACHABLE"];
 						$stringState=array();
-						foreach($rule_state as $state){
+						if(is_array($rule_state)){
+							$rule_state = implode(",",$rule_state);
+						}
+	
+						$stringState=array();
+						foreach(explode(",",$rule_state) as $state){
 							if(in_array(strtoupper($state),$availableStateHost)){
 								array_push($stringState, strtoupper($state));
 							}
@@ -462,13 +662,15 @@ class ObjectManager {
 						$rule->setState(implode(",",$stringState));
 					}
 				}else{
-
-					if($rule_state == "*"){
-						$rule->setState($rule_state);
-					}else{
+					if(isset($rule_state)){
 						$availableStateService = ["OK","WARNING","CRITICAL","UNKNOWN"];
 						$stringState=array();
-						foreach($rule_state as $state){
+						if(is_array($rule_state)){
+							$rule_state = implode(",",$rule_state);
+						}
+	
+						$stringState=array();
+						foreach(explode(",",$rule_state) as $state){
 							if(in_array(strtoupper($state),$availableStateService)){
 								array_push($stringState, strtoupper($state));
 							}
@@ -483,9 +685,21 @@ class ObjectManager {
 					$mdto = new NotifierMethodDTO();
 					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
 					if(!$m){
-						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+						$error .= "| ERROR : The method $method_name does not exist in the database for this type of object. ";
 					}else{
-						$rule->addMethod($method_name);
+						$found = false;
+						$methods_list = $rule->getMethods();
+						foreach($methods_list as $method_link){
+							if($method_link->getName() == $m->getName()){
+								$found = true;
+							}
+						}
+						if(!$found){
+							$rule->addMethod($method_name);
+						}else{
+							$error .= "| ERROR : The method $method_name is already linked to this rule. ";
+						}
+						
 					}
 				}
 			}
@@ -495,22 +709,23 @@ class ObjectManager {
 					$mdto = new NotifierMethodDTO();
 					$m=$mdto->getNotifierMethodByNameAndType($method_name,$rule->getType());
 					if(!$m){
-						$error .= " | ERROR : The method $method_name does not exist in the database for this type of object.";
+						$error .= "| ERROR : The method $method_name does not exist in the database for this type of object. ";
 					}else{
 						$rule->deleteMethod($method_name);
 					}
 				}
 			}
 			
-			if($rule->getMethods() != array()){
+			if(count($rule->getMethods())>=1){
 				if($rule->save()){
-					$success .= " | SUCCESS : The rules '$rule_name' have been saved with all the configuration.";
+					$success .= "| SUCCESS : The rules '$rule_name' have been saved with all the configuration. ";
 				}else{
 					$error .= "| ERROR : The rules failed to saved the configuration. "; 
 					$code = 1;
 				}
 			}else {
-				$error .= "| ERROR : The rules failed to saved the configuration no methods are set. "; 
+				$dump = $rule->toArray();
+				$error .= "| ERROR : The rules failed to saved the configuration no methods are set. ". implode(",",$dump); 
 				$code = 1;
 			}
 			
@@ -530,7 +745,7 @@ class ObjectManager {
 		$timeperiod = $timeperiodDto->getNotifierTimeperiodByName($timeperiod_name);
 		
 		if(!$timeperiod){
-			$error .= "| ERROR : The Timeperiod '$timeperiod_name' does not exist.";
+			$error .= "ERROR : The Timeperiod '$timeperiod_name' does not exist.";
 			$code = 1;
 		}else{
 			if(isset($new_timeperiod_name)){
@@ -573,7 +788,7 @@ class ObjectManager {
 		$method=$methodDto->getNotifierMethodByNameAndType($method_name,$method_type);
 
 		if(!$method){
-			$error .= "$method_name does not exist in the database.";
+			$error .= "ERROR : $method_name does not exist in the database. ";
 			$code =1;
 		}else{
 			if(isset($new_method_name)){
@@ -587,9 +802,9 @@ class ObjectManager {
 			}
 
 			if($method->save()){
-				$success .= $method->getName()." updated his id is : ".$method->getId();			
+				$success .= "| SUCCESS : ".$method->getName()." updated his id is : ".$method->getId();			
 			}else{
-				$error .= $method->getName()." failed to be updated.";
+				$error .= "| ERROR : ".$method->getName()." failed to be updated. ";
 				$code =1;
 			}
 		}
@@ -631,6 +846,292 @@ class ObjectManager {
 			return "Host named ".$hostName." doesn't exist."; 
 		}
 	}
+	/* GED - Get Event details by idEvent */
+
+	public function getDetailsEvent($idEvent,$queue){  //queue : active or history
+
+		global $database_ged;
+		/* find event */
+		$sql = "SELECT * FROM nagios_queue_".$queue ." WHERE id =".$idEvent;
+		
+		$result = sqlrequest($database_ged, $sql);
+		$event = mysqli_fetch_assoc($result);
+
+		if ($event){
+			
+			return $event;
+		}
+		else{
+			
+			return "Event with id ".$idEvent." doesn't exist."; 
+		}
+		
+	}
+
+		/* GED - modify an active event by idEvent */
+
+		public function modifyEvent($comments,$idEvent){
+			$error = "";
+			$success = "";
+			$code=0;
+			global $database_ged;			
+			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+			$res = sqlrequest($database_ged, $sql);
+			$verif = mysqli_fetch_assoc($res);
+			/* modify comment */
+			If($verif["id"] == $idEvent){
+				$sql = "UPDATE  nagios_queue_active SET comments= \"".$comments."\" WHERE id = ".$idEvent;
+				 sqlrequest($database_ged, $sql);
+				$success =  "Comments modified.";
+				
+			}
+			
+			else{
+				$error =  "Event with id ".$idEvent." doesn't exist.";
+				$code = 1;
+			}
+		
+			$logs = $this->getLogs($error, $success);
+		
+			$result=array("code"=>$code,"description"=>$logs);	
+
+			return $result;
+		}
+
+
+	/* GED - own event  */
+	public function ownDisownEvent($idEvent,$owner=""){
+		$error = "";
+		$success = "";
+		$code=0;
+		global $database_ged;			
+		$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+		$res = sqlrequest($database_ged, $sql);
+		$verif = mysqli_fetch_assoc($res);
+
+		If($verif["id"] == $idEvent){
+			$sql = "UPDATE  nagios_queue_active SET nagios_queue_active.owner = \"".$owner."\" WHERE id = ".$idEvent;
+			 sqlrequest($database_ged, $sql);
+			$success= "Event owned.";
+		}
+		
+		else{
+			$error= "Event with id ".$idEvent." doesn't exist.";
+			$code = 1;
+		}
+	
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);	
+
+		return $result;
+	}
+
+	/* GED - delete an Event (history) */
+	public function deleteEvent($idEvent){
+		$error = "";
+		$success = "";
+		$code=0;
+		global $database_ged;			
+		$sql = "SELECT * from nagios_queue_history   WHERE id = ".$idEvent;
+		$res = sqlrequest($database_ged, $sql);
+		$verif = mysqli_fetch_assoc($res);
+
+		If($verif["id"] == $idEvent && $verif["queue"]=="h"){
+
+			$sql = "DELETE FROM  nagios_queue_history WHERE id = ".$idEvent;
+			sqlrequest($database_ged, $sql);
+			$success = "Event deleted.";
+		}
+		
+		else{
+			$error =  "Event with id ".$idEvent." doesn't exist.";
+			$code = 1;
+		}
+
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);	
+
+		return $result;
+	}
+
+
+		/* GED - acknowledge an Event (active) */
+		public function acknowledgeEvent($idEvent){
+			$error = "";
+			$success = "";
+			$code=0;
+			global $database_ged;			
+			$sql = "SELECT id from nagios_queue_active   WHERE id = ".$idEvent;
+			$res = sqlrequest($database_ged, $sql);
+			$verif = mysqli_fetch_assoc($res);
+			/*  if the event exist */
+			If($verif["id"] == $idEvent){
+
+				/*  copy the event from nagios_queue_active to nagios_queue_history */
+				$sql = "INSERT INTO nagios_queue_history  SELECT * FROM nagios_queue_active where nagios_queue_active.id =".$idEvent." 
+				ON DUPLICATE KEY UPDATE id = (select max(id)+1 from nagios_queue_history)";
+
+				$sql2 = "UPDATE nagios_queue_history SET nagios_queue_history.queue='h' where id = ".$idEvent;
+ 
+
+
+				sqlrequest($database_ged, $sql);
+				sqlrequest($database_ged, $sql2);
+
+				/* delete from nagios_queue_active */
+				$sql = "DELETE FROM nagios_queue_active WHERE id=".$idEvent;
+				sqlrequest($database_ged, $sql);
+				$success =  "Event acknowlegded.";
+			}
+			
+			else{
+				$error =  "Event with id ".$idEvent." doesn't exist.";
+				$code = 1;
+			}
+	
+			$logs = $this->getLogs($error, $success);
+		
+			$result=array("code"=>$code,"description"=>$logs);	
+
+			return $result;
+		}
+	/* Get process status by name */
+	public function getPIDProcess($process){
+
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+		
+		$processTab = $this->getNameProcess();
+
+		if(in_array($process,$processTab)){
+		
+			$cmd = $array_serv_system[$process]["status"];
+			$PID = exec($cmd,$result);
+			if($PID!=null){
+				$result_process["status"]="UP";
+				$result_process["PID"]= $PID;
+			}
+			else {
+				$result_process["status"]= "DOWN";
+				$result_process["PID"] = "";
+			}
+			return $result_process;
+		}
+		else {
+			
+			return "Process named ".$process." doesn't exist.";
+		 	
+		}
+				
+	} 
+
+	/* Do actions on process | stop - start - restart - reload - verify */
+
+
+	public function actionProcess($process,$action){
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+		$error = "";
+		$success = "";
+		$code=0;
+		$doReload = FALSE;
+
+		
+		$processTab = $this->getNameProcess();
+
+		if(in_array($process,$processTab)){
+			$cmd = $array_serv_system[$process]["status"];
+			$PID = exec($cmd,$result);
+			$processActions = array_keys($array_serv_system[$process]["proc_act"]);
+
+			if(in_array($action,$processActions)){
+				switch($action){
+					case $action=="stop" :
+						if($PID!=null){
+							$cmd = $array_serv_system[$process]["proc_act"][$action];
+							exec($cmd,$result);
+							$doReload = TRUE;
+
+							$success = $result;
+							break;
+						}else {
+							$code = 1;
+							$error = $process." process is already on ".$action;
+							break;
+						}
+					case $action=="start" :
+						if($PID==null){
+							$cmd = $array_serv_system[$process]["proc_act"][$action];
+							exec($cmd,$result);
+							$doReload = TRUE;
+							
+							$success =$result;
+							break;
+						}else {
+							$code = 1;
+							$error = $process." process is already on ".$action;
+							break;
+						}
+					
+					case $action=="restart" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success = $result;
+						break;
+
+					case $action=="reload" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success = $result;
+						break;
+
+					case $action=="verify" :
+						$cmd = $array_serv_system[$process]["proc_act"][$action];
+						exec($cmd,$result);
+						$success =$result;
+						break;
+				}
+
+				if ($doReload == True && in_array("reload",$processActions)){
+					$cmd = $array_serv_system[$process]["proc_act"]["reload"];
+					exec($cmd,$result);
+				}
+
+			}else {
+				$error =  "You can't do action named ". $action." on ".$process. " process";
+				$code = 1;
+			}		
+			
+		} else {
+			$error =  "Process named ".$process." doesn't exist.";
+			$code = 1;
+			}
+
+		if ($code==1){
+			$result=array("code"=>$code,"description"=>$error);	
+		}elseif($code == 0){
+			return array("code"=>$code,"description"=>$success);
+		}
+		
+
+		return $result;
+	}
+
+	/* Get all process */
+	public function getNameProcess(){
+		global $path_nagios_bin;
+		global $path_nagios_etc;
+		global $array_serv_system;
+
+		$process = array_keys($array_serv_system);
+		return $process;
+	}
+
+
 	/* LILAC - Get Hosts by template name */
 	public function getHostsBytemplate( $templateHostName){
         $nhtp = new NagiosHostTemplatePeer;
@@ -872,13 +1373,60 @@ class ObjectManager {
 		return($HostsDown);
 	}
 
+	/* EONWEB-LIVESTATUS - Get Services Status*/	
+	public function getServicesStatus(){
+		
+
+		$ServiceDown=array();
+		$tabColumns=array("id","host_name","host_address","display_name","state","acknowledged","acknowledged_type","comment","comments_with_info","last_state_change");
+		$tabFilters=array();
+		$tabDate=array("last_state_change");
+		$tabConcat=array("comments_with_info");
+
+		$dateT=array();
+		foreach($this->listNagiosObjects("services",NULL,$tabColumns,$tabFilters)["default"] as $sd ){
+			foreach($sd as $k=>$sdown){
+					if(in_array($k,$tabDate)){
+						$ta["human_".$k]=gmdate("Y-m-d\TH:i:s\Z",$sdown);
+						$dateT=($k=="last_state_change"?array("last_state_change"=>$sdown):NULL);
+					}elseif(in_array($k,$tabConcat)){
+						$concat="";
+						if(sizeof($sd[$k])>0){
+							for($i=0;$i<=sizeof($sd[$k])-1;$i++){
+								if(sizeof($sd[$k][$i])>0){
+								for($j=0;$j<=sizeof($sd[$k][$i])-1;$j++){
+									$concat.=$sd[$k][$i][$j]." | ";
+								}
+							}
+								$concat.=(sizeof($sd[$k][$i])>1? NULL: "|");
+							}
+						}
+						$ta["human_".$k]=$concat;
+						$ta["date"]=time();
+						$ta["human_date"]=gmdate("Y-m-d\TH:i:s\Z",$ta["date"]);
+						if(isset($dateT["last_state_change"])){
+							$date1=new DateTime();
+							$date2=new DateTime();
+							$date2->setTimestamp($dateT["last_state_change"]);
+							$interval=$date2->diff($date1);
+							$ta["human_duration"]=$interval->format('%ad %hh %im %ss ');
+						}
+					}
+					$ta[$k]=$sdown;
+				}
+			array_push($ServiceDown,$ta);
+		}
+		
+		return $ServiceDown;
+	}
+
 	/* EONWEB-LIVESTATUS - Get Services Down*/	
 	public function getServicesDown(){
 		
 
 		$ServiceDown=array();
 		$tabColumns=array("id","host_name","host_address","display_name","acknowledged","acknowledged_type","comment","comments_with_info","last_state_change");
-		$tabFilters=array("state > 0","host_state = 0","state_type = 1",);
+		$tabFilters=array("state > 0","host_state = 0","state_type = 1");
 		$tabDate=array("last_state_change");
 		$tabConcat=array("comments_with_info");
 
@@ -943,9 +1491,114 @@ class ObjectManager {
 		return array("code"=>$code,"description"=>$logs);
 	}
 
+	/* EonWeb - get user */
+	public function getEonUser($user_name){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$eonUserDto = new EonwebUserDTO();
+			$eonUser = $eonUserDto->getEonwebUserByName($user_name);
+			
+			if(!$eonUser){
+				$error .= "$user_name does not exist.";
+			}else{
+				return $eonUser->toArray();
+			}
+
+		}catch (Exception $e){
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return $logs;
+	}
+
+	/* EonWeb - get group */
+	public function getEonGroup($group_name){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$eonGroupDto = new EonwebGroupDTO();
+			$eonGroup = $eonGroupDto->getEonwebGroupByName($group_name);
+			
+			if(!$eonGroup){
+				$error .= "$group_name does not exist.";
+			}else{
+				return $eonGroup->toArray();
+			}
+
+		}catch (Exception $e){
+			$error .= "An exception occured : $e";
+		}
+
+		$logs = $this->getLogs($error, $success);
+
+		return $logs;
+	}
+
 ########################################## CREATE
+
+	/* LILAC - add kinship link */
+	public function addParentToHost($parentName, $childName, $exportConfiguration=FALSE){
+		
+		$error = "";
+		$success = "";
+		$code=0;
+		
+		try{
+
+			// Wants to add a parent 
+			$nhp = new NagiosHostPeer;
+			// Find host
+			$parentHost = $nhp->getByName($parentName);
+			if(!$parentHost) {
+				$code=1;
+				$error .= "Parent Host $parentName does not exists\n";
+			}
+
+			$childHost = $nhp->getByName($childName);
+			if(!$childHost) {
+				$code=1;
+				$error .= "Child Host $childName does not exists\n";
+			}
+
+			if($code==0){
+				$c = new Criteria();
+				$c->add(NagiosHostParentPeer::CHILD_HOST , $childHost->getId());
+				$c->add(NagiosHostParentPeer::PARENT_HOST, $parentHost->getId());
+				$parentRelationship = NagiosHostParentPeer::doSelectOne($c);
+				if($parentRelationship) {
+					$code=1;
+					$error .= "That parent relationship already exist.\n";
+				}else {
+					$tempParent = new NagiosHostParent();
+					$tempParent->setChildHost($childHost->getId());
+					$tempParent->setParentHost($parentHost->getId());
+					$tempParent->save();
+					$success .= "Parent added";
+				}
+
+				if( $exportConfiguration == TRUE )
+					$this->exportConfigurationToNagios($error, $success);
+			
+			}
+			
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		
+        return array("code"=>$code,"description"=>$logs);
+	}
+
+
 	/* LILAC - create contact */ 
-	public function createContact($contactName, $contactAlias="description", $contactMail, $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
+	public function createContact($contactName, $contactMail, $contactAlias="description", $contactPager="", $contactGroup="",$serviceNotificationCommand="notify-by-email-service",$hostNotificationCommand="notify-by-email-host", $options=NULL, $exportConfiguration = FALSE ){
 		$error = "";
 		$success = "";
 		$code=0;
@@ -1146,7 +1799,7 @@ class ObjectManager {
 				while($x < count($downtimesList) && !$verify){
 					if(strval($timestamp) == strval($downtimesList[$x]["entry_time"])){
 						$verify=True;
-						$success .= "Schedule host downtimes succesfully save. ref: $timestamp";
+						$success .= "Schedule service downtimes succesfully save. ref: $timestamp";
 					}
 					$x++;
 				}
@@ -1170,7 +1823,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Create Host and Services */
-	public function createHost( $templateHostName="GENERIC_HOST", $hostName, $hostIp, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function createHost($hostName, $hostIp, $templateHostName="GENERIC_HOST", $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
@@ -1649,7 +2302,7 @@ class ObjectManager {
 	}
 
 	/* EONWEB - Create User */
-	public function createEonUser($user_mail="", $user_name,$user_descr="",$user_group, $user_password, $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
+	public function createEonUser($user_group, $user_password, $user_name, $user_mail="", $user_descr="", $is_ldap_user=false, $user_location="", $user_limitation=0, $user_language = 0, $in_nagvis = false, $in_cacti = false, $nagvis_group = false){
 		$error = "";
 		$success = "";
 		$code = 0;
@@ -3868,7 +4521,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Modify Command --- */  
-    public function modifyCommand($commandName, $newCommandName=NULL, $commandLine, $commandDescription=NULL){
+    public function modifyCommand($commandName, $commandLine, $newCommandName=NULL, $commandDescription=NULL){
         /*---Modify check command ==> 'dummy_ok'---*/
 		//TODO ==> Change command to 'dummy_ok' for template GENERIC_HOST (inheritance)
 		$error = "";
@@ -3945,7 +4598,7 @@ class ObjectManager {
 	}
 
 	/* LILAC - Modify Host */
-	public function modifyHost( $templateHostName=NULL, $hostName,$newHostName=NULL, $hostIp=NULL, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
+	public function modifyHost( $hostName, $templateHostName=NULL, $newHostName=NULL, $hostIp=NULL, $hostAlias = "", $contactName = NULL, $contactGroupName = NULL, $exportConfiguration = FALSE ){
         $error = "";
         $success = "";
 		$code=0;
@@ -4178,6 +4831,57 @@ class ObjectManager {
 	}
 ########################################## DELETE
 
+/* LILAC - delete kinship link */
+public function deleteParentToHost($parentName, $childName, $exportConfiguration=FALSE){
+		
+	$error = "";
+	$success = "";
+	$code=0;
+	
+	try{
+
+		// Wants to add a parent 
+		$nhp = new NagiosHostPeer;
+		// Find host
+		$parentHost = $nhp->getByName($parentName);
+		if(!$parentHost) {
+			$code=1;
+			$error .= "Parent Host $parentName does not exists\n";
+		}
+
+		$childHost = $nhp->getByName($childName);
+		if(!$childHost) {
+			$code=1;
+			$error .= "Child Host $childName does not exists\n";
+		}
+
+		if($code==0){
+			$c = new Criteria();
+			$c->add(NagiosHostParentPeer::CHILD_HOST , $childHost->getId());
+			$c->add(NagiosHostParentPeer::PARENT_HOST, $parentHost->getId());
+			$parentRelationship = NagiosHostParentPeer::doSelectOne($c);
+			if($parentRelationship) {
+				$parentRelationship->delete();
+				$success  .= "That parent relationship been deleted.\n";
+			}else {
+				$code = 1;
+				$error.= "That parent relationship does not exist yet.\n";
+			}
+
+			if( $exportConfiguration == TRUE )
+				$this->exportConfigurationToNagios($error, $success);
+		
+		}
+		
+	}catch(Exception $e) {
+		$code=1;
+		$error .= $e->getMessage();
+	}
+	
+	$logs = $this->getLogs($error, $success);
+	
+	return array("code"=>$code,"description"=>$logs);
+}
 	/* LILAC - delete host Downtimes */
     public function deleteHostDowntime($idDowntime){
 		$error = "";
@@ -6047,6 +6751,1154 @@ class ObjectManager {
 		return $result;
 
 	}*/
+	/* NAGIOS - create service Acknowledge */
+	public function createServiceAcknowledge($hostName,$serviceName,$sticky,$notify,$persistent,$comment,$user){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] ACKNOWLEDGE_SVC_PROBLEM;'.$hostName.';'.$serviceName.';'.$sticky.';'.$notify.';'.$persistent.';'.$user.';'.$comment.''.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				
+				$AcknowledgeList = $this->getServiceAcknowledges();
+				$verify = False;
+				if($AcknowledgeList[$hostName][$serviceName]["acknowledged"] == 1){
+					$verify=True;
+					$success .= "Acknowledge succesfully save.";
+				}
+				
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+		return $result;
+	}
+
+	/* NAGIOS - Get Service Acknowledge */	
+	public function getServiceAcknowledges(){
+		$acknowledge=array();
+		$tab=array("host_name","description","host_address","acknowledged","acknowledgement_type","state","last_state_change","last_time_ok","last_time_warning","last_time_critical","last_time_unknown","comments_with_info","contacts","notifications_enabled");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$acknowledge[$value["host_name"]][$value["description"]] = $value;
+
+		}
+		return $acknowledge;
+	}
+
+	/* NAGIOS - delete service acknowledge */
+    public function deleteServiceAcknowledge($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] REMOVE_SVC_ACKNOWLEDGEMENT;'.$hostName.';'.$serviceName.' '.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				$AcknowledgeList = $this->getServiceAcknowledges();
+				$verify = True;
+					if($AcknowledgeList[$hostName][$serviceName]["acknowledged"] != 1){
+						$verify=False;
+						$success .= "Acknowledge succesfully deleted.";
+					}
+				if($verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	public function createHostAcknowledge($hostName,$sticky,$notify,$persistent,$comment,$user){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] ACKNOWLEDGE_HOST_PROBLEM;'.$hostName.';'.$sticky.';'.$notify.';'.$persistent.';'.$user.';'.$comment.''.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				
+				$AcknowledgeList = $this->getHostAcknowledges();
+				$verify = False;
+				if($AcknowledgeList[$hostName]["acknowledged"] == 1){
+					$verify=True;
+					$success .= "Acknowledge succesfully save.";
+				}
+				
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+		return $result;
+	}
+
+	/* NAGIOS - delete host acknowledge */
+    public function deleteHostAcknowledge($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] REMOVE_HOST_ACKNOWLEDGEMENT;'.$hostName.' '.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				$AcknowledgeList = $this->getHostAcknowledges();
+				$verify = True;
+					if($AcknowledgeList[$hostName]["acknowledged"] != 1){
+						$verify=False;
+						$success .= "Acknowledge succesfully deleted.";
+					}
+				if($verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+	public function getHostAcknowledges(){
+		$acknowledge=array();
+		$tab=array("host_name","description","host_address","acknowledged","acknowledgement_type","state","last_state_change","last_time_ok","last_time_warning","last_time_critical","last_time_unknown","comments_with_info","contacts","notifications_enabled");
+		foreach($this->listNagiosObjects("hosts",NULL,$tab)["default"] as $key=>$value){
+			$acknowledge[$value["host_name"]] = $value;
+
+		}
+		return $acknowledge;
+	}
+
+	/* NAGIOS - create service Comment */
+	public function createServiceComment($hostName,$serviceName,$persistent,$user,$comment){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] ADD_SVC_COMMENT;'.$hostName.';'.$serviceName.';'.$persistent.';'.$user.';'.$comment.''.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				
+				$CommentList = $this->getServiceComments();
+				$verify = False;
+				if(strval($timestamp) == strval($CommentList[$hostName][$serviceName]["entry_time"])){
+					$verify=True;
+					$success .= "Comment succesfully save. ref: $timestamp";
+				}
+				
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+		return $result;
+	}
+
+	/* NAGIOS - Get Service Comments */	
+	public function getServiceComments(){
+		$comment=array();
+		$tab=array("host_name","service_description","host_address","service_acknowledged","entry_time","service_acknowledgement_type","service_state","service_last_state_change","service_last_time_ok","service_last_time_warning","service_last_time_critical","service_last_time_unknown","service_comments_with_info","service_contacts","service_notifications_enabled");
+		foreach($this->listNagiosObjects("comments",NULL,$tab)["default"] as $key=>$value){
+			$comment[$value["host_name"]][$value["service_description"]] = $value;
+		}
+		return $comment;
+	}
+
+	/* NAGIOS - Delete Service Comments */	
+	public function deleteServiceComment($hostName,$serviceName,$idComment){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DEL_SVC_COMMENT;'.$idComment.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CommentList = $this->getServiceComments();
+			$verify = True;
+			$x = 0;
+			while($x < count($CommentList) && $verify){
+				if($CommentList[$hostName][$serviceName]["service_comments_with_info"][$x]["0"] == $idComment){
+					$verify=False;
+					$error .= "An error occurred nothing happen.";
+				}
+				$x++;
+			}
+				
+			if($verify){
+				$code = 1;
+				$success .="Comment succesfully deleted. ";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Delete all Service Comments */	
+	public function deleteAllServiceComments($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DEL_ALL_SVC_COMMENTS;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CommentList = $this->getServiceComments();
+			$verify = True;
+				if(isset($CommentList[$hostName][$serviceName])){
+					$verify=False;
+					$error .= "An error occurred nothing happen.";
+				}	
+			if($verify){
+				$code = 1;
+				$success .="Comments succesfully deleted.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - create Host Comment */
+	public function createHostComment($hostName,$persistent,$user,$comment){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+				$cmdline = '['.$timestamp.'] ADD_HOST_COMMENT;'.$hostName.';'.$persistent.';'.$user.';'.$comment.''.PHP_EOL;
+				file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+				
+				$CommentList = $this->getHostComments();
+				$verify = False;
+				if(strval($timestamp) == strval($CommentList[$hostName]["entry_time"])){
+					$verify=True;
+					$success .= "Comment succesfully save. ref: $timestamp";
+				}
+				
+
+				if(!$verify){
+					$code = 1;
+					$error.="An error occurred nothing happen.";
+				}
+			}
+
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage()."\n";
+		}
+		
+		$logs = $this->getLogs($error, $success);
+		$result=array("code"=>$code,"description"=>$logs);
+		return $result;
+	}
+
+	/* NAGIOS - Get Host Comments */	
+	public function getHostComments(){
+		$comment=array();
+		$tab=array("host_name","host_address","entry_time","host_state","host_comments_with_info","host_contacts","host_notifications_enabled");
+		foreach($this->listNagiosObjects("comments",NULL,$tab)["default"] as $key=>$value){
+				$comment[$value["host_name"]] = $value;
+		}
+		return $comment;
+	}
+
+	/* NAGIOS - Delete Host Comments */	
+	public function deleteHostComment($hostName,$idComment){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DEL_HOST_COMMENT;'.$idComment.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CommentList = $this->getHostComments();
+			$verify = True;
+			$x = 0;
+			while($x < count($CommentList) && $verify){
+				if($CommentList[$hostName]["host_comments_with_info"][$x]["0"] == $idComment){
+					$verify=False;
+					$error .= "An error occurred nothing happen.";
+				}
+				$x++;
+			}
+				
+			if($verify){
+				$code = 1;
+				$success .="Comment succesfully deleted. ";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Delete all Host Comments */	
+	public function deleteAllHostComments($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DEL_ALL_HOST_COMMENTS;'.$hostName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CommentList = $this->getHostComments();
+			$verify = True;
+			if(!empty($CommentList[$hostName]["host_comments_with_info"])){
+				$verify=False;
+				$error .= "An error occurred nothing happen.";
+			}	
+			if($verify){
+				$code = 1;
+				$success .="Comments succesfully deleted.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Enable Service Check */	
+	public function enableServiceCheck($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_SVC_CHECK;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getServiceChecks();
+			$verify = True;
+			if($CheckList[$hostName][$serviceName]["active_checks_enabled"] == 1 ){
+				$verify=False;
+				$success .= "Active check succesfully enabled.";
+			}
+
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+	
+	
+
+	/* NAGIOS - Disable Service Check */	
+	public function disableServiceCheck($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_SVC_CHECK;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getServiceChecks();
+			$verify = True;
+			if($CheckList[$hostName][$serviceName]["active_checks_enabled"] == 0 ){
+				$verify=False;
+				$success .= "Active check succesfully disabled.";
+			}
+			
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Get Service Check */	
+	public function getServiceChecks(){
+		$check=array();
+		$tab=array("host_name","description","host_address","active_checks_enabled","last_check","latency","acknowledged","state");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]][$value["description"]] = $value;
+		}
+		return $check;
+	}
+
+	/* NAGIOS - Enable Host Check */	
+	public function enableHostCheck($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_HOST_CHECK;'.$hostName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getHostChecks();
+			$verify = True;
+			if($CheckList[$hostName]["active_checks_enabled"] == 1 ){
+				$verify=False;
+				$success .= "Active check succesfully enabled.";
+			}
+
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Disable Host Check */	
+	public function disableHostCheck($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_HOST_CHECK;'.$hostName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getHostChecks();
+			$verify = True;
+			if($CheckList[$hostName]["active_checks_enabled"] == 0 ){
+				$verify=False;
+				$success .= "Active check succesfully disabled.";
+			}
+
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Get Host Check */	
+	public function getHostChecks(){
+		$check=array();
+		$tab=array("host_name","host_address","active_checks_enabled","last_check","latency","acknowledged","state");
+		foreach($this->listNagiosObjects("hosts",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]] = $value;
+		}
+		return $check;
+	}
+
+	/* NAGIOS - Enable Service Notification */	
+	public function enableServiceNotification($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_SVC_NOTIFICATIONS;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$NotificationList = $this->getServiceNotifications();
+			$verify = True;
+			$x = 0;
+			if($NotificationList[$hostName][$serviceName]["notifications_enabled"] == 1 ){
+				$verify=False;
+				$success .= "Notification succesfully enabled.";
+			}
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+	
+	/* NAGIOS - Disable Service Notification */	
+	public function disableServiceNotification($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_SVC_NOTIFICATIONS;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$NotificationList = $this->getServiceNotifications();
+			$verify = True;
+			$x = 0;
+			if($NotificationList[$hostName][$serviceName]["notifications_enabled"] == 0 ){
+				$verify=False;
+				$success .= "Notification succesfully disabled.";
+			}
+			 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Get Service Notification */	
+	public function getServiceNotifications(){
+		$check=array();
+		$tab=array("host_name","description","host_address","notifications_enabled","current_notification_number","last_notification","state");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]][$value["description"]] = $value;
+		}
+		return $check;
+	}
+
+	/* NAGIOS - Enable Host Notification */	
+	public function enableHostNotification($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_HOST_NOTIFICATIONS;'.$hostName. ' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$NotificationList = $this->getHostNotifications();
+			$verify = True;
+			$x = 0;
+			if($NotificationList[$hostName]["notifications_enabled"] == 1 ){
+				$verify=False;
+				$success .= "Notification succesfully enabled.";
+			}
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Disable Host Notification */	
+	public function disableHostNotification($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_HOST_NOTIFICATIONS;'.$hostName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$NotificationList = $this->getHostNotifications();
+			$verify = True;
+			$x = 0;
+			if($NotificationList[$hostName][$serviceName]["notifications_enabled"] == 0 ){
+				$verify=False;
+				$success .= "Notification succesfully disabled.";
+			}
+			 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+
+	/* NAGIOS - Get Host Notification */	
+	public function getHostNotifications(){
+		$check=array();
+		$tab=array("host_name","host_address","notifications_enabled","current_notification_number","last_notification","state");
+		foreach($this->listNagiosObjects("hosts",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]] = $value;
+		}
+		return $check;
+	}
+	
+	/* NAGIOS - Enable Service EventHandler */	
+	public function enableServiceEventHandler($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_SVC_EVENT_HANDLER;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$EventHandlerList = $this->getServiceEventHandler();
+			$verify = True;
+			$x = 0;
+			if($EventHandlerList[$hostName][$serviceName]["event_handler_enabled"] == 1 ){
+				$verify=False;
+				$success .= "EventHandler succesfully enabled.";
+			}
+
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Disable Service EventHandler */	
+	public function disableServiceEventHandler($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_SVC_EVENT_HANDLER;'.$hostName.';'.$serviceName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$EventHandlerList = $this->getServiceEventHandler();
+			$verify = True;
+			$x = 0;
+			if($EventHandlerList[$hostName][$serviceName]["event_handler_enabled"] == 0 ){
+				$verify=False;
+				$success .= "EventHandler succesfully disabled.";
+			}
+			
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Get Service EventHandler */
+	public function getServiceEventHandler(){
+		$check=array();
+		$tab=array("host_name","description","host_address","event_handler_enabled","state");
+		foreach($this->listNagiosObjects("services",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]][$value["description"]] = $value;
+		}
+		return $check;
+	}
+
+	/* NAGIOS - Enable Host EventHandler */	
+	public function enableHostEventHandler($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] ENABLE_HOST_EVENT_HANDLER;'.$hostName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$EventHandlerList = $this->getHostEventHandler();
+			$verify = True;
+			$x = 0;
+			if($EventHandlerList[$hostName]["event_handler_enabled"] == 1 ){
+				$verify=False;
+				$success .= "Notification succesfully enabled.";
+			}
+
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Enable Host EventHandler */	
+	public function disableHostEventHandler($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] DISABLE_HOST_EVENT_HANDLER;'.$hostName.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$EventHandlerList = $this->getHostEventHandler();
+			$verify = True;
+			$x = 0;
+			if($EventHandlerList[$hostName]["event_handler_enabled"] == 0 ){
+				$verify=False;
+				$success .= "Notification succesfully disabled.";
+			}
+
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Get Host EventHandler */
+	public function getHostEventHandler(){
+		$check=array();
+		$tab=array("host_name","host_address","event_handler_enabled","state");
+		foreach($this->listNagiosObjects("hosts",NULL,$tab)["default"] as $key=>$value){
+			$check[$value["host_name"]] = $value;
+		}
+		return $check;
+	}
+
+	/* NAGIOS - Submit Service Passive Check Result */
+	public function submitServicePassiveCheckResult($hostName,$serviceName,$returnCode,$outPut){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] PROCESS_SERVICE_CHECK_RESULT;'.$hostName.';'.$serviceName.';'.$returnCode.';'.$outPut.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$StateList = $this->getServiceEventHandler();
+			$verify = True;
+			$x = 0;
+			while($x < count($StateList) && $verify){
+				if($StateList[$hostName][$serviceName]["state"] == $returnCode){
+					$verify=False;
+					$success .= "Passive check result succesfully send. returnCode = ".$returnCode;
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Submit Host Passive Check Result */
+	public function submitHostPassiveCheckResult($hostName,$returnCode,$outPut){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] PROCESS_HOST_CHECK_RESULT;'.$hostName.';'.$returnCode.';'.$outPut.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$StateList = $this->getHostEventHandler();
+			$verify = True;
+			$x = 0;
+			while($x < count($StateList) && $verify){
+				if($StateList[$hostName]["state"] == $returnCode){
+					$verify=False;
+					$success .= "Passive check result succesfully send. returnCode = ".$returnCode;
+				}
+				$x++;
+			} 
+			if($verify){
+				$code = 1;
+				$error .= "An error occurred nothing happen.";
+			}
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Schedule Service Force Check */
+	public function scheduleServiceForcedCheck($hostName,$serviceName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nsp = new NagiosServicePeer();
+			$service = $nsp->getByHostAndDescription($hostName,$serviceName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$service){
+				$code = 1;
+				$error.="$hostName and/or $serviceName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] SCHEDULE_FORCED_SVC_CHECK;'.$hostName.';'.$serviceName.';'.$timestamp.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getServiceChecks();			
+			$success .= "Last check was at:".$CheckList[$hostName][$serviceName]["last_check"].". Check in progress is at:".$timestamp;
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
+
+	/* NAGIOS - Schedule Host Force Check */
+	public function scheduleHostForcedCheck($hostName){
+		$error = "";
+		$success = "";
+		$code=0;
+		try{
+			$CommandFile="/srv/eyesofnetwork/nagios/var/log/rw/nagios.cmd";
+			$nhp = new NagiosHostPeer();
+			$host = $nhp->getByName($hostName);
+			$date = new DateTime();
+			$timestamp = $date->getTimestamp();
+			if(!$host){
+				$code = 1;
+				$error.="$hostName didn't exist.";
+			}else{
+			$cmdline = '['.$timestamp.'] SCHEDULE_FORCED_SVC_CHECK;'.$hostName.';'.$timestamp.' ' .PHP_EOL;
+			file_put_contents($CommandFile, $cmdline,FILE_APPEND);
+			$CheckList = $this->getServiceChecks();			
+			$success .= "Last check was at:".$CheckList[$hostName]["last_check"].". Check in progress is at:".$timestamp;
+		}
+		}catch(Exception $e) {
+			$code=1;
+			$error .= $e->getMessage();
+		}
+        
+		$logs = $this->getLogs($error, $success);
+		
+		$result=array("code"=>$code,"description"=>$logs);
+        return $result;
+	}
 }
+
 
 ?>
